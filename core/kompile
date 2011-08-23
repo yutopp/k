@@ -1494,73 +1494,78 @@ sub compile {
     }
 
 # If the keyword "Error" begins a line in the output, then extract and report the error message
-    if (/^Error: (.*?)Bye/sm) {
-	print "ERROR:\n";
-	print $1;
-	print "Aborting the compilation\n";
-	exit(1);
-    }
+	if (/^Error: (.*?)Bye/sm) {
+		print "ERROR:\n";
+		print $1;
+		print "Aborting the compilation\n";
+		exit(1);
+	}
 
 # If the output contains a generated Maude file, then write it in $output_file_name
-    if (/$begin_compiled_module(.*?)$end_compiled_module/s) {
-	open FILE,">",$output_file_name or die "Cannot create $output_file_name\n";
-	print FILE "--- Compiler checksum: " . get_checksum() . "\n";
-	print FILE "load $k_prelude\n";
-	my $compiled_out = $1;
-	
-	# TODO: partial compilation
-	# append saved compiled rules
-	if ($partial_compilation)
-	{
-	    # collect all compiled rules ...
-	    my $rules = "";
-	    while (my ($key, $value) = each (%status_map))
-	    {
-		$rules .= $value . "\n";
-	    }
-	    
-	    # ... and put them in the compiled file
-	    $compiled_out =~ s/endm/\n$rules\nendm/sg;
+	if (/$begin_compiled_module(.*?)$end_compiled_module/s) {
+		open FILE,">",$output_file_name or die "Cannot create $output_file_name\n";
+		print FILE "--- Compiler checksum: " . get_checksum() . "\n";
+		print FILE "load $k_prelude\n";
+		my $compiled_out = $1;
+
+		# TODO: partial compilation
+		# append saved compiled rules
+		# if ($partial_compilation)
+		$compiled_out = append_saved_compiled_rules($compiled_out);
+
+		print FILE $compiled_out;
+		close FILE;
+		push(@generated_files, $output_file_name);
+
+		print "Compiled version written in $output_file_name.\n";
 	}
-	
-	
-	
-	print FILE $compiled_out;
-	close FILE;
-	push(@generated_files, $output_file_name);
-	
-	print "Compiled version written in $output_file_name.\n";
-    }
 
 # Otherwise there must be some error that the script is now aware of, so show the whole thing
-    else {
-	print "Unknown ERROR: cannot parse the output below (returned by the compiler):\n$_\n" if $_ ne "-1";
-	print "Aborting the compilation\n";
-	exit(1);
-    }
+	else {
+		print "Unknown ERROR: cannot parse the output below (returned by the compiler):\n$_\n" if $_ ne "-1";
+		print "Aborting the compilation\n";
+		exit(1);
+	}
     
     # TODO: partial compilation
     # Store the compiled rules in %dump_map
     # Dump file is always created if -compiled.maude exists.
-    if ($partial_compilation && -e $output_file_name)
-    {
+    if (-e $output_file_name) {
+		create_partial_dump($output_file_name);
+    }    
+}
+
+sub append_saved_compiled_rules {
+	my ($compiled_out) = (@_);
+	# collect all compiled rules ...
+	my $rules = "";
+	while (my ($key, $value) = each (%status_map)) {
+		$rules .= $value . "\n";
+	}
+	
+	# ... and put them in the compiled file
+	$compiled_out =~ s/endm/\n$rules\nendm/sg;
+	return $compiled_out;
+}
+
+sub create_partial_dump {
+	my ($output_file_name) = (@_);
 	# compiled file
 	my $compiled_content = get_file_content($output_file_name);
 	
 	# save a new dump file
-	while ($copy_ =~ /((rule|context|macro).*?\s)(?=$kmaude_keywords_pattern)/sg)
-	{
+	while ($copy_ =~ /((rule|context|macro).*?\s)(?=$kmaude_keywords_pattern)/sg) {
 	    # extract rule
 	    my $temp_rule = $1;
-#	    print "Inspect: $temp_rule\n";
+		# print "Inspect: $temp_rule\n";
 	    
 	    # get location
 	    my $location = $1 if $temp_rule =~ /(location=\(.*?\))/sg;
-#	    print "Location: $location\n";
+		# print "Location: $location\n";
 	    
 	    # get compiled rule using the location
 	    my $correspondent = $1 if $compiled_content =~ /([^\n]*?\Q$location\E[^\n]*)/s;
-#	    print "Correspondent: $correspondent\n\n\n";
+		# print "Correspondent: $correspondent\n\n\n";
 
 	    # trim rule
 	    $temp_rule =~ s/^\s*//sg;
@@ -1574,7 +1579,6 @@ sub compile {
 	open FOO, ">", $dump_file or die "Cannot load dump file: $dump_file!";
 	print FOO Dumper \%dump_map;
 	close FOO;
-    }    
 }
 
 
