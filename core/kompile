@@ -1553,6 +1553,15 @@ sub create_partial_dump {
 	# compiled file
 	my $compiled_content = get_file_content($output_file_name);
 	
+	# map compiled rules to locations
+	my %compiled_loc_map = ();
+	my @lines = split /\n/, $compiled_content;
+	foreach my $line (@lines) {
+		if ($line =~ /(location=\(.*?\))/sg) {
+			$compiled_loc_map{$1} = $line;
+		}
+	}	
+	
 	# save a new dump file
 	while ($copy_ =~ /((rule|context|macro).*?\s)(?=$kmaude_keywords_pattern)/sg) {
 	    # extract rule
@@ -1564,7 +1573,7 @@ sub create_partial_dump {
 		# print "Location: $location\n";
 	    
 	    # get compiled rule using the location
-	    my $correspondent = $1 if $compiled_content =~ /([^\n]*?\Q$location\E[^\n]*)/s;
+	    # my $correspondent = $1 if $compiled_content =~ /([^\n]*?\Q$location\E[^\n]*)/s;
 		# print "Correspondent: $correspondent\n\n\n";
 
 	    # trim rule
@@ -1572,7 +1581,8 @@ sub create_partial_dump {
 	    $temp_rule =~ s/\s*$//sg;
 	    
 	    # put pair {rule, compiled_rule} in dump map
-	    $dump_map{$temp_rule} = $correspondent if defined $correspondent;
+	    # $dump_map{$temp_rule} = $compiled_loc_map{$location} if defined $compiled_loc_map{$location};
+		$dump_map{$temp_rule} = $compiled_loc_map{$location};
 	}
 	
 	# save dump_map in dump_file
