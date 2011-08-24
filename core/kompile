@@ -1532,7 +1532,7 @@ sub compile {
     # Dump file is always created if -compiled.maude exists.
     if (-e $output_file_name) {
 		create_partial_dump($output_file_name);
-    }    
+    }
 }
 
 sub append_saved_compiled_rules {
@@ -1558,7 +1558,7 @@ sub create_partial_dump {
 	my @lines = split /\n/, $compiled_content;
 	foreach my $line (@lines) {
 		if ($line =~ /(location=\(.*?\))/sg) {
-			$compiled_loc_map{$1} = $line;
+			push @{$compiled_loc_map{$1}}, $line;
 		}
 	}	
 	
@@ -1566,15 +1566,9 @@ sub create_partial_dump {
 	while ($copy_ =~ /((rule|context|macro).*?\s)(?=$kmaude_keywords_pattern)/sg) {
 	    # extract rule
 	    my $temp_rule = $1;
-		# print "Inspect: $temp_rule\n";
 	    
 	    # get location
 	    my $location = $1 if $temp_rule =~ /(location=\(.*?\))/sg;
-		# print "Location: $location\n";
-	    
-	    # get compiled rule using the location
-	    # my $correspondent = $1 if $compiled_content =~ /([^\n]*?\Q$location\E[^\n]*)/s;
-		# print "Correspondent: $correspondent\n\n\n";
 
 	    # trim rule
 	    $temp_rule =~ s/^\s*//sg;
@@ -1582,7 +1576,7 @@ sub create_partial_dump {
 	    
 	    # put pair {rule, compiled_rule} in dump map
 	    # $dump_map{$temp_rule} = $compiled_loc_map{$location} if defined $compiled_loc_map{$location};
-		$dump_map{$temp_rule} = $compiled_loc_map{$location};
+		$dump_map{$temp_rule} = join("\n", @{$compiled_loc_map{$location}});;
 	}
 	
 	# save dump_map in dump_file
@@ -1768,24 +1762,21 @@ sub maudify_file {
 #    print "Copy saved!\n";
     
     
-    # remove compiled rules/statements
-    # but keep them in a separate map
-    if ($partial_compilation)
-    {
-	while (my ($key, $value) = each(%dump_map))
-	{
-	    if (/\Q$key\E/)
-	    {
-#		print "TO REPLACE: $key\nwith\n" . $dump_map{$key} . "\n\n";
+	# remove compiled rules/statements
+	# but keep them in a separate map
+	if ($partial_compilation) {
+		while (my ($key, $value) = each(%dump_map)) {
+			if (/\Q$key\E/) {
+				# print "TO REPLACE: $key\nwith\n" . $dump_map{$key} . "\n\n";
 
-		# remove
-		s/\Q$key\E//s;
-		
-		# append in temp map
-		$status_map{$key} = $dump_map{$key};
-	    }
-	}	
-    }
+				# remove
+				s/\Q$key\E//s;
+
+				# append in temp map
+				$status_map{$key} = $dump_map{$key};
+			}
+		}	
+	}
     
     
     # resolve rule tags
