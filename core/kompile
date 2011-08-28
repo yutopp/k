@@ -1550,7 +1550,7 @@ sub compile {
 		print "Aborting the compilation\n";
 		exit(1);
 	}
-    
+ 	
     # TODO: partial compilation
     # Store the compiled rules in %_partialRules
     # Dump file is always created if -compiled.maude exists.
@@ -1732,46 +1732,6 @@ sub maudify_file {
 
     $_ = slurp_k($file, $latex || $png || $pdf || $ps || $crop || $eps);
     
-# keep a copy of $_ in order to do partial compilation    
-    $_rules_copy .= $_ . "\n\n";
-#    print "Copy saved!\n";
-    
-	@_currentSorts = @all_sorts;
-	$_currentSubsorts = getSubsortations();
-	
-    if ($partial_compilation) {
-		if ($_partialConfig ne $_currentConfig) {
-			print "Configuration has changed.  Forcing full recompile...\n";
-			$partial_compilation = 0;
-		}
-		# if (@_partialSorts ne @_currentSorts) {
-			# print "Sorts have changed.  Forcing full recompile...\n";
-			# print "Was:\n@_partialSorts\n";
-			# print "Now:\n@_currentSorts\n";
-			# $partial_compilation = 0;
-		# }
-		# if ($_partialSubsorts ne $_currentSubsorts) {
-			# print "Subsorts have changed.  Forcing full recompile...\n";
-			# print "Was:\n$_partialSubsorts\n";
-			# print "Now:\n$_currentSubsorts\n";
-			# $partial_compilation = 0;
-		# }
-		#if @_partialOps != _currentOps != @_currentOps
-	}
-	
-	# remove compiled rules/statements
-	# but keep them in a separate map
-	if ($partial_compilation) {
-		while (my ($key, $value) = each(%_partialRules)) {
-			if (/\Q$key\E/) {
-				# remove
-				s/\Q$key\E//s;
-
-				# append in temp map
-				$status_map{$key} = $_partialRules{$key};
-			}
-		}	
-	}
     
     
     # resolve rule tags
@@ -1832,6 +1792,55 @@ sub maudify_file {
 
 	# add k_license to it
 #	$maudified =~ s!^!\*\*\*\(\n$k_license\n\)\*\*\*\n\n\n!;
+
+
+    $_rules_copy = $maudified;
+	@_currentSorts = @all_sorts;
+	$_currentSubsorts = getSubsortations();
+	
+    if ($partial_compilation) {
+		print "Considering partial compilation...\n";
+		if ($_partialConfig ne $_currentConfig) {
+			print "Configuration has changed.  Forcing full recompile...\n";
+			$partial_compilation = 0;
+		} else {
+			print "Configuration is same\n";
+		}
+		if (@_partialSorts ne @_currentSorts) {
+			print "Sorts have changed.  Forcing full recompile...\n";
+			print "Was:\n@_partialSorts\n";
+			print "Now:\n@_currentSorts\n";
+			$partial_compilation = 0;
+		} else {
+			print "Sorts are same\n";
+		}
+		if ($_partialSubsorts ne $_currentSubsorts) {
+			print "Subsorts have changed.  Forcing full recompile...\n";
+			print "Was:\n$_partialSubsorts\n";
+			print "Now:\n$_currentSubsorts\n";
+			$partial_compilation = 0;
+		} else {
+			print "Subsorts are same\n";
+		}
+		#if @_partialOps != _currentOps != @_currentOps
+	}
+	
+	# remove compiled rules/statements
+	# but keep them in a separate map
+	if ($partial_compilation) {
+		print "removing rules\n";
+		#print "$maudified\n";
+		while (my ($key, $value) = each(%_partialRules)) {
+			if (/\Q$key\E/) {
+				# remove
+				$maudified =~ s/\Q$key\E//s;
+
+				# append in temp map
+				$status_map{$key} = $_partialRules{$key};
+			}
+		}	
+	}
+
 
     open FILE,">",$maude_file or die "Cannot write $maude_file\n";
     print FILE $maudified;
@@ -2012,28 +2021,37 @@ sub maudify_module {
 
 
     # maudify
-    s!((?:$kmaude_keywords_pattern).*?)(?=(?:$kmaude_keywords_pattern|$))!k2maude($1)!gse;
+    #s!((?:$kmaude_keywords_pattern).*?)(?=(?:$kmaude_keywords_pattern|$))!k2maude($1)!gse;
+	my @kmaude_statements = m!((?:$kmaude_keywords_pattern).*?)(?=(?:$kmaude_keywords_pattern|$))!gs;
+	my @maude_statements = ();
+	# $_ = "";
+	foreach my $stmt (@kmaude_statements) {
+		# print "s: $stmt\n";
+		$stmt =~ s!((?:$kmaude_keywords_pattern).*?)(?=(?:$kmaude_keywords_pattern|$))!k2maude($1)!se;
+		push (@maude_statements, $stmt);
+		# $_ .= $stmt;
+	}
+	$_ = join('', @maude_statements);
+	# print "s: $_\n";
 
 	# unfreeze if there are still frozen attributes
 	$_ = Unfreeze("ATTR", $_);
+	# map(Unfreeze("ATTR"), @maude_statements);
 #	print  "Stage:\n$_\n\n";
    
 # Step: add line numbers for mb configuration and latex 
 	$_ = add_line_no_mb($file, $mno, $_);
+	# map(add_line_no_mb($file, $mno), @maude_statements);
 #	print "Stage: \n$_\n\n";
 	
 # Step: Unfreeze everything still frozen
     $_ = Unfreeze("ANONYMOUS", $_);
+	# map(Unfreeze("ANONYMOUS"), @maude_statements);
 #    $_ = unfreeze($_);
     # print  "Stage:\n$_\n\n";
 
 # Step: Add KLabel generated definitions - do that in shared.k for now
-    if ($decl ne "")
-    {
-	$klabels .= $decl;
-	s!mod(\s+)([\S]+)(\s+)is(\s+)!"mod$1$2$3is including K-SHARED .$4"!se;
-	$mset = 1;
-    }
+	$_ = addKLabelGeneratedDefinitions($decl, $_);
 #    print  "Stage:\n$_\n\n";
 
 # Step: register all subsort relations
@@ -2044,6 +2062,15 @@ sub maudify_module {
     print generate_error("WARNING", 1, $file, "unknown line", "Unbalanced parentheses in module $module_name\nMaude might not finish.\n") if (!balanced($_, '(', ')', '`'));
 
     return $_;
+}
+sub addKLabelGeneratedDefinitions {
+	my ($decl, $str) = (@_);
+	if ($decl ne "") {
+		$klabels .= $decl;
+		$str =~ s!mod(\s+)([\S]+)(\s+)is(\s+)!"mod$1$2$3is including K-SHARED .$4"!se;
+		$mset = 1;
+	}
+	return $str;
 }
 
 
