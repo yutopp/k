@@ -1,3 +1,5 @@
+krun --parser="cat" examples/ex3.kast
+
 abacaxi:js m3rabb$ ls .k/krun_tmp/
 maude_err	maude_in.maude	maude_out
 abacaxi:js m3rabb$ maude js-compiled.maude .k/krun_tmp/maude_in.maude

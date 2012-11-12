@@ -39,6 +39,8 @@ kmod JS-NUMERICS is including JS-BASIS
 endkm
 
 kmod JS-PRIMITIVES is including JS-NUMERICS
+	syntax V ::= .None
+	
 	syntax V ::= $undefined
 	syntax V ::= $null
 	
@@ -50,12 +52,42 @@ kmod JS-PRIMITIVES is including JS-NUMERICS
 	
 	rule [boolValue]:	boolValue($b(B:Bool)) 		=> B	[structural anywhere]
 	rule [stringValue]:	stringValue($s(S:String))	=> S	[structural anywhere]
-endkm
-
-kmod JS-SYNTAX is including JS-PRIMITIVES + K
+	
+	
 	--- ECMA-262 8.7
-	syntax V ::= .None
 	syntax V ::= $binding( K , String ) [strict(1)]
+	
+	syntax K ::= getTarget( V )
+	syntax K ::= getPropertyName( V )
+	
+	rule [getTarget]:
+		getTarget($binding(Target:V, _)) => Target
+		[structural]
+	
+	rule [getPropertyName]:
+		getPropertyName($binding(_, Name:String)) => Name
+		[structural]
+
+
+	--- ECMA-262 8.9
+	syntax V ::= $completion( String , K , V )	[strict(2)]
+
+	syntax K ::= getCompletionType( V )		--- normal, break, continue, return, throw
+	syntax K ::= getCompletionValue( V )	--- .None | value
+	syntax K ::= getCompletionTargetLabel( V )	--- .None | identifierString
+	
+	rule [getCompletionType]:
+		getCompletionType($completion(CompletionType:String, _, _)) => CompletionType
+		[structural]
+	
+	rule [getCompletionValue]:
+		getCompletionValue($completion(_, Value:V, _)) => Value
+		[structural]
+
+	rule [getCompletionTargetLabel]:
+		getCompletionTargetLabel($completion(_, _, Value:V)) => Value
+		[structural]
+	
 	
 	syntax V ::= $regex( String ) --- $o( Map ) --- | $function!!!
 	syntax V ::= $ReferenceError( String )
@@ -66,12 +98,14 @@ kmod JS-SYNTAX is including JS-PRIMITIVES + K
 	
 	syntax K ::= $env( K , K )
 	syntax K ::= $id ( String )
+
 	
-	syntax List{K} ::= .Empty
+	--- syntax List{K} ::= .Empty	
+	--- macro .Empty = .List{K}  --- Maybe make this a rule !!!
 	
-	macro .Empty = .List{K}  --- Maybe make this a rule !!!
-	
-	
+endkm
+
+kmod JS-SYNTAX is including JS-PRIMITIVES + K	
 	syntax K ::= 
 		  $this
 		| $nop
@@ -91,6 +125,7 @@ kmod JS-SYNTAX is including JS-PRIMITIVES + K
 		| $not ( K ) [strict]					--- ! Exp
 		| $neg ( K ) [strict] 					--- - Exp
 		| $plus ( K ) [strict] 					--- + Exp
+		| $bitNot ( K ) [strict]				--- ~ Exp
 		
 		| $mul ( K , K ) [seqstrict] 				--- Exp * Exp
 		| $div ( K , K ) [seqstrict] 				--- Exp / Exp
@@ -98,6 +133,10 @@ kmod JS-SYNTAX is including JS-PRIMITIVES + K
 		
 		| $add ( K , K ) [seqstrict]				--- Exp + Exp
 		| $sub ( K , K ) [seqstrict] 				--- Exp - Exp
+		
+		| $lsl ( K , K ) [seqstrict] 				--- Exp << Exp
+		| $lsr ( K , K ) [seqstrict] 				--- Exp >> Exp
+		| $asr ( K , K ) [seqstrict] 				--- Exp >>> Exp
 		
 		| $lt ( K , K ) [seqstrict] 				--- Exp < Exp
 		| $lte ( K , K ) [seqstrict] 				--- Exp <= Exp
@@ -111,6 +150,10 @@ kmod JS-SYNTAX is including JS-PRIMITIVES + K
 		| $identical ( K , K ) [seqstrict] 		--- Exp === Exp
 		| $notIdentical ( K , K ) [seqstrict] 		--- Exp !== Exp
 		
+		| $bitAnd ( K , K ) [seqstrict] 				--- Exp & Exp
+		| $bitXor ( K , K ) [seqstrict] 				--- Exp ^ Exp
+		| $bitOr ( K , K ) [seqstrict] 				--- Exp | Exp
+		
 		| $and ( K , K ) [strict(1)] 			--- Exp && Exp
 		
 		| $or ( K , K ) [strict(1)] 			--- Exp || Exp
@@ -119,7 +162,7 @@ kmod JS-SYNTAX is including JS-PRIMITIVES + K
 		
 		
 		| $assignment ( K , K ) [seqstrict]		--- TargetExp Exp
-		| $compoundAssignment ( K , Nat , K ) [seqstrict]	--- TargetExp AssignmentOp Exp
+		| $compoundAssignment ( K , String , K ) [seqstrict]	--- TargetExp AssignmentOp Exp
 		| $arrayLit ( List{K} )						--- [ CommaList{Exp} ]
 		| $objectLit ( List{K} )					--- { CommaList{Property} }
 		| $propertyLit ( K , K )					--- PropertyName : Exp
@@ -130,11 +173,10 @@ kmod JS-SYNTAX is including JS-PRIMITIVES + K
 		| $throw ( K ) [strict]					--- throw Exp
 		| $label ( String , K ) 
 		
-		| $exp ( K ) [strict]					--- exp
+		| $expStmt ( K ) [strict]					--- exp
 		
-		| $stmts ( List{K} ) 					--- List{Stmt}
-		| $block ( List{K} )
-		| $comma ( List{K} )
+		| $block ( List{K} ) 					--- List{Stmt}
+		| $comma ( List{K} ) 					--- List{Stmt}
 		| $list ( List{K} )						--- for invocation parameters
 		| $ifElse ( K , K , K ) [strict(1)]		--- if (Exp) Block Block
 		| $try ( K , List{K} , K ) [seqstrict]		--- 

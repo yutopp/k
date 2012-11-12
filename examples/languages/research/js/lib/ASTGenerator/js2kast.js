@@ -148,7 +148,7 @@ JSAST = (function () {
 			'CONTINUE'		: '$continue              label',
 			'THROW'			: '$throw                 exception',
 			'BLOCK'			: '$block                 children',
-			'SEMICOLON'		: '$exp                   expression',
+			'SEMICOLON'		: '$expStmt               expression',
 			'LIST'			: '$list                  children',
 			'COMMA'			: '$comma                 children',
 			'IF'			: '$ifElse                condition thenPart elsePart',

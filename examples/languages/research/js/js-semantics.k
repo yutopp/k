@@ -1,45 +1,7 @@
 --- ../../../tools/kompile.pl -lint js
 
 
-
-
-kmod JS-CONTROL-STRUCTURES is including JS-BASIC-SEMANTICS
-	--- rule [statement-queue-empty]: 
-	--- 	<k> $stmts(.List{K}) => . ...</k>  
-	--- 	[structural]
-	--- 
-	--- rule [statement-queue-next]: 
-	--- 	<k> $stmts(Stmt:K ,, Stmts:List{K}) => Stmt ~> $stmts(Stmts) ...</k>  
-	--- 	[structural]
-	
-	rule [statement-final-stmt]: 
-		<k> $stmts(Stmt:K) => Stmt ...</k>
-		[structural]
-
-	rule [statement-queue-next]: 
-		<k> $stmts(Stmt:K ,, NextStmt:K ,, Stmts:List{K}) => Stmt ~> $stmts(NextStmt ,, Stmts) ...</k>  
-		[structural]
-
-	rule [statement-consume-value]: 
-		<k> (Value:V => . ) ~> $stmts(NextStmt:K ,, Stmts:List{K}) ...</k>  
-
-	rule [expression]:
-		<k> $exp(Exp:K) => Exp ...</k> 
-		[structural]
-
-	rule [block]:
-		$block(Stmts:List{K}) => $stmts(Stmts)
-		[structural]
-
-	rule [comma]:
-		$comma(Exps:List{K}) => $stmts(Exps)
-		[structural]
-
-
-
-endkm
-
-kmod JS-UNARY is including JS-CONTROL-STRUCTURES
+kmod JS-UNARY is including JS-BASIC-SEMANTICS
 	syntax V ::= not ( K )
 	syntax V ::= neg ( K )
 
@@ -65,9 +27,9 @@ endkm
 kmod JS-ARITHMETIC is including JS-UNARY 
 
 	syntax K ::= arith( String , K , K )	[strict]
-	syntax Int ::= newSign( Int , Int ) 
-	syntax V ::= newInfinity( Int , Int ) 
-	syntax V ::= newZero( Int , Int )
+	syntax K ::= newSign( Int , Int ) --- Int
+	syntax K ::= newInfinity( Int , Int ) 
+	syntax K ::= newZero( Int , Int )
 	syntax K ::= strAdd( K , K )			[strict]
 	syntax K ::= add( K , K )
 	
@@ -165,8 +127,8 @@ kmod JS-ARITHMETIC is including JS-UNARY
 endkm
 
 kmod JS-PREFIX-POSTFIX is including JS-ARITHMETIC
-	syntax V ::= postOp( V , K , Int )	[strict]
-	syntax V ::= preOp( V , K , Int )	[strict]
+	syntax K ::= postOp( V , K , Int )	[strict]
+	syntax K ::= preOp( V , K , Int )	[strict]
 	
 	--- ECMA-262 11.3.1 Postfix Increment Operator
 	rule $inc(Target:V, true) => postOp(Target, toNumber(getValue(Target)), 1)
@@ -186,8 +148,76 @@ kmod JS-PREFIX-POSTFIX is including JS-ARITHMETIC
 	rule preOp(Target:V, Num:V, I:Int) => putValue(Target, add(Num, $n(I)))		[structural]
 endkm
 
+kmod JS-PROPERTY-ACCESS is including JS-PREFIX-POSTFIX
+	syntax K ::= accessPropertyAt( K , K ) [seqstrict]
+	
+	rule [staticAccess]:
+		$staticAccess(Target:V, $id(Name:String)) => accessPropertyAt(Target, $s(Name))
+	
+	rule [dynamicAccess]:
+		$dynamicAccess(Target:V, PropNameValue:V) 
+		=> accessPropertyAt(Target, toString(getValue(PropNameValue)))
+	
+	rule [accessPropertyAt]:
+		accessPropertyAt(Target:V, $s(Name:String)) 
+		=> $binding(checkObjectCoercible(getValue(Target)), Name)
+		[structural]
+endkm
 
-kmod JS-COMPARISON is including JS-PREFIX-POSTFIX
+kmod JS-ASSIGNMENT is including JS-PROPERTY-ACCESS
+	--- ECMA-262 11.4.1 The delete Operator 
+	rule $delete(Value:V) 							=> $b(true) when notBinding(Value)
+
+	rule $delete($binding(.None, _)) 				=> $b(true)
+
+	rule $delete($binding(Target:V, Name:String)) 
+		=> deleteProperty(toObject(Target), Name) 	when Target =/=K .None
+
+	--- If IsPropertyReference(ref) is true, then
+	--- 	a.	Return the result of calling the [[Delete]] internal method on ToObject(GetBase(ref)) providing GetReferencedName(ref) and IsStrictReference(ref) as the arguments.
+	--- 	5.	Else, ref is a Reference to an Environment Record binding, so a.	If IsStrictReference(ref) is true, throw a SyntaxError exception. b.	Let bindings be GetBase(ref). c.	Return the result of calling the DeleteBinding concrete method of bindings, providing
+	--- 	GetReferencedName(ref) as the argument.
+
+
+	syntax K ::= assignmentExp( String , K , K )
+
+	rule [assignment-simple]:
+		$assignment(Target:V, Value:V) => putValue(Target, getValue(Value))
+	
+	
+	--- Desugar shortcut assignments into and operation followed by a standard assignments
+	rule [compoundAssignment-desugar]:
+		$compoundAssignment(Target:V, OpName:String, Value:V) 
+		=> $assignment(Target, assignmentExp(OpName, Target, Value))  
+		[structural]
+
+	--- *=   /=   %=   +=   -=   <<=   >>=   >>>=  &=   ^=   |=
+	rule [assignment-mul]:
+		assignmentExp("*", Target:V, Value:V)	=> $mul(Target, Value)  [structural]
+	rule [assignment-div]:
+		assignmentExp("/", Target:V, Value:V)	=> $div(Target, Value)  [structural]
+	rule [assignment-mod]:
+		assignmentExp("%", Target:V, Value:V)	=> $mod(Target, Value)  [structural]
+	rule [assignment-add]:
+		assignmentExp("+", Target:V, Value:V)	=> $add(Target, Value)  [structural]
+	rule [assignment-sub]:
+		assignmentExp("-", Target:V, Value:V)	=> $sub(Target, Value)  [structural]
+	rule [assignment-lsl]:
+		assignmentExp("<<", Target:V, Value:V)	=> $lsl(Target, Value)  [structural]
+	rule [assignment-lsr]:
+		assignmentExp(">>", Target:V, Value:V)	=> $lsr(Target, Value)  [structural]
+	rule [assignment-asr]:
+		assignmentExp(">>>", Target:V, Value:V)	=> $asr(Target, Value)  [structural]
+	rule [assignment-and]:
+		assignmentExp("&", Target:V, Value:V)	=> $bitAnd(Target, Value)  [structural]
+	rule [assignment-xor]:
+		assignmentExp("^", Target:V, Value:V)	=> $bitXor(Target, Value)  [structural]
+	rule [assignment-or]:
+		assignmentExp("|", Target:V, Value:V)	=> $bitOr(Target, Value)  [structural]
+	
+endkm
+
+kmod JS-COMPARISON is including JS-ASSIGNMENT
 
 	--- ECMA-262 11.8.1-4
 	rule $lt(Left:V, Right:V) 	
@@ -243,8 +273,9 @@ kmod JS-EQUALITY is including JS-IDENTITY
 	rule $notEqual(Left:V, Right:V) 	=> not($equal(Left, Right))			[structural]
 	
 	rule $equal(Left:V, Right:V) 		
-	=> #if typeof(Left) ==K typeof(Right) #then $identical(Left, Right) 
-	   #else castEqual(Left, Right) #fi
+	=> if(typeof(Left) ==K typeof(Right), $identical(Left, Right), castEqual(Left, Right))
+	--- => #if typeof(Left) ==K typeof(Right) #then $identical(Left, Right) 
+	---    #else castEqual(Left, Right) #fi
 	
 	rule castEqual($undefined, $null) 		=> $b(true)
 	rule castEqual($null, $undefined) 		=> $b(true)
@@ -257,23 +288,8 @@ kmod JS-EQUALITY is including JS-IDENTITY
 	rule castEqual(Value:V, $s(S:String))	=> $equal(Value, toNumber($s(S))) 	when isNumber(Value)	
 endkm
 
-kmod JS-PROPERTY-ACCESS is including JS-EQUALITY
-	syntax K ::= accessPropertyAt( K , K ) [seqstrict]
-	
-	rule [staticAccess]:
-		$staticAccess(Target:V, $id(Name:String)) => accessPropertyAt(Target, $s(Name))
-	
-	rule [dynamicAccess]:
-		$dynamicAccess(Target:V, PropNameValue:V) 
-		=> accessPropertyAt(Target, toString(getValue(PropNameValue)))
-	
-	rule [accessPropertyAt]:
-		accessPropertyAt(Target:V, $s(Name:String)) 
-		=> $binding(checkObjectCoercible(getValue(Target)), Name)
-		[structural]
-endkm
 
-kmod JS-OBJECT-LITERAL is including JS-PROPERTY-ACCESS
+kmod JS-OBJECT-LITERAL is including JS-EQUALITY
 	--- ECMA-262 11.1.5 Object Initialiser
 	syntax K ::= composeObjLit( List{K} , V ) [strict(2)]
 
@@ -291,23 +307,107 @@ kmod JS-OBJECT-LITERAL is including JS-PROPERTY-ACCESS
 		[structural]
 endkm
 
---- kmod
---- 	--- ECMA-262 11.4.1 The delete Operator 
---- 	rule $delete(Value:V) => $b(true) when notBinding(Value)
---- 	
---- 	rule $delete($binding(.None, _)) => $b(true)
---- 	
---- 		rule $delete($binding(Target:V, Name:String)) 
---- 		=> deleteProperty(toObject(Target), Name) when Target =/=K .None
---- 	
---- 
---- 
---- If IsPropertyReference(ref) is true, then
---- 	a.	Return the result of calling the [[Delete]] internal method on ToObject(GetBase(ref)) providing GetReferencedName(ref) and IsStrictReference(ref) as the arguments.
---- 	5.	Else, ref is a Reference to an Environment Record binding, so a.	If IsStrictReference(ref) is true, throw a SyntaxError exception. b.	Let bindings be GetBase(ref). c.	Return the result of calling the DeleteBinding concrete method of bindings, providing
---- 	GetReferencedName(ref) as the argument.
---- 	
---- 	
+kmod JS-STATEMENTS is including JS-OBJECT-LITERAL
+	syntax K ::= stmts ( K , List{K} ) [strict(1)]
+
+
+	--- ECMA-262 12.1 Block Statement
+	rule [block-empty]:
+		$block(.List{K}) => $completion("NORMAL", .None, .None)
+		[structural]
+
+	rule [block]:
+		$block(Stmt:K ,, Stmts:List{K}) => stmts(Stmt, Stmts, .None)
+		[structural]
+
+
+	rule [stmts-last-done]:
+		stmts(.List{K}, .List{K}, Completion:V) => Completion
+
+	rule [stmts-normal-no-result]:
+		stmts($completion("NORMAL", .None, _), Stmt:K ,, Stmts:List{K}, Completion:V) 
+		=> stmts(Stmt, Stmts, Completion)
+
+	rule [stmts-normal]:
+		stmts($completion("NORMAL", Value:V, TargetLabel:String), Stmt:K ,, Stmts:List{K}, _) 
+		=> stmts(Stmt, Stmts, $completion("NORMAL", Value, TargetLabel)) 	when notNone(Value)
+
+	rule [stmts-abrupt]:
+		stmts(Completion:V, Stmts:List{K}) => Completion				when isAbrupt(Completion)
+
+
+
+		
+		
+	--- --- rule [statement-queue-empty]: 
+	--- --- 	<k> stmts(.List{K}) => . ...</k>  
+	--- --- 	[structural]
+	--- --- 
+	--- --- rule [statement-queue-next]: 
+	--- --- 	<k> stmts(Stmt:K ,, Stmts:List{K}) => Stmt ~> stmts(Stmts) ...</k>  
+	--- --- 	[structural]
+	--- 
+	--- rule [statement-final-stmt]: 
+	--- 	<k> stmts(Stmt:K) => Stmt ...</k>
+	--- 	[structural]
+	--- 
+	--- rule [statement-queue-next]: 
+	--- 	<k> stmts(Stmt:K ,, NextStmt:K ,, Stmts:List{K}) => Stmt ~> stmts(NextStmt ,, Stmts) ...</k>  
+	--- 	[structural]
+	--- 
+	--- rule [statement-consume-value]: 
+	--- 	<k> (Value:V => . ) ~> stmts(NextStmt:K ,, Stmts:List{K}) ...</k>  
+
+
+
+	--- ECMA-262 12.2 Variable Statement
+
+	--- Since the var declarations have already been made, the var declarations need to be stripped
+	--- from the execution.  However, the var initialize expressions need to be set to run.
+	rule [strip-inline-varDeclarations-empty]:
+		$varDeclarations(.List{K}) => $completion("NORMAL", .None, .None) 
+		[structural]
+
+	rule [strip-inline-varDeclarations-id]: 
+		$varDeclarations($id(_) ,, Remaining:List{K}) => $varDeclarations(Remaining:List{K})
+		[structural]
+
+	rule [strip-inline-varDeclarations-init]: 
+		$varDeclarations($initNewId(Name:String, Exp:K) ,, Remaining:List{K})
+		=> $assignment($id(Name), Exp) ~> discard ~> $varDeclarations(Remaining)  
+		[structural]
+
+
+	syntax K ::= exps ( List{K} )
+	
+	rule [exps-one]: 
+		exps(Exp:K) => Exp
+		
+	rule [exps-multiple]: 
+		exps(Exp:K ,, NextExp:K ,, Exps:List{K}) => Exp ~> exps(NextExp ,, Exps)
+		
+	rule [exps-strip-result]: 
+		(Value:V => . ) ~> exps(Exp:K ,, Exps:List{K})
+
+	rule [comma]:
+		 (Exps:List{K}) => exps(Exps)
+		[structural]
+
+	--- ECMA-262 12.4 Expression Statement
+	rule [expression-stmt]:
+		<k> $expStmt(Exp:K) => $completion("NORMAL", getValue(Exp), .None) ...</k> 
+		[structural]
+
+
+	--- ECMA-262 12.5 If Statement
+	rule [ifElse]:
+		$ifElse(ConditionExp:V, TrueStmt:K , FalseStmt:K) 
+		=> $ternary(ConditionExp, 
+			TrueStmt, #if FalseStmt ==K .None 
+				#then $completion("NORMAL", .None, .None) #else FalseStmt #fi)
+
+endkm
+
 --- kmod
 --- 
 --- 	rule [for]:
@@ -320,7 +420,7 @@ endkm
 --- 	rule [loop]:
 --- 		loop(TestExp:K, Body:K, IncrExp:K, Result:V) 
 --- 		=> $ternary(TestExp, 
---- 				$stmts(loop(TestExp, Body, IncrExp, loopStep(Body:K)) ,, IncrExp),
+--- 				stmts(loop(TestExp, Body, IncrExp, loopStep(Body:K)) ,, IncrExp),
 --- 				completion("normal", Result, .None))
 --- 	
 --- 	rule [loopStep]:
@@ -340,42 +440,24 @@ endkm
 --- 	rule [doLoop]:
 --- 		doLoop(NewResult:V, LastValue:V, IncrExp, TestExp) 
 --- 		=> IncrExp ~> loop(isTruthy(TestExp), when isEmptyResult()
---- 	
 --- 
----  Values of the Completion type are triples of the form (type, value, target), where type is one of normal, break, continue, return, or throw, value is any ECMAScript language value or empty, and target is any ECMAScript identifier or empty.
---- 
---- 
---- $ifElse(getValue(TestExp), 
---- 	
---- 	
---- 2.	Let V = empty. 3. Repeat
---- a.	If the first Expression is present, then i.	Let testExprRef be the result of evaluating the first Expression.
---- ii.	If GetValue(testExprRef) is false, return (normal, V, empty). b.	Let stmt be the result of evaluating Statement. c.	If stmt.value is not empty, let V = stmt.value d.	If stmt.type is break and stmt.target is in the current label set, return (normal, V, empty). e.	If stmt.type is not continue || stmt.target is not in the current label set, then
---- i.	If stmt is an abrupt completion, return stmt. f.	If the second Expression is present, then
---- i.	Let incExprRef be the result of evaluating the second Expression. ii.	Call GetValue(incExprRef). (This value is not used.)
+
 --- 
 --- 
 --- 
---- 11.4.1 ThedeleteOperator The production UnaryExpression : delete UnaryExpression is evaluated as follows:
---- 1.	Let ref be the result of evaluating UnaryExpression. 2.	If Type(ref) is not Reference, return true. 3.	If IsUnresolvableReference(ref) then return true. 
---- 4.	If IsPropertyReference(ref) is true, then
---- a.	Return the result of calling the [[Delete]] internal method on ToObject(GetBase(ref)) providing GetReferencedName(ref) and IsStrictReference(ref) as the arguments.
---- 5.	Else, ref is a Reference to an Environment Record binding, so a.	If IsStrictReference(ref) is true, throw a SyntaxError exception. b.	Let bindings be GetBase(ref). c.	Return the result of calling the DeleteBinding concrete method of bindings, providing
---- GetReferencedName(ref) as the argument.
 
 
 
-kmod JS-SEMANTICS is including JS-OBJECT-LITERAL
+kmod JS-SEMANTICS is including JS-STATEMENTS
 --- JS-CONTROL-STRUCTURES + JS-ARITHMETIC
 	syntax K ::= 
 			varPreDeclarations(	List{K} )
 		|	varPreDeclaration( K )
 		|	funcPreDeclarations( List{K} )
-		|	assignmentExp( Nat , K , K )
 		
 	rule [begin-program]: 
 		<k> $program(VarDecls:List{K}, FuncDecls:List{K}, Stmts:List{K}) 
-			=> varPreDeclarations(VarDecls) ~> funcPreDeclarations(FuncDecls) ~> $stmts(Stmts) </k>
+			=> varPreDeclarations(VarDecls) ~> funcPreDeclarations(FuncDecls) ~> stmts(Stmts) </k>
 		[structural]
 
 
@@ -407,54 +489,7 @@ kmod JS-SEMANTICS is including JS-OBJECT-LITERAL
 		[structural]
 
 
-	--- Since the var declarations have already been made, the var declarations need to be stripped
-	--- from the execution.  However, the var initialize expressions need to be set to run.
-	rule [strip-inline-varDeclarations-empty]:
-		$varDeclarations(.List{K}) => $undefined  
-		[structural]
 
-	rule [strip-inline-varDeclarations-id]: 
-		$varDeclarations($id(_) ,, Remaining:List{K}) => $varDeclarations(Remaining:List{K})
-		[structural]
-
-	rule [strip-inline-varDeclarations-init]: 
-		$varDeclarations($initNewId(Name:String, Exp:K) ,, Remaining:List{K})
-		=> $assignment($id(Name), Exp) ~> discard ~> $varDeclarations(Remaining)  
-		[structural]
-
-	rule [assignment-simple]:
-		$assignment(Target:V, Value:V) => putValue(Target, getValue(Value))
-
-	--- Desugar shortcut assignments into and operation followed by a standard assignments
-	rule [compoundAssignment-desugar]:
-		$compoundAssignment(Target:V, Opcode:Nat, Value:V) 
-		=> $assignment(Target, assignmentExp(Opcode, Target, Value))  
-		[structural]
-
-	--- *=   /=   %=   +=   -=   <<=   >>=   >>>=  &=   ^=   |=
-	--- rule [assignment *=]
-	--- 	assignmentExp(XXXXX, Id:K, Exp:K) => $mul(Id, Exp))  [structural]
-	--- rule [assignment /=]
-	--- 	assignmentExp(XXXXX, Id:K, Exp:K) => $div(Id, Exp))  [structural]
-	--- rule [assignment %=]
-	--- 	assignmentExp(XXXXX, Id:K, Exp:K) => $mod(Id, Exp))  [structural]
-		rule [assignment-+=]:
-			assignmentExp(24, Target:V, Value:V) => $add(Target, Value)  [structural]
-	--- rule [assignment -=]
-	--- 	assignmentExp(XXXXX, Id:K, Exp:K) => $sub(Id, Exp))  [structural]
-	--- rule [assignment <<=]
-	--- 	assignmentExp(XXXXX, Id:K, Exp:K) => $lsl(Id, Exp))  [structural]
-	--- rule [assignment >>=]
-	--- 	assignmentExp(XXXXX, Id:K, Exp:K) => $lsr(Id, Exp))  [structural]
-	--- rule [assignment >>>=]
-	--- 	assignmentExp(XXXXX, Id:K, Exp:K) => $asr(Id, Exp))  [structural]
-	--- rule [assignment &=]
-	--- 	assignmentExp(XXXXX, Id:K, Exp:K) => $and(Id, Exp))  [structural]
-	--- rule [assignment ^=]
-	--- 	assignmentExp(XXXXX, Id:K, Exp:K) => $xor(Id, Exp))  [structural]
-	--- rule [assignment |=]
-	--- 	assignmentExp(XXXXX, Id:K, Exp:K) => $or(Id, Exp))  [structural]
-	
 endkm
 
 
