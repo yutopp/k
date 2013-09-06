@@ -8,7 +8,13 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.io.PrintWriter;
+import java.io.StringWriter;
+import java.io.Writer;
+import java.lang.ProcessBuilder.Redirect;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -26,10 +32,16 @@ import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.io.IOUtils;
 import org.fusesource.jansi.AnsiConsole;
 import org.kframework.backend.java.symbolic.JavaSymbolicKRun;
 import org.kframework.backend.java.symbolic.SpecificationCompilerSteps;
 import org.kframework.backend.maude.krun.MaudeKRun;
+import org.kframework.backend.provers.ast.FromTerm;
+import org.kframework.backend.provers.ast.Render;
+import org.kframework.backend.unparser.KastFilter;
 import org.kframework.compile.ConfigurationCleaner;
 import org.kframework.compile.FlattenModules;
 import org.kframework.compile.transformers.AddEmptyLists;
@@ -68,12 +80,14 @@ import org.kframework.krun.api.UnsupportedBackendOptionException;
 import org.kframework.krun.gui.Controller.RunKRunCommand;
 import org.kframework.krun.gui.UIDesign.MainWindow;
 import org.kframework.parser.DefinitionLoader;
+import org.kframework.parser.ProgramLoader;
 import org.kframework.parser.concrete.disambiguate.CollectVariablesVisitor;
 import org.kframework.utils.BinaryLoader;
 import org.kframework.utils.Stopwatch;
 import org.kframework.utils.errorsystem.KException;
 import org.kframework.utils.errorsystem.KException.ExceptionType;
 import org.kframework.utils.errorsystem.KException.KExceptionGroup;
+//import org.kframework.utils.file.FileUtil;
 import org.kframework.utils.file.KPaths;
 import org.kframework.utils.general.GlobalSettings;
 
@@ -787,6 +801,11 @@ public class Main {
      *            represents the arguments/options given to jkrun command..
      */
     public static void execute_Krun(String cmds[]) {
+        if (Arrays.asList(cmds).contains("-acl2")) {
+            acl2Main(cmds);
+            return;
+        }
+
         Context context = new Context();
         K.init(context);
         // delete temporary krun directory
@@ -912,12 +931,12 @@ public class Main {
             if (cmd.hasOption("maude-cmd")) {
                 K.maude_cmd = cmd.getOptionValue("maude-cmd");
             }
-			/*
-			 * if (cmd.hasOption("xsearch-pattern")) { K.maude_cmd = "search";
-			 * K.do_search = true; K.xsearch_pattern =
-			 * cmd.getOptionValue("xsearch-pattern"); //
-			 * System.out.println("xsearch-pattern:" + K.xsearch_pattern); }
-			 */
+            /*
+             * if (cmd.hasOption("xsearch-pattern")) { K.maude_cmd = "search";
+             * K.do_search = true; K.xsearch_pattern =
+             * cmd.getOptionValue("xsearch-pattern"); //
+             * System.out.println("xsearch-pattern:" + K.xsearch_pattern); }
+             */
             if (cmd.hasOption("pattern")) {
                 K.pattern = cmd.getOptionValue("pattern");
             }
@@ -1198,5 +1217,113 @@ public class Main {
 
     public static void main(String[] args) {
         execute_Krun(args);
+    }
+
+    private static void acl2Main(String[] args) {
+        if (args.length != 2
+                || !args[0].equals("-acl2")) {
+            System.err.println("ACL2 execution supports a very limited set of options, krun must be invoked as\n"
+                    +"krun -acl PATH.EXT"
+                    +"passing the path to the program to execute, and must be run from a directory containing\n"
+                    +"the an EXT-kompiled directory created by compiling for ACL2 (containing EXP.lisp)\n");
+            System.exit(1);
+        }
+
+        String program = args[1];
+        executeAcl2(program);
+    }
+
+    private static void executeAcl2(String program) {
+        String parse;
+
+        try {
+            Process kast = new ProcessBuilder("kast", "-acl2", program).redirectError(Redirect.INHERIT).start();
+            kast.getOutputStream().close();
+            parse = IOUtils.toString(kast.getInputStream());
+            int exitCode = kast.waitFor();
+            if (exitCode != 0) {
+                System.exit(exitCode);
+            }
+        } catch (Exception e) {
+            System.err.println("Error running kast:\n");
+            e.printStackTrace();
+            System.exit(1);
+            return;
+        }
+
+        String def = FilenameUtils.getExtension(program);
+        {
+            File defFile = new File(def+"-kompiled/"+def+".lisp");
+            if(!defFile.exists()) {
+                System.err.println("Could not file ACL2-kompiled definition for language "+def+" at "+defFile.getPath());
+                System.exit(1);
+            }
+        }
+
+        File krunDir = new File(System.getProperty("user.dir"), ".k/krun/");
+        krunDir.mkdirs();
+        File input = new File(krunDir, "acl2_in.txt");
+        File output = new File(krunDir, "acl2_out.txt");
+        File result = new File(krunDir, "acl2_result.txt");
+        result.delete();
+
+        Writer acl2Input;
+        try {
+            acl2Input = new PrintWriter(input);
+        } catch (FileNotFoundException e1) {
+            System.err.println("Could not create ACL2 input file "+input.getAbsolutePath());
+            System.exit(1);
+            return;
+        }
+        try {
+            acl2Input.write(""
+            +"(break-on-error t)\n"
+            +"(set-guard-checking nil)\n"
+            +"(ld \"../../"+def+"-kompiled/cert.acl2\")\n"
+            +"(include-book \"../../"+def+"-kompiled/"+def+"\")\n"
+            +"(in-package \""+def.toUpperCase()+"\")\n"
+            +"(defun pgm ()\n"
+            +"  '"+parse+")\n"
+            +"(mv-let (chan state)\n"
+            +"  (open-output-channel \"acl2_result.txt\" :character state)\n"
+            +"  (mv-let (col state)\n"
+            +"    (fmt1 \"~x0\"\n"
+            +"    (list (cons #\\0 ("+def+"-run ("+def+"-start (pgm)))))\n"
+            +"      0 chan state nil)\n"
+            +"    (declare (ignore col))\n"
+            +"    (close-output-channel chan state)))\n");
+            acl2Input.close();
+        } catch (IOException e1) {
+            System.err.println("Error writing to ACL2 input file "+input.getAbsolutePath());
+            e1.printStackTrace();
+            System.exit(1);
+            return;
+        }
+
+        ProcessBuilder acl2 = new ProcessBuilder("acl2");
+        acl2.redirectErrorStream(true);
+        acl2.redirectInput(input);
+        acl2.redirectOutput(output);
+        acl2.directory(krunDir);
+        try {
+            int errorCode = acl2.start().waitFor();
+            if (errorCode != 0) {
+                System.err.println("ACL2 returned error code "+errorCode+"\n"
+                        +"Check ACL2 output "+output.getPath()+" for errors");
+                System.exit(1);
+            }
+        } catch (Exception e) {
+            System.err.println("Error running ACL2");
+            e.printStackTrace();
+        }
+
+        try {
+            System.out.print(FileUtils.readFileToString(result));
+        } catch (IOException e1) {
+            System.err.println("Error reading result from "+result.getPath()+"\n"
+                    +"Check ACL2 output "+output.getPath()+" for errors");
+            e1.printStackTrace();
+            System.exit(1);
+        }
     }
 }

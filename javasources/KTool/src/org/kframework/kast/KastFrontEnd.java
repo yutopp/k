@@ -7,11 +7,14 @@ import java.io.IOException;
 
 import org.apache.commons.cli.CommandLine;
 import org.kframework.backend.maude.MaudeFilter;
+import org.kframework.backend.provers.ast.FromTerm;
+import org.kframework.backend.provers.ast.Render;
 import org.kframework.backend.unparser.IndentationOptions;
 import org.kframework.backend.unparser.KastFilter;
 import org.kframework.compile.FlattenModules;
 import org.kframework.compile.transformers.AddTopCellConfig;
 import org.kframework.kil.ASTNode;
+import org.kframework.kil.Term;
 import org.kframework.kil.loader.Context;
 import org.kframework.kil.visitors.exceptions.TransformerException;
 import org.kframework.parser.ProgramLoader;
@@ -201,6 +204,8 @@ public class KastFrontEnd {
 				KastFilter kastFilter = new KastFilter(indentationOptions, nextline, context);
 				out.accept(kastFilter);
 				kast = kastFilter.getResult();
+			} else if (cmd.hasOption("acl2")) {
+				kast = Render.kData(FromTerm.convertKItem((Term)out));
 			} else {
 				MaudeFilter maudeFilter = new MaudeFilter(context);
 				out.accept(maudeFilter);

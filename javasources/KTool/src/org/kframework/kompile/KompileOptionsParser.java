@@ -43,6 +43,7 @@ public class KompileOptionsParser {
 		Option compile = new Option("c", "compile", false, "compile the definition");
 		Option toXml = new Option("xml", false, "generate xml from definition");
 		Option toDoc = new Option("doc", "documentation", false, "generate the HTML documentation");
+        Option acl2 = new Option("acl2", "generate an acl2 semantics from the definition");
 
 		tex.addOption(latex);
 		tex.addOption(pdf);
@@ -50,6 +51,7 @@ public class KompileOptionsParser {
 		tex.addOption(maudify);
 		tex.addOption(toXml);
 		tex.addOption(toDoc);
+		tex.addOption(acl2);
 
 		OptionGroup warn = new OptionGroup();
 		Option warnings = new Option("w", "warnings", true, "Use with all/none to control warnings display");

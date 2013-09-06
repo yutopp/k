@@ -39,6 +39,9 @@ public class KastOptionsParser {
 		Option exp = new Option("e", "expression", true, "an expression to parse passed on the command line");
 		tex2.addOption(tbl);
 		tex2.addOption(exp);
+		
+		//output type
+		Option acl2Print = new Option("acl2", false, "ACL2 S-expression output");
 
 		// indentation options
 		Option prettyPrint = new Option("pretty", false, "pretty print the output");
@@ -66,6 +69,7 @@ public class KastOptionsParser {
 		options.addOptionGroup(nofile);
 		options.addOptionGroup(parserGroup);
 		options.addOption(prettyPrint);
+		options.addOption(acl2Print);
 		options.addOption(tabSize);
 		options.addOption(maxWidth);
 		options.addOption(auxSize);

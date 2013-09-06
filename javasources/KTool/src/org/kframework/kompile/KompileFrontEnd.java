@@ -2,6 +2,7 @@ package org.kframework.kompile;
 
 import org.apache.commons.cli.CommandLine;
 import org.kframework.backend.Backend;
+import org.kframework.backend.acl2.Acl2Backend;
 import org.kframework.backend.doc.DocumentationBackend;
 import org.kframework.backend.html.HtmlBackend;
 import org.kframework.backend.java.symbolic.JavaSymbolicBackend;
@@ -237,6 +238,14 @@ public class KompileFrontEnd {
             }
             context.dotk = new File(output);
             context.dotk.mkdirs();
+        } else if (cmd.hasOption("acl2")) {
+            backend = new Acl2Backend(Stopwatch.sw, context);
+            GlobalSettings.addTopCell = true;
+            GlobalSettings.includePath = "/include-acl2/";
+            if (output == null) {
+                output = FileUtil.stripExtension(mainFile.getName()) + "-kompiled";
+            }
+            context.dotk = new File(output);
         } else {
 			if (output == null) {
 				output = FileUtil.stripExtension(mainFile.getName()) + "-kompiled";
