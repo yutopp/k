@@ -58,4 +58,8 @@ public class GlobalSettings {
 	
 	public static String CHECK = null;
 	public static boolean symbolic = false; // true if the --symbolic argument has been provided to kompile
+	/**
+	 * Path under the K base directory to look for system include files.
+	 */
+	public static String includePath = "/include/";
 }

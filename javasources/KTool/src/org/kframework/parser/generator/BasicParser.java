@@ -76,7 +76,7 @@ public class BasicParser {
 		File file = new File(parentFile.getCanonicalFile().getParent() + "/" + fileName);
 		if (file.exists())
 			return file;
-		file = new File(KPaths.getKBase(false) + "/include/" + fileName);
+		file = new File(KPaths.getKBase(false) + GlobalSettings.includePath + fileName);
 		if (file.exists())
 			return file;
 
@@ -108,7 +108,7 @@ public class BasicParser {
 				}
 			}
 
-			boolean predefined = file.getCanonicalPath().startsWith(KPaths.getKBase(false) + File.separator + "include");
+			boolean predefined = file.getCanonicalPath().startsWith(KPaths.getKBase(false) + GlobalSettings.includePath);
 			if (!predefined)
 				context.addFileRequirement(buildCanonicalPath("autoinclude.k", file).getCanonicalPath(), file.getCanonicalPath());
 
