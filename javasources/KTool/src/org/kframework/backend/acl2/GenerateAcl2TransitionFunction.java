@@ -28,8 +28,7 @@ public final class GenerateAcl2TransitionFunction {
             Acl2Definition def) {
         StringWriter w = def.getLispWriter();
 
-        w.write("(include-book \"seqmatch\")\n" + "(include-book \"k\")\n"
-                + "(make-event (K::define-k-builtins '||))\n"
+        w.write("(include-book \"seqmatch\")\n"
                 + "(make-event (K::define-sort-predicates '|| "
                   + "("+context.getGrammarName()+")))\n");
         final String modName = def.getDefinition().getMainModule();

@@ -84,8 +84,9 @@ public class Acl2Backend extends BasicBackend {
                 +"(ld \"coi/util/def-defpkg.lsp\" :dir :system)\n"
                 +"(defpkg \""+definitionName.toUpperCase()+"\"\n"
                 +"  (append '(seqmatch::seq-match)\n"
-                +"    (revappend *acl2-exports*\n"
-                +"      *common-lisp-symbols-from-main-lisp-package*)))\n"
+                +"          *k-exports*\n"
+                +"          (union-eq *acl2-exports*\n"
+                +"                    *common-lisp-symbols-from-main-lisp-package*)))\n"
                 +"(assign ld-okp t)\n"
                 );
         w.close();

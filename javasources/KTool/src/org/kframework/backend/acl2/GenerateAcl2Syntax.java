@@ -271,21 +271,15 @@ public final class GenerateAcl2Syntax {
         w.write(""
             + "(in-package \"" + pkg + "\")\n"
             + "\n"
+            + "(include-book \"syntax\")\n"
+            + "(include-book \"k\")\n"
             + "(defun " + name + " ()\n"
-            + "  '(;; Primitives\n"
-            + "\n");
+            + "  '(\n");
 
         String indent = "    ";
 
-        writePredicate(w, indent, "#Int", "integerp");
-        writePredicate(w, indent, "#Id", "symbolp");
-        // writePredicate(w, indent, "#String", "stringp");
-        // writePredicate(w, indent, "#Float", "rationalp");
-
-        writeGroup(w, indent, "#Bool", ImmutableList.of("'true", "'false"));
-        writeElement(w, indent, "'true");
-        writeElement(w, indent, "'false");
-        w.write("\n");
+        // Some standard types are defined in the k package,
+        // dist/lib/acl2/kompiled-template/k.lisp
 
         for (String separator : separators) {
             writeElement(w, indent, listTerminator(separator));
@@ -298,7 +292,6 @@ public final class GenerateAcl2Syntax {
         }
         w.write(indent + "))\n"
             + "\n"
-            + "(include-book \"syntax\")\n"
             + "(make-event (syntax::make-constructors '|| ("+name+")))\n"
             + "(make-event (syntax::make-predicates '|| ("+name+")))\n"
             );
