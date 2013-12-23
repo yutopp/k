@@ -198,6 +198,10 @@ public class TestCase {
         results.add(result);
     }
 
+    public void addExclude(String pgmPat) {
+        this.excludes.add(pgmPat);
+    }
+
     /**
      * Do we need to skip a step for this test case?
      * @param step step to skip

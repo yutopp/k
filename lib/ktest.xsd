@@ -93,6 +93,7 @@
           <xs:attribute name="results" type="xs:string" use="optional" />
           <xs:attribute name="more-programs" type="xs:string" use="optional" />
           <xs:attribute name="more-results" type="xs:string" use="optional" />
+          <xs:attribute name="more-exclude" type="xs:string" use="optional" />
           <xs:attribute name="extension" type="xs:string" use="optional" />
           <xs:attribute name="exclude" type="xs:string" use="optional" />
         </xs:complexType>

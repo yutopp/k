@@ -179,6 +179,9 @@ public class ConfigFileParser {
         if (includeAttrs.getNamedItem("more-results") != null)
             for (String r : splitNodeValue(includeAttrs.getNamedItem("more-results")))
                 extendResults(ret, annotate(normalize(r, cmdArgs.getPrograms()), location));
+        if (includeAttrs.getNamedItem("more-exclude") != null)
+            for (String r : splitNodeValue(includeAttrs.getNamedItem("more-exclude")))
+                extendExcludes(ret, r);
 
         for (TestCase tc : ret)
             tc.validate();
@@ -214,6 +217,11 @@ public class ConfigFileParser {
     private void extendResults(List<TestCase> tests, Annotated<String, LocationData> r) {
         for (TestCase tc : tests)
             tc.addResult(r);
+    }
+
+    private void extendExcludes(List<TestCase> tests, String pgmPat) {
+        for (TestCase tc : tests)
+            tc.addExclude(pgmPat);
     }
 
     private boolean hasElement(NodeList nodes, String elemName) {
