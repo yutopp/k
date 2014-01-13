@@ -27,6 +27,7 @@ import org.kframework.backend.java.indexing.IndexingPair;
 import org.kframework.backend.java.indexing.KLabelIndex;
 import org.kframework.backend.java.indexing.TokenIndex;
 import org.kframework.backend.java.indexing.TopIndex;
+import org.kframework.backend.java.indexing.pathIndex.PathIndex;
 import org.kframework.backend.java.kil.Cell;
 import org.kframework.backend.java.kil.CellCollection;
 import org.kframework.backend.java.kil.ConstrainedTerm;
@@ -90,6 +91,11 @@ public class SymbolicRewriter {
         } else {
             phase1PluggableKastChecker = null;
             phase2PluggableKastChecker = null;
+        }
+
+        if (K.do_indexing){
+            PathIndex pathIndex = new PathIndex(definition);
+//            return;
         }
 
         /* populate the table of rules rewriting the top configuration */
