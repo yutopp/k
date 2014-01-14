@@ -51,6 +51,49 @@ public class PathIndex {
         assert indexedRules.size() == definition.rules().size();
         printIndices(indexedRules, pString);
 
+        //intitialize the trie
+        PathIndexTrie trie = new PathIndexTrie();
+
+        //add all the pStrings to the trie
+        ArrayList<String> strings;
+        for (Integer key : pString.keySet()) {
+            strings = (ArrayList<String>) pString.get(key);
+            for (String string : strings) {
+                trie.addIndex(trie.getRoot(), string.substring(2), key);
+            }
+        }
+
+        System.out.println("full trie: "+trie);
+        System.out.println("full trie size: "+trie.size(trie.getRoot()));
+
+
+        //TODO(OwolabL): move these to the test class
+//        ArrayList<String> firstSet = (ArrayList<String>) pString.get(5);
+//        trie.addIndex(trie.getRoot(),firstSet.get(0).substring(2),5);
+//        trie.addIndex(trie.getRoot(), firstSet.get(1).substring(2), 5);
+//        trie.addIndex(trie.getRoot(),firstSet.get(2).substring(2),5);
+//        System.out.println("Trie: "+trie);
+//
+//        ArrayList<String> secondSet = (ArrayList<String>) pString.get(11);
+//        trie.addIndex(trie.getRoot(),secondSet.get(0).substring(2),11);
+//        trie.addIndex(trie.getRoot(),secondSet.get(1).substring(2),11);
+//        System.out.println("Trie Again: "+trie);
+//
+//        ArrayList<String> thirdSet = (ArrayList<String>) pString.get(8);
+//        trie.addIndex(trie.getRoot(),thirdSet.get(0).substring(2),8);
+//        trie.addIndex(trie.getRoot(),thirdSet.get(1).substring(2),8);
+//        System.out.println("Trie III: "+trie);
+//
+//        System.out.println("Trie III size: "+trie.size(trie.getRoot()));
+//
+//        trie.removeIndex(trie.getRoot(), thirdSet.get(0).substring(2),8);
+//        trie.removeIndex(trie.getRoot(), thirdSet.get(1).substring(2),8);
+//
+//        System.out.println("Triee IV: "+trie);
+//
+//        Set<Integer> retrieved = trie.retrieve(trie.getRoot(),secondSet.get(1));
+//        System.out.println("retrieved: "+retrieved);
+
         //add p-string to PathIndexTrie with IND(i) in the set on the leaf
         //create IndexedRule(rule(i),PS(i))
         //add <IND(i),IndexedRule(rule(i),PS(i))> to IndexToRuleMap
