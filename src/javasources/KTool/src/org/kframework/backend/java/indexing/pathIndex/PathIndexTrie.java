@@ -8,11 +8,10 @@ import java.util.*;
  */
 public class PathIndexTrie implements Trie {
     private final TrieNode root;
-    private String delimiter;
+    private String delimiter = "\\.";
 
     public PathIndexTrie() {
         root = new TrieNode("@");
-        delimiter = "\\.";
     }
 
     /**
@@ -205,26 +204,28 @@ public class PathIndexTrie implements Trie {
     public Set<Integer> retrieve(TrieNode trieNode, String queryString) {
         String[] split = queryString.split(delimiter);
         ArrayList<String> splitList = new ArrayList<>(Arrays.asList(split));
+//        System.out.println("split: "+splitList);
         ArrayList<String> subList = new ArrayList<>(splitList.subList(1,splitList.size()));
-        System.out.println("split: "+splitList);
-        System.out.println("sub: "+subList);
+//        System.out.println("sub: "+subList);
         return retrieveSet(trieNode, subList);
     }
 
     private Set<Integer> retrieveSet(TrieNode trieNode, ArrayList<String> splitList) {
         String firstString = splitList.get(0);
-//        System.out.println("Node: "+trieNode);
-//        System.out.println("Q: "+queryString);
-//        System.out.println("S: "+splitList);
-        System.out.println("F: "+firstString);
         ArrayList<String> subList = new ArrayList<>(splitList.subList(1,splitList.size()));
         TrieNode child = trieNode.getChild(firstString);
-
+//        System.out.println("child class: "+child.getClass());
+//        System.out.println(trieNode);
         if (trieNode.getValue().equals("@")) {
+//            System.out.println("there");
+            if (splitList.size() == 1 && (child instanceof TrieLeaf)){
+              return ((TrieLeaf) child).getIndices();
+            }
             return retrieveSet(child, subList);
         }
 
         if (splitList.size() == 1) {
+//                System.out.println("here");
             if (child instanceof TrieLeaf) {
                 return ((TrieLeaf) child).getIndices();
             }
