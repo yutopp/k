@@ -5,9 +5,11 @@ import org.apache.commons.collections15.MultiMap;
 import org.apache.commons.collections15.multimap.MultiHashMap;
 import org.kframework.backend.java.builtins.UninterpretedToken;
 import org.kframework.backend.java.kil.*;
+//import org.kframework.backend.java.kil.Collection;
 import org.kframework.backend.java.util.LookupCell;
 
 import java.util.*;
+import java.util.Collection;
 
 /**
  * Author: Owolabi Legunsen
@@ -18,6 +20,7 @@ public class PathIndex {
     private Map<Integer, Rule> indexedRules;
     private Definition definition;
     private PathIndexTrie trie;
+    private MultiMap<Integer,String> pStringMap;
 
     public PathIndex(Definition definition) {
         this.definition = definition;
@@ -27,7 +30,7 @@ public class PathIndex {
 
     //TODO(Owolabi): should this be called from constructor or from client?
     private void constructIndex(Definition definition) {
-        MultiMap<Integer, String> pString = new MultiHashMap<>();
+        pStringMap = new MultiHashMap<>();
         int count = 1;
         //Step 1: initialize the Trie
 
@@ -35,18 +38,18 @@ public class PathIndex {
         //Step 3: assign a numeric index to identify the rule IND(i)
         for (Rule rule : definition.rules()) {
             if (rule.containsAttribute("heat")) {
-                pString.putAll(createHeatingRulePString(rule, count));
+                pStringMap.putAll(createHeatingRulePString(rule, count));
                 indexedRules.put(count, rule);
                 count++;
                 continue;
             }
 
             if (rule.containsAttribute("cool")) {
-                pString.putAll(createCoolingRulePString(rule, count));
+                pStringMap.putAll(createCoolingRulePString(rule, count));
                 indexedRules.put(count, rule);
                 count++;
             } else {
-                pString.putAll(createRulePString(rule, count));
+                pStringMap.putAll(createRulePString(rule, count));
                 indexedRules.put(count, rule);
                 count++;
             }
@@ -54,15 +57,15 @@ public class PathIndex {
         }
 
         assert indexedRules.size() == definition.rules().size();
-        printIndices(indexedRules, pString);
+//        printIndices(indexedRules, pStringMap);
 
         //intitialize the trie
         trie = new PathIndexTrie();
 
         //add all the pStrings to the trie
         ArrayList<String> strings;
-        for (Integer key : pString.keySet()) {
-            strings = (ArrayList<String>) pString.get(key);
+        for (Integer key : pStringMap.keySet()) {
+            strings = (ArrayList<String>) pStringMap.get(key);
             for (String string : strings) {
                 trie.addIndex(trie.getRoot(), string.substring(2), key);
             }
@@ -279,7 +282,7 @@ public class PathIndex {
         ArrayList<String> pStrings = getTermPString(term);
         Set<Rule> rules = new HashSet<>();
         //find the intersection of all the sets returned
-        System.out.println("term: " + term);
+//        System.out.println("term: " + term);
         System.out.println("Pstrings: " + pStrings);
         Set<Integer> matchingIndices = new HashSet<>();
         if (pStrings.size() > 1) {
@@ -291,6 +294,20 @@ public class PathIndex {
                 if (nextRetrieved != null && currentMatch != null) {
                     currentMatch = Sets.intersection(currentMatch, nextRetrieved);
                 }
+
+                if (nextRetrieved != null && currentMatch == null) {
+                    currentMatch = nextRetrieved;
+                }
+
+                //TODO(OwolabiL):Another terrible hack that should be removed!!!
+                //This is a result of not yet knowing how to manipulate the sort hierarchy in
+                // the index
+                if (nextRetrieved == null && currentMatch != null){
+                    System.out.println("yayy!");
+                    ArrayList<String> list = new ArrayList<>();
+                    list.add(pString);
+                    currentMatch = Sets.union(currentMatch,getClosestIndices(list));
+                }
             }
             if (currentMatch != null) {
                 matchingIndices.addAll(currentMatch);
@@ -299,14 +316,38 @@ public class PathIndex {
         } else if (pStrings.size() == 1) {
             matchingIndices.addAll(trie.retrieve(trie.getRoot(), pStrings.get(0)));
         }
-        System.out.println("matching: " + matchingIndices);
+        //TODO(OwolabiL): Bad hack to be removed. Manipulate sorts instead
+        //this is needed if we had multiple pStrings that do not match any rules
+        //e.g. for imp, [@.'_+_.1.Id] should match [@.'_+_.1.KItem] or [@.'_+_.1.AExp] but it
+        // currently doesn't
+        if (matchingIndices.size() == 0 && pStrings.size() != 0){
+            Set<Integer> closestIndices = getClosestIndices(pStrings);
+            matchingIndices.addAll(closestIndices);
+        }
+
+//        System.out.println("matching: " + matchingIndices);
         for (Integer n : matchingIndices) {
             rules.add(indexedRules.get(n));
         }
-        System.out.println("Rules: " + rules + "\n");
+//        System.out.println("Rules: " + rules + "\n");
+
         return rules;
         //no matching rule was found
 //        return null;
+    }
+
+    private Set<Integer> getClosestIndices(ArrayList<String> pStrings) {
+        Set<Integer> candidates = new HashSet<>();
+        String firstPString = pStrings.get(0);
+        String sub = firstPString.substring(0,firstPString.lastIndexOf("."));
+        for (Map.Entry<Integer,Collection<String>> entry: pStringMap.entrySet()){
+            for (String str : entry.getValue()){
+                if (str.startsWith(sub)){
+                    candidates.add(entry.getKey());
+                }
+            }
+        }
+        return candidates;
     }
 
     private ArrayList<String> getTermPString(Term term) {
