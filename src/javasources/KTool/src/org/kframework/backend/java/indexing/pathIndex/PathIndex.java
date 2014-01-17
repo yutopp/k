@@ -283,7 +283,6 @@ public class PathIndex {
         Set<Rule> rules = new HashSet<>();
         //find the intersection of all the sets returned
 //        System.out.println("term: " + term);
-        System.out.println("Pstrings: " + pStrings);
         Set<Integer> matchingIndices = new HashSet<>();
         if (pStrings.size() > 1) {
             Set<Integer> retrieved = trie.retrieve(trie.getRoot(), pStrings.get(0));
@@ -303,7 +302,6 @@ public class PathIndex {
                 //This is a result of not yet knowing how to manipulate the sort hierarchy in
                 // the index
                 if (nextRetrieved == null && currentMatch != null){
-                    System.out.println("yayy!");
                     ArrayList<String> list = new ArrayList<>();
                     list.add(pString);
                     currentMatch = Sets.union(currentMatch,getClosestIndices(list));
