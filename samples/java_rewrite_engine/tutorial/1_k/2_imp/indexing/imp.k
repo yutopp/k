@@ -1,26 +1,26 @@
 
 module IMP-SYNTAX
   syntax AExp  ::= Int | Id
-  //               | AExp "*" AExp              [left, seqstrict]
-  //               | AExp "/" AExp              [left, seqstrict]
+                 | AExp "*" AExp              [left, seqstrict]
+                 | AExp "/" AExp              [left, seqstrict]
                  > AExp "+" AExp              [left, seqstrict]
-  //               | AExp "-" AExp              [left, seqstrict]
-  //               | "(" AExp ")"               [bracket]
-  //syntax BExp  ::= Bool
-  //               | AExp "<" AExp              [seqstrict]
-  //               | AExp "<=" AExp             [seqstrict, latex({#1}\leq{#2})]
-  //               | AExp ">" AExp              [seqstrict]
-  //               | AExp ">=" AExp             [seqstrict, latex({#1}\geq{#2})]
-  //               | "!" BExp                   [strict]
-  //              > BExp "&&" BExp             [left, strict(1)]
-  //              | "(" BExp ")"               [bracket]
-  //syntax Block ::= "{" "}"
-  //               | "{" Stmt "}"
+                 | AExp "-" AExp              [left, seqstrict]
+                 | "(" AExp ")"               [bracket]
+  syntax BExp  ::= Bool
+                 | AExp "<" AExp              [seqstrict]
+                 | AExp "<=" AExp             [seqstrict, latex({#1}\leq{#2})]
+                 | AExp ">" AExp              [seqstrict]
+                 | AExp ">=" AExp             [seqstrict, latex({#1}\geq{#2})]
+                 | "!" BExp                   [strict]
+                > BExp "&&" BExp             [left, strict(1)]
+                | "(" BExp ")"               [bracket]
+  syntax Block ::= "{" "}"
+                 | "{" Stmt "}"
   syntax Stmt  ::= //Block
                   Id "=" AExp ";"            [strict(2)]
   //               | "if" "(" BExp ")"
   //                Block "else" Block         [strict(1)]
-  //               | "while" "(" BExp ")" Block
+                 | "while" "(" BExp ")" Block
                  > Stmt Stmt                  [left]
   syntax Pgm ::= "int" Ids ";" Stmt
   syntax Ids ::= List{Id,","}
@@ -41,20 +41,20 @@ module IMP
 
 // AExp
   rule <k> X:Id => I ...</k> <state>... X |-> I:KItem ...</state>
-  //rule I1 / I2 => I1 /Int I2  when I2 =/=Int 0
+  rule I1 / I2 => I1 /Int I2  when I2 =/=Int 0
   rule I1 + I2 => I1 +Int I2
-  //rule I1 - I2 => I1 -Int I2
+  rule I1 - I2 => I1 -Int I2
 // BExp
-  //rule I1 < I2 => I1 <Int I2
-  //rule I1 <= I2 => I1 <=Int I2
-  //rule I1 > I2 => I1 >Int I2
-  //rule I1 >= I2 => I1 >=Int I2
-  //rule ! T => notBool T
-  //rule true  && B => B
-  //rule false && _ => false
+  rule I1 < I2 => I1 <Int I2
+  rule I1 <= I2 => I1 <=Int I2
+  rule I1 > I2 => I1 >Int I2
+  rule I1 >= I2 => I1 >=Int I2
+  rule ! T => notBool T
+  rule true  && B => B
+  rule false && _ => false
 // Block
-  //rule {} => .   [structural]
-  //rule {S} => S  [structural]
+  rule {} => .   [structural]
+  rule {S} => S  [structural]
 // Stmt
   rule <k> X = I:Int; => . ...</k>
        <state>... X |-> (_:KItem => I) ...</state>

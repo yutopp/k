@@ -139,27 +139,44 @@ public class PathIndex {
                 KLabel kLabel = ((KItem) content0).kLabel();
                 KList kList = ((KItem) content0).kList();
                 //TODO(OwolabiL): do a loop with the kList size instead?
-                Term first = kList.get(0);
-                Term second = kList.get(1);
-                if (first instanceof Variable) {
-                    String firstString = "@." + kLabel.toString() + ".1." +
-                            ((Variable) first).sort();
-                    pStrings.put(count, firstString);
-                } else if (first instanceof KItem) {
-                    KItem innerFirst = (KItem) first;
-                    String firstString = "@." + kLabel.toString()
-                            + ".1.";
-                    if (innerFirst.kList().size() == 0) {
-                        firstString += "#ListOf#Bot{\",\"}";
-                    } //TODO(OwolabiL): else what? this is brittle!
-                    pStrings.put(count, firstString);
+//                Term first = kList.get(0);
+//                Term second = kList.get(1);
+                ArrayList<Term> terms = new ArrayList<>();
+                for (int i = 0; i < kList.size(); i++) {
+                    terms.add(kList.get(i));
+                    if(kList.get(i) instanceof Variable){
+                        String firstString = "@." + kLabel.toString() + "."+(i+1)+"." +
+                                ((Variable) kList.get(i)).sort();
+                        pStrings.put(count, firstString);
+                    } else if (kList.get(i) instanceof KItem){
+                        KItem innerFirst = (KItem) kList.get(i);
+                        String firstString = "@." + kLabel.toString()
+                                + "."+(i+1)+".";
+                        if (innerFirst.kList().size() == 0) {
+                            firstString += "#ListOf#Bot{\",\"}";
+                        } //TODO(OwolabiL): else what? this is brittle!
+                        pStrings.put(count, firstString);
+                    }
                 }
-
-                if (second instanceof Variable) {
-                    String secondString = "@." + kLabel.toString() + ".2." +
-                            ((Variable) second).sort();
-                    pStrings.put(count, secondString);
-                }
+//                if (first instanceof Variable) {
+//                    String firstString = "@." + kLabel.toString() + ".1." +
+//                            ((Variable) first).sort();
+//                    pStrings.put(count, firstString);
+//                } else if (first instanceof KItem) {
+//                    KItem innerFirst = (KItem) first;
+//                    String firstString = "@." + kLabel.toString()
+//                            + ".1.";
+//                    if (innerFirst.kList().size() == 0) {
+//                        firstString += "#ListOf#Bot{\",\"}";
+//                    } //TODO(OwolabiL): else what? this is brittle!
+//                    pStrings.put(count, firstString);
+//                }
+//
+//                if (second instanceof Variable) {
+//                    String secondString = "@." + kLabel.toString() + ".2." +
+//                            ((Variable) second).sort();
+//                    pStrings.put(count, secondString);
+//                }
 
             }
         } else {
@@ -229,28 +246,44 @@ public class PathIndex {
             KLabelFreezer freezer = (KLabelFreezer) ((KItem) content1).kLabel();
             KItem frozenItem = (KItem) freezer.term();
             String frozenItemLabel = frozenItem.kLabel().toString();
-            Term frozenItemListMember1 = frozenItem.kList().get(0);
-            Term frozenItemListMember2 = frozenItem.kList().get(1);
-            String frozenItem1String;
-            String frozenItem2String;
-            if (frozenItemListMember1 instanceof Hole) {
-                frozenItem1String = "HOLE";
-            } else {
-                //is it always a variable?
-                frozenItem1String = ((Variable) frozenItemListMember1).sort();
+
+            Term frozenTerm;
+            String frozenItemString;
+
+            for (int i = 0; i < frozenItem.kList().size(); i++) {
+                frozenTerm = frozenItem.kList().get(i);
+                if (frozenTerm instanceof Hole) {
+                    frozenItemString = "HOLE";
+                } else {
+                    //is it always a variable?
+                    frozenItemString = ((Variable) frozenTerm).sort();
+                }
+                pStrings.put(n, "@." + firstSort + ".1." + frozenItemLabel + "."+(i+1)+"."
+                        + frozenItemString);
             }
-
-            if (frozenItemListMember2 instanceof Hole) {
-                frozenItem2String = "HOLE";
-            } else {
-                frozenItem2String = ((Variable) frozenItemListMember2).sort();
-            }
-
-            pStrings.put(n, "@." + firstSort + ".1." + frozenItemLabel + ".1."
-                    + frozenItem1String);
-
-            pStrings.put(n, "@." + firstSort + ".1." + frozenItemLabel + ".2."
-                    + frozenItem2String);
+//            Term frozenItemListMember1 = frozenItem.kList().get(0);
+//            Term frozenItemListMember2 = frozenItem.kList().get(1);
+//            String frozenItem1String;
+//            String frozenItem2String;
+//            if (frozenItemListMember1 instanceof Hole) {
+//                frozenItem1String = "HOLE";
+//            } else {
+//                //is it always a variable?
+//                frozenItem1String = ((Variable) frozenItemListMember1).sort();
+//            }
+//
+//            if (frozenItemListMember2 instanceof Hole) {
+//                frozenItem2String = "HOLE";
+//            } else {
+//                frozenItem2String = ((Variable) frozenItemListMember2).sort();
+//            }
+//
+//            pStrings.put(n, "@." + firstSort + ".1." + frozenItemLabel + ".1."
+//                    + frozenItem1String);
+//
+//
+//            pStrings.put(n, "@." + firstSort + ".1." + frozenItemLabel + ".2."
+//                    + frozenItem2String);
 
         }
 
@@ -266,13 +299,16 @@ public class PathIndex {
             Term content = ((KSequence) lhsK.getContent()).get(0);
             KLabel label = ((KItem) content).kLabel();
             Term first = ((KItem) content).kList().get(0);
-            Variable second = (Variable) ((KItem) content).kList().get(1);
-
             String firstSort = ((Variable) first).sort();
-            String secondSort = second.sort();
-
             pStrings.put(n, "@." + label.toString() + ".1." + firstSort);
-            pStrings.put(n, "@." + label.toString() + ".2." + secondSort);
+
+            Variable second;
+            String secondSort;
+            if (((KItem) content).kList().size() > 1){
+                second = (Variable) ((KItem) content).kList().get(1);
+                secondSort = second.sort();
+                pStrings.put(n, "@." + label.toString() + ".2." + secondSort);
+            }
         }
 
         return pStrings;
