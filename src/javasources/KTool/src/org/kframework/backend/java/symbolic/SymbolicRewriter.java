@@ -265,8 +265,9 @@ public class SymbolicRewriter {
 
     private Set<Rule> getNonIndexedRules(Term term) {
         Set<Rule> rules = new HashSet<Rule>();
-
-        buildBasicIndex();
+        if (K.do_indexing){
+            buildBasicIndex();
+        }
 
         for (IndexingPair pair : term.getIndexingPairs()) {
             if (ruleTable.get(pair.first) != null) {

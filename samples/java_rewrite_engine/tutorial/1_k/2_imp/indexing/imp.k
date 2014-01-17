@@ -16,10 +16,10 @@ module IMP-SYNTAX
                 | "(" BExp ")"               [bracket]
   syntax Block ::= "{" "}"
                  | "{" Stmt "}"
-  syntax Stmt  ::= //Block
-                  Id "=" AExp ";"            [strict(2)]
-  //               | "if" "(" BExp ")"
-  //                Block "else" Block         [strict(1)]
+  syntax Stmt  ::= Block
+                 | Id "=" AExp ";"            [strict(2)]
+                 | "if" "(" BExp ")"
+                  Block "else" Block         [strict(1)]
                  | "while" "(" BExp ")" Block
                  > Stmt Stmt                  [left]
   syntax Pgm ::= "int" Ids ";" Stmt
@@ -60,9 +60,9 @@ module IMP
        <state>... X |-> (_:KItem => I) ...</state>
   // the following has sort annotation to avoid ambiguity with Map, MySet, etc
   rule S1:Stmt S2:Stmt => S1 ~> S2  [structural]
-  //rule if (true)  S else _ => S
-  //rule if (false) _ else S => S
-  //rule while (B) S => if (B) {S while (B) S} else {}  [structural]
+  rule if (true)  S else _ => S
+  rule if (false) _ else S => S
+  rule while (B) S => if (B) {S while (B) S} else {}  [structural]
 // Pgm
   rule
     <k> int (X, Xs => Xs); _ </k>

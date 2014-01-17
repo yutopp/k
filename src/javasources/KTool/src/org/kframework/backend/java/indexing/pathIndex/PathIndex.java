@@ -57,7 +57,7 @@ public class PathIndex {
         }
 
         assert indexedRules.size() == definition.rules().size();
-//        printIndices(indexedRules, pStringMap);
+        printIndices(indexedRules, pStringMap);
 
         //intitialize the trie
         trie = new PathIndexTrie();
@@ -114,8 +114,11 @@ public class PathIndex {
             System.out.println(indexedRules.get(n));
             System.out.println("P-Strings: ");
             ArrayList<String> p_strings = (ArrayList<String>) pString.get(n);
-            for (int i = 0; i < p_strings.size(); i++) {
-                System.out.println((i + 1) + ": " + p_strings.get(i));
+            //TODO(Owolabi): there should be no null p-string!!
+            if (p_strings != null) {
+                for (int i = 0; i < p_strings.size(); i++) {
+                    System.out.println((i + 1) + ": " + p_strings.get(i));
+                }
             }
             System.out.println();
         }
