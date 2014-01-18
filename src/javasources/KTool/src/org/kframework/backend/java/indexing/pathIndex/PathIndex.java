@@ -151,27 +151,30 @@ public class PathIndex {
                 //TODO(OwolabiL): do a loop with the kList size instead?
 //                Term first = kList.get(0);
 //                Term second = kList.get(1);
-                ArrayList<Term> terms = new ArrayList<>();
+//                ArrayList<Term> terms = new ArrayList<>();
+                Term kTerm;
+                String firstString;
                 for (int i = 0; i < kList.size(); i++) {
-                    if(kList.get(i) instanceof Variable){
-                        String firstString = "@." + kLabel.toString() + "."+(i+1)+"." +
-                                ((Variable) kList.get(i)).sort();
+                    kTerm = kList.get(i);
+                    if(kTerm instanceof Variable){
+                        firstString = "@." + kLabel.toString() + "."+(i+1)+"." +
+                                ((Variable) kTerm).sort();
                         pStrings.put(count, firstString);
-                    } else if (kList.get(i) instanceof KItem){
-                        KItem innerFirst = (KItem) kList.get(i);
-                        String firstString = "@." + kLabel.toString()
+                    } else if (kTerm instanceof KItem){
+                        KItem innerFirst = (KItem) kTerm;
+                        firstString = "@." + kLabel.toString()
                                 + "."+(i+1)+".";
                         if (innerFirst.kList().size() == 0) {
                             firstString += "#ListOf#Bot{\",\"}";
                         } //TODO(OwolabiL): else what? this is brittle!
                         pStrings.put(count, firstString);
-                    }else if (kList.get(i) instanceof Token){
+                    }else if (kTerm instanceof Token){
                         //TODO(OwolabiL): make this more general, as it may not always be a BoolToken
-                        String firstString = "@." + kLabel.toString() + "."+(i+1)+"." +
-                                ((BoolToken) kList.get(i)).value();
+                        firstString = "@." + kLabel.toString() + "."+(i+1)+"." +
+                                ((BoolToken) kTerm).value();
                         pStrings.put(count, firstString);
                     }
-                    terms.add(kList.get(i));
+//                    terms.add(kList.get(i));
                 }
 //                if (first instanceof Variable) {
 //                    String firstString = "@." + kLabel.toString() + ".1." +
@@ -327,7 +330,7 @@ public class PathIndex {
 //                        System.out.println("baza");
 //                        System.out.println("rule: "+rule);
 //                        System.out.println("var: "+term);
-                        sort = getKResultSort(term, rule);
+                        sort = getKResultSort(term);
 
                     }else{
                         sort = ((Variable) term).sort();
@@ -351,7 +354,7 @@ public class PathIndex {
         return pStrings;
     }
 
-    private String getKResultSort(Term term, Rule rule) {
+    private String getKResultSort(Term term) {
         String sort = null;
         Set<String> sorts = new HashSet<>();
 //        sorts.add("KResult");
@@ -396,9 +399,8 @@ public class PathIndex {
 //        System.out.println("pStrings: "+pStrings);
         Set<Integer> matchingIndices = new HashSet<>();
         if (pStrings.size() > 1) {
-            Set<Integer> retrieved = trie.retrieve(trie.getRoot(), pStrings.get(0));
             Set<Integer> nextRetrieved;
-            Set<Integer> currentMatch = retrieved;
+            Set<Integer> currentMatch = trie.retrieve(trie.getRoot(), pStrings.get(0));
             for (String pString : pStrings.subList(1, pStrings.size())) {
                 nextRetrieved = trie.retrieve(trie.getRoot(), pString);
                 if (nextRetrieved != null && currentMatch != null) {
@@ -412,11 +414,11 @@ public class PathIndex {
                 //TODO(OwolabiL):Another terrible hack that should be removed!!!
                 //This is a result of not yet knowing how to manipulate the sort hierarchy in
                 // the index
-                if (nextRetrieved == null && currentMatch != null){
-                    ArrayList<String> list = new ArrayList<>();
-                    list.add(pString);
-                    currentMatch = Sets.union(currentMatch,getClosestIndices(list));
-                }
+//                if (nextRetrieved == null && currentMatch != null){
+//                    ArrayList<String> list = new ArrayList<>();
+//                    list.add(pString);
+//                    currentMatch = Sets.union(currentMatch,getClosestIndices(list));
+//                }
             }
             if (currentMatch != null) {
                 matchingIndices.addAll(currentMatch);
@@ -515,9 +517,6 @@ public class PathIndex {
                                         }
                                     }
                                 }
-
-
-
 
                                 String string2 = string1 + "1." + frozenItemLabel + ".1." + frozenItem1String;
                                 // end of duplicated code

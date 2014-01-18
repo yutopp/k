@@ -367,14 +367,15 @@ public class SymbolicRewriter {
 //            Set<Rule> normalRules = getNonIndexedRules(constrainedTerm.term());
 //            Set<Rule> rulesFromIndex = pathIndex.getRulesForTerm(constrainedTerm.term());
 //            if (rulesFromIndex != null) {
-//                System.out.println("====================================");
+////                System.out.println("====================================");
 ////                System.out.println("Term: "+constrainedTerm.term() +"\n");
-//                System.out.println("No. of Normal rules: "+normalRules.size());
-//                System.out.println("No. of rules from index: "+rulesFromIndex.size()+"\n");
+//                System.out.println(normalRules.size() +" "+rulesFromIndex.size());
+////                System.out.println("No. of Normal rules: "+normalRules.size());
+////                System.out.println("No. of rules from index: "+rulesFromIndex.size()+"\n");
 //
-//                System.out.println("Normal rules: "+normalRules);
-//                System.out.println("Rules from index: " + rulesFromIndex );
-//                System.out.println("===================================="+ "\n");
+////                System.out.println("Normal rules: "+normalRules);
+////                System.out.println("Rules from index: " + rulesFromIndex );
+////                System.out.println("===================================="+ "\n");
 //            }
 //        }
 
