@@ -3,10 +3,11 @@ package org.kframework.backend.java.indexing.pathIndex;
 import com.google.common.collect.Sets;
 import org.apache.commons.collections15.MultiMap;
 import org.apache.commons.collections15.multimap.MultiHashMap;
-import org.kframework.backend.java.builtins.UninterpretedToken;
+import org.kframework.backend.java.builtins.BoolToken;
 import org.kframework.backend.java.kil.*;
 //import org.kframework.backend.java.kil.Collection;
 import org.kframework.backend.java.util.LookupCell;
+import org.kframework.kil.Production;
 
 import java.util.*;
 import java.util.Collection;
@@ -112,6 +113,8 @@ public class PathIndex {
         for (Integer n : indexedRules.keySet()) {
             System.out.println("Rule " + n + ": ");
             System.out.println(indexedRules.get(n));
+            System.out.println("Rule Attribute:" );
+            System.out.println(indexedRules.get(n).getAttributes());
             System.out.println("P-Strings: ");
             ArrayList<String> p_strings = (ArrayList<String>) pString.get(n);
             //TODO(Owolabi): there should be no null p-string!!
@@ -141,12 +144,15 @@ public class PathIndex {
             if (content0 instanceof KItem) {
                 KLabel kLabel = ((KItem) content0).kLabel();
                 KList kList = ((KItem) content0).kList();
+                if (kList.size()==0){
+                    String string = "@."+kLabel.toString()+".1."+ "#ListOf#Bot{\",\"}";
+                    pStrings.put(count,string);
+                }
                 //TODO(OwolabiL): do a loop with the kList size instead?
 //                Term first = kList.get(0);
 //                Term second = kList.get(1);
                 ArrayList<Term> terms = new ArrayList<>();
                 for (int i = 0; i < kList.size(); i++) {
-                    terms.add(kList.get(i));
                     if(kList.get(i) instanceof Variable){
                         String firstString = "@." + kLabel.toString() + "."+(i+1)+"." +
                                 ((Variable) kList.get(i)).sort();
@@ -159,7 +165,13 @@ public class PathIndex {
                             firstString += "#ListOf#Bot{\",\"}";
                         } //TODO(OwolabiL): else what? this is brittle!
                         pStrings.put(count, firstString);
+                    }else if (kList.get(i) instanceof Token){
+                        //TODO(OwolabiL): make this more general, as it may not always be a BoolToken
+                        String firstString = "@." + kLabel.toString() + "."+(i+1)+"." +
+                                ((BoolToken) kList.get(i)).value();
+                        pStrings.put(count, firstString);
                     }
+                    terms.add(kList.get(i));
                 }
 //                if (first instanceof Variable) {
 //                    String firstString = "@." + kLabel.toString() + ".1." +
@@ -296,32 +308,92 @@ public class PathIndex {
     private MultiMap<Integer, String> createHeatingRulePString(Rule rule, int n) {
         Cell lhsK = LookupCell.find(rule.leftHandSide(), "k");
         MultiMap<Integer, String> pStrings = new MultiHashMap<>();
+
         if (lhsK.getContent() instanceof KSequence) {
             //TODO(OwolabiL): There has to be a more general way of doing this!
             //TODO(OwolabiL): Should I be keeping requires information?
             Term content = ((KSequence) lhsK.getContent()).get(0);
             KLabel label = ((KItem) content).kLabel();
-            Term first = ((KItem) content).kList().get(0);
-            String firstSort = ((Variable) first).sort();
-            pStrings.put(n, "@." + label.toString() + ".1." + firstSort);
+            KItem kItem = (KItem) content;
+            KList kList = kItem.kList();
+            Term term;
+            String sort = null;
+            for (int i = 0; i < kList.size(); i++) {
+                term = kList.get(i);
+                if (term instanceof Variable){
 
-            Variable second;
-            String secondSort;
-            if (((KItem) content).kList().size() > 1){
-                second = (Variable) ((KItem) content).kList().get(1);
-                secondSort = second.sort();
-                pStrings.put(n, "@." + label.toString() + ".2." + secondSort);
+                    if(isRequiredToBeKResult(term, rule)){
+//                        sort = ((Variable) term).sort();
+//                        System.out.println("baza");
+//                        System.out.println("rule: "+rule);
+//                        System.out.println("var: "+term);
+                        sort = getKResultSort(term, rule);
+
+                    }else{
+                        sort = ((Variable) term).sort();
+                    }
+                    pStrings.put(n, "@." + label.toString() + "." + (i + 1) + "." + sort);
+                }
             }
+//            Term first = ((KItem) content).kList().get(0);
+//            String firstSort = ((Variable) first).sort();
+//            pStrings.put(n, "@." + label.toString() + ".1." + firstSort);
+//
+//            Variable second;
+//            String secondSort;
+//            if (((KItem) content).kList().size() > 1){
+//                second = (Variable) ((KItem) content).kList().get(1);
+//                secondSort = second.sort();
+//                pStrings.put(n, "@." + label.toString() + ".2." + secondSort);
+//            }
         }
 
         return pStrings;
+    }
+
+    private String getKResultSort(Term term, Rule rule) {
+        String sort = null;
+        Set<String> sorts = new HashSet<>();
+//        sorts.add("KResult");
+        sorts.add(((Variable) term).sort());
+
+        Collection<String> commonSubsorts = definition.context().getCommonSubsorts(sorts);
+//        System.out.println("common subsorts: " + commonSubsorts);
+        if (commonSubsorts.size() == 1) {
+            for (String s : commonSubsorts) {
+                sort = s;
+            }
+        }
+
+        System.out.println("InnerSort: " + sort);
+        return sort;
+
+    }
+
+
+    private boolean isRequiredToBeKResult(Term term, Rule rule) {
+        boolean required = false;
+//        System.out.println("*************");
+        for (Term require : rule.requires()){
+            if (require instanceof KItem){
+                if (((KItem) require).kLabel().toString().equals("isKResult") &&
+                        ((KItem) require).kList().size() == 1 && ((KItem) require).kList().get(0).equals(term)){
+//                    System.out.println("bazi");
+                    required = true;
+//
+                }
+            }
+
+        }
+        return required;
     }
 
     public Set<Rule> getRulesForTerm(Term term) {
         ArrayList<String> pStrings = getTermPString(term);
         Set<Rule> rules = new HashSet<>();
         //find the intersection of all the sets returned
-//        System.out.println("term: " + term);
+        System.out.println("term: " + term);
+        System.out.println("pStrings: "+pStrings);
         Set<Integer> matchingIndices = new HashSet<>();
         if (pStrings.size() > 1) {
             Set<Integer> retrieved = trie.retrieve(trie.getRoot(), pStrings.get(0));
@@ -351,6 +423,7 @@ public class PathIndex {
             }
 
         } else if (pStrings.size() == 1) {
+//            System.out.println("pStringz: "+pStrings);
             matchingIndices.addAll(trie.retrieve(trie.getRoot(), pStrings.get(0)));
         }
         //TODO(OwolabiL): Bad hack to be removed. Manipulate sorts instead
@@ -412,9 +485,10 @@ public class PathIndex {
                                 KItem frozenItem = (KItem) freezer.term();
                                 String frozenItemLabel = frozenItem.kLabel().toString();
                                 Term frozenItemListMember1 = frozenItem.kList().get(0);
-                                Term frozenItemListMember2 = frozenItem.kList().get(1);
-                                String frozenItem1String;
+                                Term frozenItemListMember2;
                                 String frozenItem2String;
+
+                                String frozenItem1String;
                                 if (frozenItemListMember1 instanceof Hole) {
                                     frozenItem1String = "HOLE";
                                 } else {
@@ -422,17 +496,33 @@ public class PathIndex {
                                     frozenItem1String = ((Token) frozenItemListMember1).sort();
                                 }
 
-                                if (frozenItemListMember2 instanceof Hole) {
-                                    frozenItem2String = "HOLE";
-                                } else {
-                                    frozenItem2String = ((Token) frozenItemListMember2).sort();
+                                if(frozenItem.kList().size() > 1){
+                                    frozenItemListMember2 = frozenItem.kList().get(1);
+                                    if (frozenItemListMember2 instanceof Hole) {
+                                        frozenItem2String = "HOLE";
+                                        String string3 = string1 + "1." + frozenItemLabel + ".2." + frozenItem2String;
+                                        candidates.add(string3);
+                                    } else {
+//                                        System.out.println("frizen2 class: "+ frozenItemListMember2.getClass());
+                                        if (frozenItemListMember2 instanceof KItem){
+                                            frozenItem2String = ((KItem) frozenItemListMember2).sort();
+                                            String string3 = string1 + "1." + frozenItemLabel + ".2." + frozenItem2String;
+                                            candidates.add(string3);
+                                        } else if (frozenItemListMember2 instanceof Token){
+                                            frozenItem2String = ((Token) frozenItemListMember2).sort();
+                                            String string3 = string1 + "1." + frozenItemLabel + ".2." + frozenItem2String;
+                                            candidates.add(string3);
+                                        }
+                                    }
                                 }
 
+
+
+
                                 String string2 = string1 + "1." + frozenItemLabel + ".1." + frozenItem1String;
-                                String string3 = string1 + "1." + frozenItemLabel + ".2." + frozenItem2String;
                                 // end of duplicated code
                                 candidates.add(string2);
-                                candidates.add(string3);
+//                                candidates.add(string3);
 
                             }
                         }
@@ -444,66 +534,122 @@ public class PathIndex {
                     //TODO(OwolabiL): More duplicated code. Remove!!!!
                     KItem kItem = (KItem) sequenceHead;
                     KLabel kLabel = kItem.kLabel();
+//                    System.out.println("KLabel: "+kLabel);
 //                    builder.append(kLabel.toString());
                     String string1 = "@." + kLabel.toString();
                     KList kList = kItem.kList();
 
-                    Term first = kList.get(0);
-                    Term second = kList.get(1);
-
-                    //for imp there are two cases for the first element:
-                    //(1) it is a kItem
-                    if (first instanceof KItem) {
-                        KItem innerKItem = (KItem) first;
-                        String string2 = string1 + ".1." + innerKItem.sort();
-                        candidates.add(string2);
-
-                    } else if (first instanceof Token) {
-                        //(2) it is an uninterpretedToken
-                        String string2 = string1 + ".1." + ((Token) first).sort();
-                        candidates.add(string2);
+                    if (kList.size()==0){
+                        String string = "@."+kLabel.toString()+".1."+ "#ListOf#Bot{\",\"}";
+                        candidates.add(string);
                     }
 
-                    if (second instanceof KItem) {
-                        String string3 = string1 + ".2." + ((KItem) second).sort();
-                        candidates.add(string3);
-                    } else if (second instanceof Token) {
-                        String string3 = string1 + ".2." + ((Token) second).sort();
-                        candidates.add(string3);
+                    Term kListTerm;
+                    String pString = null;
+                    for (int i = 0; i < kList.size(); i++) {
+                        kListTerm = kList.get(i);
+                        //for imp there are two cases for the first element:
+                        //(1) it is a kItem
+                        if (kListTerm instanceof KItem) {
+                            KItem innerKItem = (KItem) kListTerm;
+                            pString = string1 + "."+(i+1)+"." + innerKItem.sort();
+                            candidates.add(pString);
+
+                        } else if (kListTerm instanceof Token) {
+                            //(2) it is an uninterpretedToken
+                            String sort = ((Token) kListTerm).sort();
+                            //if it is a KResult, use as is
+                            if (definition.context().isSubsorted("KResult", sort)){
+                                pString = string1 + "."+(i+1)+"." + sort;
+                            } else {
+                                ArrayList<Production> productions = (ArrayList<Production>) definition.context().productionsOf(kLabel.toString());
+//                                System.out.println("prod size: "+productions.size());
+//                                System.out.println("productions: "+productions);
+                                Production p = productions.get(0);
+                                pString = string1 + "."+(i+1)+"." + p.getChildSort(0);
+                            }
+                            //else use sort from the production in this position
+                            candidates.add(pString);
+                        }
+
+
                     }
+
+//                    Term first = kList.get(0);
+//                    Term second = kList.get(1);
+//
+//                    //for imp there are two cases for the first element:
+//                    //(1) it is a kItem
+//                    if (first instanceof KItem) {
+//                        KItem innerKItem = (KItem) first;
+//                        String string2 = string1 + ".1." + innerKItem.sort();
+//                        candidates.add(string2);
+//
+//                    } else if (first instanceof Token) {
+//                        //(2) it is an uninterpretedToken
+//                        String string2 = string1 + ".1." + ((Token) first).sort();
+//                        candidates.add(string2);
+//                    }
+//
+//
+//                    if (second instanceof KItem) {
+//                        String string3 = string1 + ".2." + ((KItem) second).sort();
+//                        candidates.add(string3);
+//                    } else if (second instanceof Token) {
+//                        String string3 = string1 + ".2." + ((Token) second).sort();
+//                        candidates.add(string3);
+//                    }
                 }
             }
 
         } else {
+
             KItem kItem = (KItem) kTerm;
             KLabel kLabel = kItem.kLabel();
 //            builder.append(kLabel.toString());
             String string1 = "@." + kLabel.toString();
             KList kList = kItem.kList();
 
-            Term first = kList.get(0);
-            Term second = kList.get(1);
+            Term kListTerm;
+            String pString;
 
-            //for imp there are two cases for the first element:
-            //(1) it is a kItem
-            if (first instanceof KItem) {
-                KItem innerKItem = (KItem) first;
-                String string2 = string1 + ".1." + innerKItem.sort();
-                candidates.add(string2);
+            for (int i = 0; i < kList.size(); i++) {
+                 kListTerm = kList.get(i);
+                if (kListTerm instanceof KItem) {
+                    KItem innerKItem = (KItem) kListTerm;
+                    pString = string1 + "."+(i+1)+"." + innerKItem.sort();
+                    candidates.add(pString);
 
-            } else if (first instanceof Token) {
-                //(2) it is an uninterpretedToken
-                String string2 = string1 + ".1." + ((Token) first).sort();
-                candidates.add(string2);
+                } else if (kListTerm instanceof Token) {
+                    //(2) it is an uninterpretedToken
+                    pString = string1 + "."+(i+1)+"." + ((Token) kListTerm).sort();
+                    candidates.add(pString);
+                }
             }
 
-            if (second instanceof KItem) {
-                String string3 = string1 + ".2." + ((KItem) second).sort();
-                candidates.add(string3);
-            } else if (second instanceof Token) {
-                String string3 = string1 + ".2." + ((Token) second).sort();
-                candidates.add(string3);
-            }
+//            Term first = kList.get(0);
+//            Term second = kList.get(1);
+//
+//            //for imp there are two cases for the first element:
+//            //(1) it is a kItem
+//            if (first instanceof KItem) {
+//                KItem innerKItem = (KItem) first;
+//                String string2 = string1 + ".1." + innerKItem.sort();
+//                candidates.add(string2);
+//
+//            } else if (first instanceof Token) {
+//                //(2) it is an uninterpretedToken
+//                String string2 = string1 + ".1." + ((Token) first).sort();
+//                candidates.add(string2);
+//            }
+//
+//            if (second instanceof KItem) {
+//                String string3 = string1 + ".2." + ((KItem) second).sort();
+//                candidates.add(string3);
+//            } else if (second instanceof Token) {
+//                String string3 = string1 + ".2." + ((Token) second).sort();
+//                candidates.add(string3);
+//            }
         }
 //        System.out.println("candidates: "+candidates);
         return candidates;

@@ -362,13 +362,13 @@ public class SymbolicRewriter {
             return;
         }
 
-        //checking how the rules from index do against existing indexing scheme
+//        //checking how the rules from index do against existing indexing scheme
 //        if (K.do_indexing){
 //            Set<Rule> normalRules = getNonIndexedRules(constrainedTerm.term());
 //            Set<Rule> rulesFromIndex = pathIndex.getRulesForTerm(constrainedTerm.term());
 //            if (rulesFromIndex != null) {
 //                System.out.println("====================================");
-//                System.out.println("Term: "+constrainedTerm.term() +"\n");
+////                System.out.println("Term: "+constrainedTerm.term() +"\n");
 //                System.out.println("No. of Normal rules: "+normalRules.size());
 //                System.out.println("No. of rules from index: "+rulesFromIndex.size()+"\n");
 //

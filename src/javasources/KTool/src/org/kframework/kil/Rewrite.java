@@ -57,7 +57,8 @@ public class Rewrite extends Term {
 	}
 
 	/**
-	 * Returning the Least Upper Bound for left and right sorts, unless either side is an ambiguity, in which case arbitrary return the left sort.
+	 * Returning the Least Upper Bound for left and right sorts, unless either side is an ambiguity,
+     * in which case arbitrary return the left sort.
 	 */
 	private void recomputeSort(Context context) {
 		if (left instanceof Ambiguity || right instanceof Ambiguity)

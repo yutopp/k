@@ -1,0 +1,7 @@
+int i, m, n;
+m = 10;  n = 2;
+if( n < m) {
+    i = m+n;
+} else {
+    i = n;
+}
