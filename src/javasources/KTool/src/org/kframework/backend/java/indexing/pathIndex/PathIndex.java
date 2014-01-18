@@ -58,7 +58,7 @@ public class PathIndex {
         }
 
         assert indexedRules.size() == definition.rules().size();
-        printIndices(indexedRules, pStringMap);
+//        printIndices(indexedRules, pStringMap);
 
         //intitialize the trie
         trie = new PathIndexTrie();
@@ -365,7 +365,7 @@ public class PathIndex {
             }
         }
 
-        System.out.println("InnerSort: " + sort);
+//        System.out.println("InnerSort: " + sort);
         return sort;
 
     }
@@ -392,8 +392,8 @@ public class PathIndex {
         ArrayList<String> pStrings = getTermPString(term);
         Set<Rule> rules = new HashSet<>();
         //find the intersection of all the sets returned
-        System.out.println("term: " + term);
-        System.out.println("pStrings: "+pStrings);
+//        System.out.println("term: " + term);
+//        System.out.println("pStrings: "+pStrings);
         Set<Integer> matchingIndices = new HashSet<>();
         if (pStrings.size() > 1) {
             Set<Integer> retrieved = trie.retrieve(trie.getRoot(), pStrings.get(0));
@@ -609,6 +609,11 @@ public class PathIndex {
 //            builder.append(kLabel.toString());
             String string1 = "@." + kLabel.toString();
             KList kList = kItem.kList();
+
+            if (kList.size()==0){
+                String string = "@."+kLabel.toString()+".1."+ "#ListOf#Bot{\",\"}";
+                candidates.add(string);
+            }
 
             Term kListTerm;
             String pString;
