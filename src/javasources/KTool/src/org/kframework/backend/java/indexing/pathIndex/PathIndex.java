@@ -4,6 +4,7 @@ import com.google.common.collect.Sets;
 import org.apache.commons.collections15.MultiMap;
 import org.apache.commons.collections15.multimap.MultiHashMap;
 import org.kframework.backend.java.builtins.BoolToken;
+import org.kframework.backend.java.indexing.pathIndex.visitors.CoolingRuleVisitor;
 import org.kframework.backend.java.indexing.pathIndex.visitors.HeatingRuleVisitor;
 import org.kframework.backend.java.kil.*;
 import org.kframework.backend.java.util.LookupCell;
@@ -166,43 +167,48 @@ public class PathIndex {
     }
 
     private MultiMap<Integer, String> createCoolingRulePString(Rule rule, int n) {
-        Cell lhsK = LookupCell.find(rule.leftHandSide(), "k");
         MultiMap<Integer, String> pStrings = new MultiHashMap<>();
-        if (lhsK.getContent() instanceof KSequence) {
-            KSequence kSequence = (KSequence) lhsK.getContent();
-            Term content0 = kSequence.get(0);
-            Term content1 = kSequence.get(1);
 
-            Variable variable0 = (Variable) content0;
-            String requiredKresult = "isKResult(" + variable0 + ")";
-            String firstSort;
-            //TODO(OwolabiL): Remove this check and use concrete sort instead
-            if (rule.requires().toString().contains(requiredKresult)) {
-                firstSort = "KResult";
-            } else {
-                //TODO(OwolabiL): this should never happen!! throw exception?
-                firstSort = variable0.sort();
-            }
+        CoolingRuleVisitor ruleVisitor = new CoolingRuleVisitor(rule);
+        rule.accept(ruleVisitor);
+        pStrings.putAll(n,ruleVisitor.getpStrings());
 
-            KLabelFreezer freezer = (KLabelFreezer) ((KItem) content1).kLabel();
-            KItem frozenItem = (KItem) freezer.term();
-            String frozenItemLabel = frozenItem.kLabel().toString();
-
-            Term frozenTerm;
-            String frozenItemString;
-
-            for (int i = 0; i < frozenItem.kList().size(); i++) {
-                frozenTerm = frozenItem.kList().get(i);
-                if (frozenTerm instanceof Hole) {
-                    frozenItemString = "HOLE";
-                } else {
-                    //is it always a variable?
-                    frozenItemString = ((Variable) frozenTerm).sort();
-                }
-                pStrings.put(n, "@." + firstSort + ".1." + frozenItemLabel + "."+(i+1)+"."
-                        + frozenItemString);
-            }
-        }
+//        Cell lhsK = LookupCell.find(rule.leftHandSide(), "k");
+//        if (lhsK.getContent() instanceof KSequence) {
+//            KSequence kSequence = (KSequence) lhsK.getContent();
+//            Term content0 = kSequence.get(0);
+//            Term content1 = kSequence.get(1);
+//
+//            Variable variable0 = (Variable) content0;
+//            String requiredKresult = "isKResult(" + variable0 + ")";
+//            String firstSort;
+//            //TODO(OwolabiL): Remove this check and use concrete sort instead
+//            if (rule.requires().toString().contains(requiredKresult)) {
+//                firstSort = "KResult";
+//            } else {
+//                //TODO(OwolabiL): this should never happen!! throw exception?
+//                firstSort = variable0.sort();
+//            }
+//
+//            KLabelFreezer freezer = (KLabelFreezer) ((KItem) content1).kLabel();
+//            KItem frozenItem = (KItem) freezer.term();
+//            String frozenItemLabel = frozenItem.kLabel().toString();
+//
+//            Term frozenTerm;
+//            String frozenItemString;
+//
+//            for (int i = 0; i < frozenItem.kList().size(); i++) {
+//                frozenTerm = frozenItem.kList().get(i);
+//                if (frozenTerm instanceof Hole) {
+//                    frozenItemString = "HOLE";
+//                } else {
+//                    //is it always a variable?
+//                    frozenItemString = ((Variable) frozenTerm).sort();
+//                }
+//                pStrings.put(n, "@." + firstSort + ".1." + frozenItemLabel + "."+(i+1)+"."
+//                        + frozenItemString);
+//            }
+//        }
 
         return pStrings;
     }

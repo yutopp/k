@@ -16,11 +16,11 @@ import java.util.*;
  */
 public class HeatingRuleVisitor extends LocalVisitor {
     private String pString;
+    private List<String> pStrings;
     private final Rule rule;
     private final Context context;
-    private int counter = 0;
 
-    private List<String> pStrings;
+    private int counter = 0;
 
     public HeatingRuleVisitor(Rule rule, Context context) {
         this.rule = rule;
@@ -94,6 +94,7 @@ public class HeatingRuleVisitor extends LocalVisitor {
         return sort;
     }
 
+    //TODO(OwolabiL): Use visitor for traversing the rule instead
     private boolean isRequiredToBeKResult(Term term, Rule rule) {
         boolean required = false;
         for (Term require : rule.requires()){
