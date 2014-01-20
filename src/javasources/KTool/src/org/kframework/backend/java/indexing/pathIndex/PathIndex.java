@@ -215,34 +215,6 @@ public class PathIndex {
         return pStrings;
     }
 
-    private String getKResultSort(Term term) {
-        String sort = null;
-        Set<String> sorts = new HashSet<>();
-        sorts.add(((Variable) term).sort());
-
-        Collection<String> commonSubsorts = definition.context().getCommonSubsorts(sorts);
-        if (commonSubsorts.size() == 1) {
-            for (String s : commonSubsorts) {
-                sort = s;
-            }
-        }
-        return sort;
-    }
-
-
-    private boolean isRequiredToBeKResult(Term term, Rule rule) {
-        boolean required = false;
-        for (Term require : rule.requires()){
-            if (require instanceof KItem){
-                if (((KItem) require).kLabel().toString().equals("isKResult") &&
-                        ((KItem) require).kList().size() == 1 && ((KItem) require).kList().get(0).equals(term)){
-                    required = true;
-                }
-            }
-        }
-        return required;
-    }
-
     public Set<Rule> getRulesForTerm(Term term) {
         ArrayList<String> pStrings = getTermPString(term);
         Set<Rule> rules = new HashSet<>();
