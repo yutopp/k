@@ -6,6 +6,7 @@ import org.apache.commons.collections15.multimap.MultiHashMap;
 import org.kframework.backend.java.builtins.BoolToken;
 import org.kframework.backend.java.indexing.pathIndex.visitors.CoolingRuleVisitor;
 import org.kframework.backend.java.indexing.pathIndex.visitors.HeatingRuleVisitor;
+import org.kframework.backend.java.indexing.pathIndex.visitors.RuleVisitor;
 import org.kframework.backend.java.kil.*;
 import org.kframework.backend.java.util.LookupCell;
 import org.kframework.kil.Production;
@@ -98,118 +99,83 @@ public class PathIndex {
         // emerges and whether there is a more general way. taking them case
         // by case for now
         MultiMap<Integer, String> pStrings = new MultiHashMap<>();
-        Cell lhsK = LookupCell.find(rule.leftHandSide(), "k");
-        if (lhsK.getContent() instanceof KSequence) {
-            KSequence kSequence = (KSequence) lhsK.getContent();
-            Term content0 = kSequence.get(0);
-            if (content0 instanceof Variable) {
-                String varString = "@." + ((Variable) content0).sort();
-                pStrings.put(count, varString);
-            }
 
-            if (content0 instanceof KItem) {
-                KLabel kLabel = ((KItem) content0).kLabel();
-                KList kList = ((KItem) content0).kList();
-                if (kList.size()==0){
-                    String string = "@."+kLabel.toString()+".1."+ "#ListOf#Bot{\",\"}";
-                    pStrings.put(count,string);
-                }
-                //TODO(OwolabiL): do a loop with the kList size instead?
-                Term kTerm;
-                String firstString;
-                for (int i = 0; i < kList.size(); i++) {
-                    kTerm = kList.get(i);
-                    if(kTerm instanceof Variable){
-                        firstString = "@." + kLabel.toString() + "."+(i+1)+"." +
-                                ((Variable) kTerm).sort();
-                        pStrings.put(count, firstString);
-                    } else if (kTerm instanceof KItem){
-                        KItem innerFirst = (KItem) kTerm;
-                        firstString = "@." + kLabel.toString()
-                                + "."+(i+1)+".";
-                        if (innerFirst.kList().size() == 0) {
-                            firstString += "#ListOf#Bot{\",\"}";
-                        } //TODO(OwolabiL): else what? this is brittle!
-                        pStrings.put(count, firstString);
-                    }else if (kTerm instanceof Token){
-                        //TODO(OwolabiL): make this more general, as it may not always be a BoolToken
-                        firstString = "@." + kLabel.toString() + "."+(i+1)+"." +
-                                ((BoolToken) kTerm).value();
-                        pStrings.put(count, firstString);
-                    }
-                }
-            }
-        } else {
-            //we don't have a kSequence. means that term fills entire K cell
-            if (lhsK.getContent() instanceof KItem) {
-                KItem kItem = (KItem) lhsK.getContent();
-                KLabel outerKLabel = kItem.kLabel();
-                KList kList = kItem.kList();
-                //TODO(OwolabiL): Again, maybe use loop
-                Term first = kList.get(0);
-                Term second = kList.get(1);
-                if (first instanceof KItem) {
-                    KItem innerKItem = (KItem) first;
-                    String outerFirstString = "@." + outerKLabel.toString()
-                            + ".1." + innerKItem.sort();
-                    pStrings.put(count, outerFirstString);
-
-                    if (second instanceof Variable) {
-                        String outerSecondString = "@." + outerKLabel.toString()
-                                + ".2." + ((Variable) second).sort();
-                        pStrings.put(count, outerSecondString);
-
-                    }
-                }
-            }
-        }
+        RuleVisitor ruleVisitor = new RuleVisitor(rule);
+        rule.accept(ruleVisitor);
+        pStrings.putAll(count,ruleVisitor.getpStrings());
+//        Cell lhsK = LookupCell.find(rule.leftHandSide(), "k");
+//        if (lhsK.getContent() instanceof KSequence) {
+//            KSequence kSequence = (KSequence) lhsK.getContent();
+//            Term content0 = kSequence.get(0);
+//            if (content0 instanceof Variable) {
+//                String varString = "@." + ((Variable) content0).sort();
+//                pStrings.put(count, varString);
+//            }
+//
+//            if (content0 instanceof KItem) {
+//                KLabel kLabel = ((KItem) content0).kLabel();
+//                KList kList = ((KItem) content0).kList();
+//                if (kList.size()==0){
+//                    String string = "@."+kLabel.toString()+".1."+ "#ListOf#Bot{\",\"}";
+//                    pStrings.put(count,string);
+//                }
+//                //TODO(OwolabiL): do a loop with the kList size instead?
+//                Term kTerm;
+//                String firstString;
+//                for (int i = 0; i < kList.size(); i++) {
+//                    kTerm = kList.get(i);
+//                    if(kTerm instanceof Variable){
+//                        firstString = "@." + kLabel.toString() + "."+(i+1)+"." +
+//                                ((Variable) kTerm).sort();
+//                        pStrings.put(count, firstString);
+//                    } else if (kTerm instanceof KItem){
+//                        KItem innerFirst = (KItem) kTerm;
+//                        firstString = "@." + kLabel.toString()
+//                                + "."+(i+1)+".";
+//                        if (innerFirst.kList().size() == 0) {
+//                            firstString += "#ListOf#Bot{\",\"}";
+//                        } //TODO(OwolabiL): else what? this is brittle!
+//                        pStrings.put(count, firstString);
+//                    }else if (kTerm instanceof Token){
+//                        //TODO(OwolabiL): make this more general, as it may not always be a BoolToken
+//                        firstString = "@." + kLabel.toString() + "."+(i+1)+"." +
+//                                ((BoolToken) kTerm).value();
+//                        pStrings.put(count, firstString);
+//                    }
+//                }
+//            }
+//        } else {
+//            //we don't have a kSequence. means that term fills entire K cell
+//            if (lhsK.getContent() instanceof KItem) {
+//                KItem kItem = (KItem) lhsK.getContent();
+//                KLabel outerKLabel = kItem.kLabel();
+//                KList kList = kItem.kList();
+//                //TODO(OwolabiL): Again, maybe use loop
+//                Term first = kList.get(0);
+//                Term second = kList.get(1);
+//                if (first instanceof KItem) {
+//                    KItem innerKItem = (KItem) first;
+//                    String outerFirstString = "@." + outerKLabel.toString()
+//                            + ".1." + innerKItem.sort();
+//                    pStrings.put(count, outerFirstString);
+//
+//                    if (second instanceof Variable) {
+//                        String outerSecondString = "@." + outerKLabel.toString()
+//                                + ".2." + ((Variable) second).sort();
+//                        pStrings.put(count, outerSecondString);
+//
+//                    }
+//                }
+//            }
+//        }
         return pStrings;
     }
 
     private MultiMap<Integer, String> createCoolingRulePString(Rule rule, int n) {
         MultiMap<Integer, String> pStrings = new MultiHashMap<>();
-
         CoolingRuleVisitor ruleVisitor = new CoolingRuleVisitor(rule);
         rule.accept(ruleVisitor);
         pStrings.putAll(n,ruleVisitor.getpStrings());
-
-//        Cell lhsK = LookupCell.find(rule.leftHandSide(), "k");
-//        if (lhsK.getContent() instanceof KSequence) {
-//            KSequence kSequence = (KSequence) lhsK.getContent();
-//            Term content0 = kSequence.get(0);
-//            Term content1 = kSequence.get(1);
-//
-//            Variable variable0 = (Variable) content0;
-//            String requiredKresult = "isKResult(" + variable0 + ")";
-//            String firstSort;
-//            //TODO(OwolabiL): Remove this check and use concrete sort instead
-//            if (rule.requires().toString().contains(requiredKresult)) {
-//                firstSort = "KResult";
-//            } else {
-//                //TODO(OwolabiL): this should never happen!! throw exception?
-//                firstSort = variable0.sort();
-//            }
-//
-//            KLabelFreezer freezer = (KLabelFreezer) ((KItem) content1).kLabel();
-//            KItem frozenItem = (KItem) freezer.term();
-//            String frozenItemLabel = frozenItem.kLabel().toString();
-//
-//            Term frozenTerm;
-//            String frozenItemString;
-//
-//            for (int i = 0; i < frozenItem.kList().size(); i++) {
-//                frozenTerm = frozenItem.kList().get(i);
-//                if (frozenTerm instanceof Hole) {
-//                    frozenItemString = "HOLE";
-//                } else {
-//                    //is it always a variable?
-//                    frozenItemString = ((Variable) frozenTerm).sort();
-//                }
-//                pStrings.put(n, "@." + firstSort + ".1." + frozenItemLabel + "."+(i+1)+"."
-//                        + frozenItemString);
-//            }
-//        }
-
         return pStrings;
     }
 
