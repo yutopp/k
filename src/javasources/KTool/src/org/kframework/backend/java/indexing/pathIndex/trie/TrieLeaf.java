@@ -1,4 +1,4 @@
-package org.kframework.backend.java.indexing.pathIndex;
+package org.kframework.backend.java.indexing.pathIndex.trie;
 
 import java.util.HashSet;
 import java.util.Set;

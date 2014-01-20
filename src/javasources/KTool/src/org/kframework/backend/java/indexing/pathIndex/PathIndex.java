@@ -4,8 +4,8 @@ import com.google.common.collect.Sets;
 import org.apache.commons.collections15.MultiMap;
 import org.apache.commons.collections15.multimap.MultiHashMap;
 import org.kframework.backend.java.builtins.BoolToken;
+import org.kframework.backend.java.indexing.pathIndex.visitors.HeatingRuleVisitor;
 import org.kframework.backend.java.kil.*;
-//import org.kframework.backend.java.kil.Collection;
 import org.kframework.backend.java.util.LookupCell;
 import org.kframework.kil.Production;
 
@@ -20,7 +20,7 @@ import java.util.Collection;
 public class PathIndex {
     private Map<Integer, Rule> indexedRules;
     private Definition definition;
-    private PathIndexTrie trie;
+    private org.kframework.backend.java.indexing.pathIndex.trie.PathIndexTrie trie;
     private MultiMap<Integer,String> pStringMap;
 
     public PathIndex(Definition definition) {
@@ -58,10 +58,10 @@ public class PathIndex {
         }
 
         assert indexedRules.size() == definition.rules().size();
-//        printIndices(indexedRules, pStringMap);
+        printIndices(indexedRules, pStringMap);
 
         //intitialize the trie
-        trie = new PathIndexTrie();
+        trie = new org.kframework.backend.java.indexing.pathIndex.trie.PathIndexTrie();
 
         //add all the pStrings to the trie
         ArrayList<String> strings;
@@ -71,41 +71,6 @@ public class PathIndex {
                 trie.addIndex(trie.getRoot(), string.substring(2), key);
             }
         }
-
-//        System.out.println("full trie: "+trie);
-//        System.out.println("full trie size: "+trie.size(trie.getRoot()));
-
-
-        //TODO(OwolabL): move these to the test class
-//        ArrayList<String> firstSet = (ArrayList<String>) pString.get(5);
-//        trie.addIndex(trie.getRoot(),firstSet.get(0).substring(2),5);
-//        trie.addIndex(trie.getRoot(), firstSet.get(1).substring(2), 5);
-//        trie.addIndex(trie.getRoot(),firstSet.get(2).substring(2),5);
-//        System.out.println("Trie: "+trie);
-//
-//        ArrayList<String> secondSet = (ArrayList<String>) pString.get(11);
-//        trie.addIndex(trie.getRoot(),secondSet.get(0).substring(2),11);
-//        trie.addIndex(trie.getRoot(),secondSet.get(1).substring(2),11);
-//        System.out.println("Trie Again: "+trie);
-//
-//        ArrayList<String> thirdSet = (ArrayList<String>) pString.get(8);
-//        trie.addIndex(trie.getRoot(),thirdSet.get(0).substring(2),8);
-//        trie.addIndex(trie.getRoot(),thirdSet.get(1).substring(2),8);
-//        System.out.println("Trie III: "+trie);
-//
-//        System.out.println("Trie III size: "+trie.size(trie.getRoot()));
-//
-//        trie.removeIndex(trie.getRoot(), thirdSet.get(0).substring(2),8);
-//        trie.removeIndex(trie.getRoot(), thirdSet.get(1).substring(2),8);
-//
-//        System.out.println("Triee IV: "+trie);
-//
-//        Set<Integer> retrieved = trie.retrieve(trie.getRoot(),secondSet.get(1));
-//        System.out.println("retrieved: "+retrieved);
-
-        //add p-string to PathIndexTrie with IND(i) in the set on the leaf
-        //create IndexedRule(rule(i),PS(i))
-        //add <IND(i),IndexedRule(rule(i),PS(i))> to IndexToRuleMap
     }
 
     private void printIndices(Map<Integer, Rule> indexedRules, MultiMap<Integer,
@@ -149,9 +114,6 @@ public class PathIndex {
                     pStrings.put(count,string);
                 }
                 //TODO(OwolabiL): do a loop with the kList size instead?
-//                Term first = kList.get(0);
-//                Term second = kList.get(1);
-//                ArrayList<Term> terms = new ArrayList<>();
                 Term kTerm;
                 String firstString;
                 for (int i = 0; i < kList.size(); i++) {
@@ -174,28 +136,7 @@ public class PathIndex {
                                 ((BoolToken) kTerm).value();
                         pStrings.put(count, firstString);
                     }
-//                    terms.add(kList.get(i));
                 }
-//                if (first instanceof Variable) {
-//                    String firstString = "@." + kLabel.toString() + ".1." +
-//                            ((Variable) first).sort();
-//                    pStrings.put(count, firstString);
-//                } else if (first instanceof KItem) {
-//                    KItem innerFirst = (KItem) first;
-//                    String firstString = "@." + kLabel.toString()
-//                            + ".1.";
-//                    if (innerFirst.kList().size() == 0) {
-//                        firstString += "#ListOf#Bot{\",\"}";
-//                    } //TODO(OwolabiL): else what? this is brittle!
-//                    pStrings.put(count, firstString);
-//                }
-//
-//                if (second instanceof Variable) {
-//                    String secondString = "@." + kLabel.toString() + ".2." +
-//                            ((Variable) second).sort();
-//                    pStrings.put(count, secondString);
-//                }
-
             }
         } else {
             //we don't have a kSequence. means that term fills entire K cell
@@ -208,27 +149,9 @@ public class PathIndex {
                 Term second = kList.get(1);
                 if (first instanceof KItem) {
                     KItem innerKItem = (KItem) first;
-//                    KLabel innerKLabel = innerKItem.kLabel();
-//                    KList innerkList = innerKItem.kList();
-//                    Term innerFirst = innerkList.get(0);
-//                    Term innerSecond = innerkList.get(1);
                     String outerFirstString = "@." + outerKLabel.toString()
                             + ".1." + innerKItem.sort();
                     pStrings.put(count, outerFirstString);
-//                    if (innerFirst instanceof Variable) {
-//                        String innerFirstString =
-//                                "@." + outerKLabel.toString() + ".2." +
-//                                        innerKLabel + ".1." +
-//                                        ((Variable) innerFirst).sort();
-//                        pStrings.put(count, innerFirstString);
-//                    }
-//
-//                    if (innerSecond instanceof Variable) {
-//                        String innerSecondString = "@." + outerKLabel.toString()
-//                                + ".2." + innerKLabel + ".2." +
-//                                ((Variable) innerSecond).sort();
-//                        pStrings.put(count, innerSecondString);
-//                    }
 
                     if (second instanceof Variable) {
                         String outerSecondString = "@." + outerKLabel.toString()
@@ -279,114 +202,43 @@ public class PathIndex {
                 pStrings.put(n, "@." + firstSort + ".1." + frozenItemLabel + "."+(i+1)+"."
                         + frozenItemString);
             }
-//            Term frozenItemListMember1 = frozenItem.kList().get(0);
-//            Term frozenItemListMember2 = frozenItem.kList().get(1);
-//            String frozenItem1String;
-//            String frozenItem2String;
-//            if (frozenItemListMember1 instanceof Hole) {
-//                frozenItem1String = "HOLE";
-//            } else {
-//                //is it always a variable?
-//                frozenItem1String = ((Variable) frozenItemListMember1).sort();
-//            }
-//
-//            if (frozenItemListMember2 instanceof Hole) {
-//                frozenItem2String = "HOLE";
-//            } else {
-//                frozenItem2String = ((Variable) frozenItemListMember2).sort();
-//            }
-//
-//            pStrings.put(n, "@." + firstSort + ".1." + frozenItemLabel + ".1."
-//                    + frozenItem1String);
-//
-//
-//            pStrings.put(n, "@." + firstSort + ".1." + frozenItemLabel + ".2."
-//                    + frozenItem2String);
-
         }
 
         return pStrings;
     }
 
     private MultiMap<Integer, String> createHeatingRulePString(Rule rule, int n) {
-        Cell lhsK = LookupCell.find(rule.leftHandSide(), "k");
         MultiMap<Integer, String> pStrings = new MultiHashMap<>();
-
-        if (lhsK.getContent() instanceof KSequence) {
-            //TODO(OwolabiL): There has to be a more general way of doing this!
-            //TODO(OwolabiL): Should I be keeping requires information?
-            Term content = ((KSequence) lhsK.getContent()).get(0);
-            KLabel label = ((KItem) content).kLabel();
-            KItem kItem = (KItem) content;
-            KList kList = kItem.kList();
-            Term term;
-            String sort = null;
-            for (int i = 0; i < kList.size(); i++) {
-                term = kList.get(i);
-                if (term instanceof Variable){
-
-                    if(isRequiredToBeKResult(term, rule)){
-//                        sort = ((Variable) term).sort();
-//                        System.out.println("baza");
-//                        System.out.println("rule: "+rule);
-//                        System.out.println("var: "+term);
-                        sort = getKResultSort(term);
-
-                    }else{
-                        sort = ((Variable) term).sort();
-                    }
-                    pStrings.put(n, "@." + label.toString() + "." + (i + 1) + "." + sort);
-                }
-            }
-//            Term first = ((KItem) content).kList().get(0);
-//            String firstSort = ((Variable) first).sort();
-//            pStrings.put(n, "@." + label.toString() + ".1." + firstSort);
-//
-//            Variable second;
-//            String secondSort;
-//            if (((KItem) content).kList().size() > 1){
-//                second = (Variable) ((KItem) content).kList().get(1);
-//                secondSort = second.sort();
-//                pStrings.put(n, "@." + label.toString() + ".2." + secondSort);
-//            }
-        }
-
+        final HeatingRuleVisitor ruleVisitor= new HeatingRuleVisitor(rule, definition.context());
+        rule.accept(ruleVisitor);
+        pStrings.putAll(n,ruleVisitor.getpStrings());
         return pStrings;
     }
 
     private String getKResultSort(Term term) {
         String sort = null;
         Set<String> sorts = new HashSet<>();
-//        sorts.add("KResult");
         sorts.add(((Variable) term).sort());
 
         Collection<String> commonSubsorts = definition.context().getCommonSubsorts(sorts);
-//        System.out.println("common subsorts: " + commonSubsorts);
         if (commonSubsorts.size() == 1) {
             for (String s : commonSubsorts) {
                 sort = s;
             }
         }
-
-//        System.out.println("InnerSort: " + sort);
         return sort;
-
     }
 
 
     private boolean isRequiredToBeKResult(Term term, Rule rule) {
         boolean required = false;
-//        System.out.println("*************");
         for (Term require : rule.requires()){
             if (require instanceof KItem){
                 if (((KItem) require).kLabel().toString().equals("isKResult") &&
                         ((KItem) require).kList().size() == 1 && ((KItem) require).kList().get(0).equals(term)){
-//                    System.out.println("bazi");
                     required = true;
-//
                 }
             }
-
         }
         return required;
     }
@@ -395,8 +247,6 @@ public class PathIndex {
         ArrayList<String> pStrings = getTermPString(term);
         Set<Rule> rules = new HashSet<>();
         //find the intersection of all the sets returned
-//        System.out.println("term: " + term);
-//        System.out.println("pStrings: "+pStrings);
         Set<Integer> matchingIndices = new HashSet<>();
         if (pStrings.size() > 1) {
             Set<Integer> nextRetrieved;
@@ -411,7 +261,7 @@ public class PathIndex {
                     currentMatch = nextRetrieved;
                 }
 
-                //TODO(OwolabiL):Another terrible hack that should be removed!!!
+                //TODO(OwolabiL):Another terrible hack that should be removed!!! Needed with general sorts
                 //This is a result of not yet knowing how to manipulate the sort hierarchy in
                 // the index
 //                if (nextRetrieved == null && currentMatch != null){
@@ -425,7 +275,6 @@ public class PathIndex {
             }
 
         } else if (pStrings.size() == 1) {
-//            System.out.println("pStringz: "+pStrings);
             matchingIndices.addAll(trie.retrieve(trie.getRoot(), pStrings.get(0)));
         }
         //TODO(OwolabiL): Bad hack to be removed. Manipulate sorts instead
@@ -437,15 +286,11 @@ public class PathIndex {
             matchingIndices.addAll(closestIndices);
         }
 
-//        System.out.println("matching: " + matchingIndices);
         for (Integer n : matchingIndices) {
             rules.add(indexedRules.get(n));
         }
-//        System.out.println("Rules: " + rules + "\n");
 
         return rules;
-        //no matching rule was found
-//        return null;
     }
 
     private Set<Integer> getClosestIndices(ArrayList<String> pStrings) {
@@ -466,7 +311,6 @@ public class PathIndex {
         //TODO(OwolabiL): another case for generality using visitors: should be able to use the same pString generator as for rules!
         Cell kCell = LookupCell.find(term, "k");
         ArrayList<String> candidates = new ArrayList<>();
-//        StringBuilder builder = new StringBuilder("@.");
         Term kTerm = kCell.getContent();
         if (kTerm instanceof KSequence) {
             if (((KSequence) kTerm).size() > 0) {
@@ -505,7 +349,6 @@ public class PathIndex {
                                         String string3 = string1 + "1." + frozenItemLabel + ".2." + frozenItem2String;
                                         candidates.add(string3);
                                     } else {
-//                                        System.out.println("frizen2 class: "+ frozenItemListMember2.getClass());
                                         if (frozenItemListMember2 instanceof KItem){
                                             frozenItem2String = ((KItem) frozenItemListMember2).sort();
                                             String string3 = string1 + "1." + frozenItemLabel + ".2." + frozenItem2String;
@@ -521,8 +364,6 @@ public class PathIndex {
                                 String string2 = string1 + "1." + frozenItemLabel + ".1." + frozenItem1String;
                                 // end of duplicated code
                                 candidates.add(string2);
-//                                candidates.add(string3);
-
                             }
                         }
                     } else {
@@ -533,8 +374,6 @@ public class PathIndex {
                     //TODO(OwolabiL): More duplicated code. Remove!!!!
                     KItem kItem = (KItem) sequenceHead;
                     KLabel kLabel = kItem.kLabel();
-//                    System.out.println("KLabel: "+kLabel);
-//                    builder.append(kLabel.toString());
                     String string1 = "@." + kLabel.toString();
                     KList kList = kItem.kList();
 
@@ -562,8 +401,6 @@ public class PathIndex {
                                 pString = string1 + "."+(i+1)+"." + sort;
                             } else {
                                 ArrayList<Production> productions = (ArrayList<Production>) definition.context().productionsOf(kLabel.toString());
-//                                System.out.println("prod size: "+productions.size());
-//                                System.out.println("productions: "+productions);
                                 Production p = productions.get(0);
                                 pString = string1 + "."+(i+1)+"." + p.getChildSort(0);
                             }
@@ -573,31 +410,6 @@ public class PathIndex {
 
 
                     }
-
-//                    Term first = kList.get(0);
-//                    Term second = kList.get(1);
-//
-//                    //for imp there are two cases for the first element:
-//                    //(1) it is a kItem
-//                    if (first instanceof KItem) {
-//                        KItem innerKItem = (KItem) first;
-//                        String string2 = string1 + ".1." + innerKItem.sort();
-//                        candidates.add(string2);
-//
-//                    } else if (first instanceof Token) {
-//                        //(2) it is an uninterpretedToken
-//                        String string2 = string1 + ".1." + ((Token) first).sort();
-//                        candidates.add(string2);
-//                    }
-//
-//
-//                    if (second instanceof KItem) {
-//                        String string3 = string1 + ".2." + ((KItem) second).sort();
-//                        candidates.add(string3);
-//                    } else if (second instanceof Token) {
-//                        String string3 = string1 + ".2." + ((Token) second).sort();
-//                        candidates.add(string3);
-//                    }
                 }
             }
 
@@ -605,7 +417,6 @@ public class PathIndex {
 
             KItem kItem = (KItem) kTerm;
             KLabel kLabel = kItem.kLabel();
-//            builder.append(kLabel.toString());
             String string1 = "@." + kLabel.toString();
             KList kList = kItem.kList();
 
@@ -631,31 +442,7 @@ public class PathIndex {
                 }
             }
 
-//            Term first = kList.get(0);
-//            Term second = kList.get(1);
-//
-//            //for imp there are two cases for the first element:
-//            //(1) it is a kItem
-//            if (first instanceof KItem) {
-//                KItem innerKItem = (KItem) first;
-//                String string2 = string1 + ".1." + innerKItem.sort();
-//                candidates.add(string2);
-//
-//            } else if (first instanceof Token) {
-//                //(2) it is an uninterpretedToken
-//                String string2 = string1 + ".1." + ((Token) first).sort();
-//                candidates.add(string2);
-//            }
-//
-//            if (second instanceof KItem) {
-//                String string3 = string1 + ".2." + ((KItem) second).sort();
-//                candidates.add(string3);
-//            } else if (second instanceof Token) {
-//                String string3 = string1 + ".2." + ((Token) second).sort();
-//                candidates.add(string3);
-//            }
         }
-//        System.out.println("candidates: "+candidates);
         return candidates;
     }
 }

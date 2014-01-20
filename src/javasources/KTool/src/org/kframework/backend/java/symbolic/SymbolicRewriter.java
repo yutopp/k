@@ -72,6 +72,11 @@ public class SymbolicRewriter {
     private final PluggableKastStructureChecker phase2PluggableKastChecker;
     private PathIndex pathIndex;
 
+    int less = 0;
+    int moreNot1 = 0;
+    int more1 = 0;
+    int equalNot1 = 0;
+    int equal1 = 0;
     /*
      * Liyi Li : add simulation rules in the constructor, and allow user to input label [alphaRule] as
      * the indication that the rule will be used as simulation
@@ -366,15 +371,37 @@ public class SymbolicRewriter {
 //        if (K.do_indexing){
 //            Set<Rule> normalRules = getNonIndexedRules(constrainedTerm.term());
 //            Set<Rule> rulesFromIndex = pathIndex.getRulesForTerm(constrainedTerm.term());
+//
 //            if (rulesFromIndex != null) {
 ////                System.out.println("====================================");
-////                System.out.println("Term: "+constrainedTerm.term() +"\n");
-//                System.out.println(normalRules.size() +" "+rulesFromIndex.size());
-////                System.out.println("No. of Normal rules: "+normalRules.size());
-////                System.out.println("No. of rules from index: "+rulesFromIndex.size()+"\n");
+//                System.out.println("Term: "+constrainedTerm.term());
+//                if (normalRules.size() > rulesFromIndex.size() && rulesFromIndex.size() ==1){
+//                    more1++;
+//                }
 //
-////                System.out.println("Normal rules: "+normalRules);
-////                System.out.println("Rules from index: " + rulesFromIndex );
+//                if (normalRules.size() > rulesFromIndex.size() && rulesFromIndex.size() !=1){
+//                    moreNot1++;
+//                }
+//
+//                if (normalRules.size() < rulesFromIndex.size()){
+//                    less++;
+//                }
+//
+//                if (normalRules.size() == rulesFromIndex.size()){
+//                    if(normalRules.size() == 1){
+//                        equalNot1++;
+//                    } else{
+//                        equal1++;
+//                    }
+//                }
+//                System.out.println(normalRules.size() +" "+rulesFromIndex.size());
+//                System.out.println("equal1: "+equal1+" | equal: "+equalNot1+" | less: "+less+" | more1: "+more1+" | moreNot1: "+moreNot1);
+//                System.out.println("No. of Normal rules: "+normalRules.size());
+//                System.out.println("No. of rules from index: "+rulesFromIndex.size()+"\n");
+//
+//                System.out.println("Normal rules: "+normalRules);
+//                System.out.println("Rules from index: " + rulesFromIndex );
+//                System.out.println();
 ////                System.out.println("===================================="+ "\n");
 //            }
 //        }

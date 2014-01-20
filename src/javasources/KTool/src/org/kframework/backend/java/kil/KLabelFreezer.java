@@ -18,8 +18,8 @@ public class KLabelFreezer extends KLabelInjection {
     }
 
     @Override
-    public void accept(Unifier unifier, Term patten) {
-        unifier.unify(this, patten);
+    public void accept(Unifier unifier, Term pattern) {
+        unifier.unify(this, pattern);
     }
 
     @Override

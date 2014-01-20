@@ -198,7 +198,7 @@
 -->
 <!-- TODO: Consider 'title' attribute
   <test
-      definition="tutorial/1_k/2_imp/lesson_4/imp.k"
+      definition="tutorial/1_k/2_imp/lesson_4/imp.k.big"
       programs="tutorial/1_k/2_imp"
       extension="imp"
       results="tutorial/1_k/2_imp"
@@ -821,7 +821,7 @@
   </test>
 
   <test
-      definition="dist/examples/java_rewrite_engine/imp_with_floats/imp.k"
+      definition="dist/examples/java_rewrite_engine/imp_with_floats/imp.k.big"
       extensions="imp"
       programs="dist/examples/java_rewrite_engine/imp_with_floats/programs"
       results="tests/examples/java_rewrite_engine/imp_with_floats/tests"
