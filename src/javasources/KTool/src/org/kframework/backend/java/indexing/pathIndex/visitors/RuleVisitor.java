@@ -60,14 +60,15 @@ public class RuleVisitor extends LocalVisitor{
 
     @Override
     public void visit(KList kList) {
-        System.out.println("kList###");
+        String base = pString;
+//        System.out.println("kList###");
         if (kList.size() == 0){
             pStrings.add(pString+"."+(position)+"."+"#ListOf#Bot{\",\"}");
         }
         for (int i = 0; i < kList.size(); i++) {
             position = i+1;
-            String pending = pString+"."+(position);
             if (!isKSequence){
+                String pending = pString+"."+(position);
                 //TODO(OwolabiL): instanceof must be removed!
                 if(kList.get(i) instanceof KItem){
                     pStrings.add(pending+"."+((KItem)kList.get(i)).sort());
@@ -75,8 +76,10 @@ public class RuleVisitor extends LocalVisitor{
                     pStrings.add(pending+"."+((Variable)kList.get(i)).sort());
                 }
             } else{
-                System.out.println("&&& P-String: "+pString);
-                pString = pending+".";
+//                String pending = base+"."+(position);
+//                System.out.println("***"+pString);
+                pString = base+"."+position+".";
+//                System.out.println("***"+pString);
                 kList.get(i).accept(this);
             }
         }
@@ -84,7 +87,7 @@ public class RuleVisitor extends LocalVisitor{
 
     @Override
     public void visit(Variable variable) {
-        System.out.println("var###");
+//        System.out.println("var###");
         pStrings.add(pString+variable.sort());
     }
 
