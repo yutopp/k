@@ -3,7 +3,6 @@ package org.kframework.backend.java.indexing.pathIndex;
 import com.google.common.collect.Sets;
 import org.apache.commons.collections15.MultiMap;
 import org.apache.commons.collections15.multimap.MultiHashMap;
-import org.kframework.backend.java.builtins.BoolToken;
 import org.kframework.backend.java.indexing.pathIndex.visitors.CoolingRuleVisitor;
 import org.kframework.backend.java.indexing.pathIndex.visitors.HeatingRuleVisitor;
 import org.kframework.backend.java.indexing.pathIndex.visitors.RuleVisitor;
@@ -25,6 +24,12 @@ public class PathIndex {
     private org.kframework.backend.java.indexing.pathIndex.trie.PathIndexTrie trie;
     private MultiMap<Integer,String> pStringMap;
 
+    public enum RuleType{
+        COOLING,
+        HEATING,
+        OTHER
+    }
+
     public PathIndex(Definition definition) {
         this.definition = definition;
         this.indexedRules = new HashMap<>();
@@ -41,22 +46,14 @@ public class PathIndex {
         //Step 3: assign a numeric index to identify the rule IND(i)
         for (Rule rule : definition.rules()) {
             if (rule.containsAttribute("heat")) {
-                pStringMap.putAll(createHeatingRulePString(rule, count));
-                indexedRules.put(count, rule);
-                count++;
-                continue;
-            }
-
-            if (rule.containsAttribute("cool")) {
-                pStringMap.putAll(createCoolingRulePString(rule, count));
-                indexedRules.put(count, rule);
-                count++;
+                pStringMap.putAll(createRulePString(rule, count, RuleType.HEATING));
+            } else if (rule.containsAttribute("cool")) {
+                pStringMap.putAll(createRulePString(rule, count, RuleType.COOLING));
             } else {
-                pStringMap.putAll(createRulePString(rule, count));
-                indexedRules.put(count, rule);
-                count++;
+                pStringMap.putAll(createRulePString(rule, count, RuleType.OTHER));
             }
-
+            indexedRules.put(count, rule);
+            count++;
         }
 
         assert indexedRules.size() == definition.rules().size();
@@ -94,94 +91,24 @@ public class PathIndex {
         }
     }
 
-    private MultiMap<Integer, String> createRulePString(Rule rule, int count) {
-        //these rules can have multiple forms. will need to see if a trend
-        // emerges and whether there is a more general way. taking them case
-        // by case for now
-        MultiMap<Integer, String> pStrings = new MultiHashMap<>();
 
-        RuleVisitor ruleVisitor = new RuleVisitor(rule);
-        rule.accept(ruleVisitor);
-        pStrings.putAll(count,ruleVisitor.getpStrings());
-//        Cell lhsK = LookupCell.find(rule.leftHandSide(), "k");
-//        if (lhsK.getContent() instanceof KSequence) {
-//            KSequence kSequence = (KSequence) lhsK.getContent();
-//            Term content0 = kSequence.get(0);
-//            if (content0 instanceof Variable) {
-//                String varString = "@." + ((Variable) content0).sort();
-//                pStrings.put(count, varString);
-//            }
-//
-//            if (content0 instanceof KItem) {
-//                KLabel kLabel = ((KItem) content0).kLabel();
-//                KList kList = ((KItem) content0).kList();
-//                if (kList.size()==0){
-//                    String string = "@."+kLabel.toString()+".1."+ "#ListOf#Bot{\",\"}";
-//                    pStrings.put(count,string);
-//                }
-//                //TODO(OwolabiL): do a loop with the kList size instead?
-//                Term kTerm;
-//                String firstString;
-//                for (int i = 0; i < kList.size(); i++) {
-//                    kTerm = kList.get(i);
-//                    if(kTerm instanceof Variable){
-//                        firstString = "@." + kLabel.toString() + "."+(i+1)+"." +
-//                                ((Variable) kTerm).sort();
-//                        pStrings.put(count, firstString);
-//                    } else if (kTerm instanceof KItem){
-//                        KItem innerFirst = (KItem) kTerm;
-//                        firstString = "@." + kLabel.toString()
-//                                + "."+(i+1)+".";
-//                        if (innerFirst.kList().size() == 0) {
-//                            firstString += "#ListOf#Bot{\",\"}";
-//                        } //TODO(OwolabiL): else what? this is brittle!
-//                        pStrings.put(count, firstString);
-//                    }else if (kTerm instanceof Token){
-//                        //TODO(OwolabiL): make this more general, as it may not always be a BoolToken
-//                        firstString = "@." + kLabel.toString() + "."+(i+1)+"." +
-//                                ((BoolToken) kTerm).value();
-//                        pStrings.put(count, firstString);
-//                    }
-//                }
-//            }
-//        } else {
-//            //we don't have a kSequence. means that term fills entire K cell
-//            if (lhsK.getContent() instanceof KItem) {
-//                KItem kItem = (KItem) lhsK.getContent();
-//                KLabel outerKLabel = kItem.kLabel();
-//                KList kList = kItem.kList();
-//                //TODO(OwolabiL): Again, maybe use loop
-//                Term first = kList.get(0);
-//                Term second = kList.get(1);
-//                if (first instanceof KItem) {
-//                    KItem innerKItem = (KItem) first;
-//                    String outerFirstString = "@." + outerKLabel.toString()
-//                            + ".1." + innerKItem.sort();
-//                    pStrings.put(count, outerFirstString);
-//
-//                    if (second instanceof Variable) {
-//                        String outerSecondString = "@." + outerKLabel.toString()
-//                                + ".2." + ((Variable) second).sort();
-//                        pStrings.put(count, outerSecondString);
-//
-//                    }
-//                }
-//            }
-//        }
-        return pStrings;
-    }
+    private MultiMap<Integer,String> createRulePString(Rule rule, int n, RuleType type){
+        RuleVisitor ruleVisitor;
+        switch (type){
+            case COOLING:
+                ruleVisitor = new CoolingRuleVisitor(rule);
+                break;
+            case HEATING:
+                ruleVisitor = new HeatingRuleVisitor(rule, definition.context());
+                break;
+            case OTHER:
+                ruleVisitor = new RuleVisitor();
+                break;
+            default:
+                throw new IllegalArgumentException("Cannot create P-String for unknown rule tye:"+type);
+        }
 
-    private MultiMap<Integer, String> createCoolingRulePString(Rule rule, int n) {
         MultiMap<Integer, String> pStrings = new MultiHashMap<>();
-        CoolingRuleVisitor ruleVisitor = new CoolingRuleVisitor(rule);
-        rule.accept(ruleVisitor);
-        pStrings.putAll(n,ruleVisitor.getpStrings());
-        return pStrings;
-    }
-
-    private MultiMap<Integer, String> createHeatingRulePString(Rule rule, int n) {
-        MultiMap<Integer, String> pStrings = new MultiHashMap<>();
-        final HeatingRuleVisitor ruleVisitor= new HeatingRuleVisitor(rule, definition.context());
         rule.accept(ruleVisitor);
         pStrings.putAll(n,ruleVisitor.getpStrings());
         return pStrings;

@@ -15,18 +15,17 @@ import java.util.List;
  * Time: 1:50 PM
  * To change this template use File | Settings | File Templates.
  */
-public class RuleVisitor extends LocalVisitor{
-    private Rule rule;
-    private String pString;
-    private List<String> pStrings;
+public class RuleVisitor extends LocalVisitor {
+    public static final String SEPARATOR = ".";
+    public static final String START_STRING = "@.";
+    protected String pString;
+    protected List<String> pStrings;
     boolean isKSequence = false;
 
     private int position = 0;
-    private int level = 1;
 
-    public RuleVisitor(Rule rule) {
-        this.rule = rule;
-        this.pString = "@.";
+    public RuleVisitor() {
+        this.pString = START_STRING;
         this.pStrings = new ArrayList<>();
     }
 
@@ -48,38 +47,33 @@ public class RuleVisitor extends LocalVisitor{
 
     @Override
     public void visit(KItem kItem) {
-            visit(kItem.kLabel());
-                visit(kItem.kList());
-
+        visit(kItem.kLabel());
+        visit(kItem.kList());
     }
 
     @Override
     public void visit(KLabel kLabel) {
-        pString =  pString.concat(kLabel.toString());
+        pString = pString.concat(kLabel.toString());
     }
 
     @Override
     public void visit(KList kList) {
         String base = pString;
-//        System.out.println("kList###");
-        if (kList.size() == 0){
-            pStrings.add(pString+"."+(position)+"."+"#ListOf#Bot{\",\"}");
+        if (kList.size() == 0) {
+            pStrings.add(pString + SEPARATOR + (position) + SEPARATOR + "#ListOf#Bot{\",\"}");
         }
         for (int i = 0; i < kList.size(); i++) {
-            position = i+1;
-            if (!isKSequence){
-                String pending = pString+"."+(position);
+            position = i + 1;
+            if (!isKSequence) {
+                String pending = pString + SEPARATOR + (position);
                 //TODO(OwolabiL): instanceof must be removed!
-                if(kList.get(i) instanceof KItem){
-                    pStrings.add(pending+"."+((KItem)kList.get(i)).sort());
-                } else{
-                    pStrings.add(pending+"."+((Variable)kList.get(i)).sort());
+                if (kList.get(i) instanceof KItem) {
+                    pStrings.add(pending + SEPARATOR + ((KItem) kList.get(i)).sort());
+                } else {
+                    pStrings.add(pending + SEPARATOR + ((Variable) kList.get(i)).sort());
                 }
-            } else{
-//                String pending = base+"."+(position);
-//                System.out.println("***"+pString);
-                pString = base+"."+position+".";
-//                System.out.println("***"+pString);
+            } else {
+                pString = base + SEPARATOR + position + SEPARATOR;
                 kList.get(i).accept(this);
             }
         }
@@ -87,17 +81,15 @@ public class RuleVisitor extends LocalVisitor{
 
     @Override
     public void visit(Variable variable) {
-//        System.out.println("var###");
-        pStrings.add(pString+variable.sort());
+        pStrings.add(pString + variable.sort());
     }
 
     @Override
     public void visit(BoolToken boolToken) {
-        pStrings.add(pString+boolToken.value());
+        pStrings.add(pString + boolToken.value());
     }
 
     public List<String> getpStrings() {
         return pStrings;
     }
-
 }

@@ -1,8 +1,6 @@
 package org.kframework.backend.java.indexing.pathIndex.visitors;
 
 import org.kframework.backend.java.kil.*;
-import org.kframework.backend.java.symbolic.LocalVisitor;
-import org.kframework.backend.java.util.LookupCell;
 import org.kframework.kil.loader.Context;
 
 import java.util.*;
@@ -14,9 +12,7 @@ import java.util.*;
  * Time: 10:25 AM
  * To change this template use File | Settings | File Templates.
  */
-public class HeatingRuleVisitor extends LocalVisitor {
-    private String pString;
-    private List<String> pStrings;
+public class HeatingRuleVisitor extends RuleVisitor {
     private final Rule rule;
     private final Context context;
 
@@ -25,23 +21,11 @@ public class HeatingRuleVisitor extends LocalVisitor {
     public HeatingRuleVisitor(Rule rule, Context context) {
         this.rule = rule;
         this.context = context;
-        this.pStrings = new ArrayList<>();
-        pString = "@.";
-    }
-
-    @Override
-    public void visit(Rule rule) {
-        visit(LookupCell.find(rule.leftHandSide(), "k"));
-    }
-
-    @Override
-    public void visit(Cell cell) {
-        visit((KSequence)cell.getContent());
     }
 
     @Override
     public void visit(KSequence kSequence) {
-        visit((KItem)kSequence.get(0));
+        kSequence.get(0).accept(this);
     }
 
     @Override
@@ -52,7 +36,7 @@ public class HeatingRuleVisitor extends LocalVisitor {
 
     @Override
     public void visit(KLabel kLabel) {
-        pString = pString.concat(kLabel.toString()+".");
+        pString = pString.concat(kLabel.toString()+SEPARATOR);
     }
 
     @Override
@@ -73,11 +57,6 @@ public class HeatingRuleVisitor extends LocalVisitor {
             sort = variable.sort();
         }
         pStrings.add(pString+counter+"."+sort);
-    }
-
-    @Override
-    public void visit(Term node) {
-        super.visit(node);
     }
 
     private String getKResultSort(Term term) {
@@ -109,8 +88,4 @@ public class HeatingRuleVisitor extends LocalVisitor {
         return required;
     }
 
-
-    public List<String> getpStrings() {
-        return pStrings;
-    }
 }
