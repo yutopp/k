@@ -6,6 +6,7 @@ import org.apache.commons.collections15.multimap.MultiHashMap;
 import org.kframework.backend.java.indexing.pathIndex.visitors.CoolingRuleVisitor;
 import org.kframework.backend.java.indexing.pathIndex.visitors.HeatingRuleVisitor;
 import org.kframework.backend.java.indexing.pathIndex.visitors.RuleVisitor;
+import org.kframework.backend.java.indexing.pathIndex.visitors.TermVisitor;
 import org.kframework.backend.java.kil.*;
 import org.kframework.backend.java.util.LookupCell;
 import org.kframework.kil.Production;
@@ -57,7 +58,7 @@ public class PathIndex {
         }
 
         assert indexedRules.size() == definition.rules().size();
-        printIndices(indexedRules, pStringMap);
+//        printIndices(indexedRules, pStringMap);
 
         //intitialize the trie
         trie = new org.kframework.backend.java.indexing.pathIndex.trie.PathIndexTrie();
@@ -179,141 +180,8 @@ public class PathIndex {
     }
 
     private ArrayList<String> getTermPString(Term term) {
-        //TODO(OwolabiL): another case for generality using visitors: should be able to use the same pString generator as for rules!
-        Cell kCell = LookupCell.find(term, "k");
-        ArrayList<String> candidates = new ArrayList<>();
-        Term kTerm = kCell.getContent();
-        if (kTerm instanceof KSequence) {
-            if (((KSequence) kTerm).size() > 0) {
-                // Is this so in general? If head is not a token, treat as a normal KItem
-                //Here, an instance of Token at the head means that a cooling rule should apply.
-                Term sequenceHead = ((KSequence) kTerm).get(0);
-                if (sequenceHead instanceof Token) {
-                    String string1;
-                    if (definition.context().isSubsorted("KResult", ((Token) sequenceHead).sort())) {
-                        string1 = "@.KResult.";
-                        Term sequenceSecond = ((KSequence) kTerm).get(1);
-                        if (sequenceSecond instanceof KItem) {
-                            KItem kItem = (KItem) sequenceSecond;
-                            KLabel kLabel = kItem.kLabel();
-                            if (kLabel instanceof KLabelFreezer) {
-                                //TODO(OwolabiL): This is duplicated code!!!!!!!
-                                KLabelFreezer freezer = (KLabelFreezer) kLabel;
-                                KItem frozenItem = (KItem) freezer.term();
-                                String frozenItemLabel = frozenItem.kLabel().toString();
-                                Term frozenItemListMember1 = frozenItem.kList().get(0);
-                                Term frozenItemListMember2;
-                                String frozenItem2String;
-
-                                String frozenItem1String;
-                                if (frozenItemListMember1 instanceof Hole) {
-                                    frozenItem1String = "HOLE";
-                                } else {
-                                    //is it always a variable? No! Here it can be an UninterpretedToken
-                                    frozenItem1String = ((Token) frozenItemListMember1).sort();
-                                }
-
-                                if(frozenItem.kList().size() > 1){
-                                    frozenItemListMember2 = frozenItem.kList().get(1);
-                                    if (frozenItemListMember2 instanceof Hole) {
-                                        frozenItem2String = "HOLE";
-                                        String string3 = string1 + "1." + frozenItemLabel + ".2." + frozenItem2String;
-                                        candidates.add(string3);
-                                    } else {
-                                        if (frozenItemListMember2 instanceof KItem){
-                                            frozenItem2String = ((KItem) frozenItemListMember2).sort();
-                                            String string3 = string1 + "1." + frozenItemLabel + ".2." + frozenItem2String;
-                                            candidates.add(string3);
-                                        } else if (frozenItemListMember2 instanceof Token){
-                                            frozenItem2String = ((Token) frozenItemListMember2).sort();
-                                            String string3 = string1 + "1." + frozenItemLabel + ".2." + frozenItem2String;
-                                            candidates.add(string3);
-                                        }
-                                    }
-                                }
-
-                                String string2 = string1 + "1." + frozenItemLabel + ".1." + frozenItem1String;
-                                // end of duplicated code
-                                candidates.add(string2);
-                            }
-                        }
-                    } else {
-                        string1 = "@." + ((Token) sequenceHead).sort();
-                        candidates.add(string1);
-                    }
-                } else if (sequenceHead instanceof KItem) {
-                    //TODO(OwolabiL): More duplicated code. Remove!!!!
-                    KItem kItem = (KItem) sequenceHead;
-                    KLabel kLabel = kItem.kLabel();
-                    String string1 = "@." + kLabel.toString();
-                    KList kList = kItem.kList();
-
-                    if (kList.size()==0){
-                        String string = "@."+kLabel.toString()+".1."+ "#ListOf#Bot{\",\"}";
-                        candidates.add(string);
-                    }
-
-                    Term kListTerm;
-                    String pString = null;
-                    for (int i = 0; i < kList.size(); i++) {
-                        kListTerm = kList.get(i);
-                        //for imp there are two cases for the first element:
-                        //(1) it is a kItem
-                        if (kListTerm instanceof KItem) {
-                            KItem innerKItem = (KItem) kListTerm;
-                            pString = string1 + "."+(i+1)+"." + innerKItem.sort();
-                            candidates.add(pString);
-
-                        } else if (kListTerm instanceof Token) {
-                            //(2) it is an uninterpretedToken
-                            String sort = ((Token) kListTerm).sort();
-                            //if it is a KResult, use as is
-                            if (definition.context().isSubsorted("KResult", sort)){
-                                pString = string1 + "."+(i+1)+"." + sort;
-                            } else {
-                                ArrayList<Production> productions = (ArrayList<Production>) definition.context().productionsOf(kLabel.toString());
-                                Production p = productions.get(0);
-                                pString = string1 + "."+(i+1)+"." + p.getChildSort(0);
-                            }
-                            //else use sort from the production in this position
-                            candidates.add(pString);
-                        }
-
-
-                    }
-                }
-            }
-
-        } else {
-
-            KItem kItem = (KItem) kTerm;
-            KLabel kLabel = kItem.kLabel();
-            String string1 = "@." + kLabel.toString();
-            KList kList = kItem.kList();
-
-            if (kList.size()==0){
-                String string = "@."+kLabel.toString()+".1."+ "#ListOf#Bot{\",\"}";
-                candidates.add(string);
-            }
-
-            Term kListTerm;
-            String pString;
-
-            for (int i = 0; i < kList.size(); i++) {
-                 kListTerm = kList.get(i);
-                if (kListTerm instanceof KItem) {
-                    KItem innerKItem = (KItem) kListTerm;
-                    pString = string1 + "."+(i+1)+"." + innerKItem.sort();
-                    candidates.add(pString);
-
-                } else if (kListTerm instanceof Token) {
-                    //(2) it is an uninterpretedToken
-                    pString = string1 + "."+(i+1)+"." + ((Token) kListTerm).sort();
-                    candidates.add(pString);
-                }
-            }
-
-        }
-        return candidates;
+        TermVisitor termVisitor = new TermVisitor(definition.context());
+        term.accept(termVisitor);
+        return (ArrayList<String>) termVisitor.getpStrings();
     }
 }
