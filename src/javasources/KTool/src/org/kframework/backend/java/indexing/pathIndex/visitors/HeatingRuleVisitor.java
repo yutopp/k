@@ -6,11 +6,9 @@ import org.kframework.kil.loader.Context;
 import java.util.*;
 
 /**
- * Created with IntelliJ IDEA.
- * User: owolabi
+ * Author: OwolabiL
  * Date: 1/20/14
  * Time: 10:25 AM
- * To change this template use File | Settings | File Templates.
  */
 public class HeatingRuleVisitor extends RuleVisitor {
     private final Rule rule;

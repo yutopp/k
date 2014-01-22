@@ -143,7 +143,7 @@ public class PathIndexTrie implements Trie {
     }
 
     private void remove(TrieNode node, ArrayList<String> splitList, int value) {
-        boolean result;
+//        boolean result;
         String c;
         ArrayList<String> newSuffix;
         TrieNode child = null;
@@ -168,26 +168,13 @@ public class PathIndexTrie implements Trie {
 //            result = false;
         } else if (newSuffix.size() == 0) {
             if(child instanceof TrieLeaf && ((TrieLeaf) child).getIndices().size()>0){
-//                if(((TrieLeaf) child).getIndices().contains(value)){
-//                    ((TrieLeaf) child).getIndices().remove(value);
-//                    result = true;
-//                } else {
-                    //this should not happen!
                     children.remove(child);
-//                    result = true;
-//                }
             }
         } else { //
             remove(child, newSuffix,value);
 
             if (child.getChildren().size() == 0) {
-//                if(((TrieLeaf) child).getIndices().contains(value)){
-//                    ((TrieLeaf) child).getIndices().remove(value);
-//                    result = true;
-//                } else {
                     children.remove(child);
-//                    result = true;
-//                }
             }
         }
 

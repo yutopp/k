@@ -9,15 +9,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Created with IntelliJ IDEA.
- * User: owolabi
+ * Author: OwolabiL
  * Date: 1/20/14
  * Time: 1:50 PM
- * To change this template use File | Settings | File Templates.
  */
 public class RuleVisitor extends LocalVisitor {
-    public static final String SEPARATOR = ".";
-    public static final String START_STRING = "@.";
+    static final String SEPARATOR = ".";
+    private static final String START_STRING = "@.";
     protected String pString;
     protected List<String> pStrings;
     boolean isKSequence = false;

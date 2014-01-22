@@ -12,26 +12,21 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * Created with IntelliJ IDEA.
- * User: owolabi
+ * Author: OwolabiL
  * Date: 1/21/14
  * Time: 12:05 PM
- * To change this template use File | Settings | File Templates.
  */
 public class TermVisitor extends LocalVisitor {
     private List<String> pStrings;
 
-    private Set<Rule> rules;
     private final Context context;
     private String pString;
     private int currentPosition = 0;
     private boolean inner = false;
-    private boolean isKResultSequenceHead = false;
     private String currentLabel;
 
     public TermVisitor(Context context) {
         pStrings = new ArrayList<>();
-        rules = new HashSet<>();
         this.context = context;
     }
 
@@ -60,7 +55,6 @@ public class TermVisitor extends LocalVisitor {
     public void visit(Token token) {
         if (pString == null) {
             if (context.isSubsorted("KResult", token.sort())) {
-                isKResultSequenceHead = true;
                 pString = "@.KResult";
             } else {
                 //TODO(OwolabiL): Use a better check than the nullity of pString
@@ -83,15 +77,6 @@ public class TermVisitor extends LocalVisitor {
         }
     }
 
-    @Override
-    public void visit(Hole hole) {
-        super.visit(hole);    //To change body of overridden methods use File | Settings | File Templates.
-    }
-
-    @Override
-    public void visit(KLabelFreezer kLabelFreezer) {
-        super.visit(kLabelFreezer);    //To change body of overridden methods use File | Settings | File Templates.
-    }
 
     @Override
     public void visit(KItem kItem) {

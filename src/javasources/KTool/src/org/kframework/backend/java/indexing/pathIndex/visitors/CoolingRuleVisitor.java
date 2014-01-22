@@ -3,11 +3,9 @@ package org.kframework.backend.java.indexing.pathIndex.visitors;
 import org.kframework.backend.java.kil.*;
 
 /**
- * Created with IntelliJ IDEA.
- * User: owolabi
+ * Author: OwolabiL
  * Date: 1/20/14
  * Time: 12:40 PM
- * To change this template use File | Settings | File Templates.
  */
 public class CoolingRuleVisitor extends RuleVisitor{
     private Rule rule;
