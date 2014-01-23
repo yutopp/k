@@ -2,7 +2,7 @@
 // and accumulates the total number of steps in s.
 
 int m, n, q, r, s;
-m = 20;
+m = 10;
 while (!(m<=2)) {
   n = m;
   m = m + -1;
@@ -17,4 +17,15 @@ while (!(m<=2)) {
 }
 
 // s should be 66 when m is 10
-// [12992, 2.287 s]
+
+//with
+// [4481, 1.349 s]
+// [4481, 1.339 s]
+// [4481, 1.366 s]
+// [4481, 1.358 s]
+
+//without
+// [4481, 1.447 s]
+// [4481, 1.425 s]
+// [4481, 1.381 s]
+// [4481, 1.398 s]

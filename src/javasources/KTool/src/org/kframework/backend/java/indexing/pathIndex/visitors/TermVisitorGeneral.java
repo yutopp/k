@@ -14,7 +14,7 @@ import java.util.List;
  * Date: 1/21/14
  * Time: 12:05 PM
  */
-public class TermVisitor extends LocalVisitor {
+public class TermVisitorGeneral extends LocalVisitor {
     private List<String> pStrings;
 
     private final Context context;
@@ -25,7 +25,7 @@ public class TermVisitor extends LocalVisitor {
     private final String SEPARATOR = ".";
     private final String START_STRING = "@.";
 
-    public TermVisitor(Context context) {
+    public TermVisitorGeneral(Context context) {
         pStrings = new ArrayList<>();
         this.context = context;
     }
@@ -74,6 +74,7 @@ public class TermVisitor extends LocalVisitor {
                 Production p = productions.get(0);
                 pStrings.add(pString + SEPARATOR+ currentPosition + SEPARATOR + p.getChildSort(0));
 
+//                pStrings.add(pString + SEPARATOR+ currentPosition + SEPARATOR + "KItem");
             }
         }
     }
@@ -94,7 +95,12 @@ public class TermVisitor extends LocalVisitor {
                 kItem.kLabel().accept(this);
                 kItem.kList().accept(this);
             } else {
-                pStrings.add(pString + SEPARATOR + currentPosition + SEPARATOR + kItem.sort());
+                if (kItem.kList().size() == 0){
+                    System.out.println("%%% "+kItem.sort());
+                    pStrings.add(pString + SEPARATOR + currentPosition + SEPARATOR + "'.List{\",\"}");
+                } else {
+                    pStrings.add(pString + SEPARATOR + currentPosition + SEPARATOR + kItem.sort());
+                }
             }
         }
     }
@@ -102,7 +108,9 @@ public class TermVisitor extends LocalVisitor {
     @Override
     public void visit(KList kList) {
         if (kList.size() == 0) {
-            pStrings.add(pString + ".1." + "#ListOf#Bot{\",\"}");
+//            pStrings.add(pString + ".1." + "#ListOf#Bot{\",\"}");
+            System.out.println("currentLabel: "+currentLabel);
+            pStrings.add(pString + ".1." + currentLabel);
         } else {
             for (int i = 0; i < kList.size(); i++) {
                 currentPosition = i + 1;
@@ -120,7 +128,7 @@ public class TermVisitor extends LocalVisitor {
         return pStrings;
     }
 
-    private class TokenVisitor extends TermVisitor {
+    private class TokenVisitor extends TermVisitorGeneral {
         private String baseString;
         private String pString;
         private List<String> candidates;

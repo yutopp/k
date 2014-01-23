@@ -1,6 +1,7 @@
 package org.kframework.backend.java.indexing.pathIndex.visitors;
 
 import org.kframework.backend.java.kil.*;
+import org.kframework.kil.loader.Context;
 
 /**
  * Author: OwolabiL
@@ -11,7 +12,8 @@ public class CoolingRuleVisitor extends RuleVisitor{
     private Rule rule;
 
 
-    public CoolingRuleVisitor(Rule rule) {
+    public CoolingRuleVisitor(Rule rule, Context context) {
+        super(context);
         this.rule = rule;
     }
 

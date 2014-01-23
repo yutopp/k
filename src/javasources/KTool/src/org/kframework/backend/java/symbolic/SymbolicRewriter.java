@@ -261,6 +261,12 @@ public class SymbolicRewriter {
         Set<Rule> rules = new HashSet<Rule>();
         if (K.do_indexing){
            rules.addAll(pathIndex.getRulesForTerm(term));
+            System.out.println();
+            System.out.println("Term: "+term);
+            System.out.println("size of indexing rules: "+rules.size());
+            System.out.println("indexing rules: "+rules);
+            System.out.println("===================================="+ "\n");
+
         } else{
             rules.addAll(getNonIndexedRules(term));
         }
@@ -367,14 +373,14 @@ public class SymbolicRewriter {
             return;
         }
 
-//        //checking how the rules from index do against existing indexing scheme
-//        if (K.do_indexing){
-//            Set<Rule> normalRules = getNonIndexedRules(constrainedTerm.term());
-//            Set<Rule> rulesFromIndex = pathIndex.getRulesForTerm(constrainedTerm.term());
-//
-//            if (rulesFromIndex != null) {
-////                System.out.println("====================================");
-//                System.out.println("Term: "+constrainedTerm.term());
+        //checking how the rules from index do against existing indexing scheme
+        if (K.do_indexing){
+            Set<Rule> normalRules = getNonIndexedRules(constrainedTerm.term());
+            Set<Rule> rulesFromIndex = pathIndex.getRulesForTerm(constrainedTerm.term());
+
+            if (rulesFromIndex != null) {
+//                System.out.println("====================================");
+                System.out.println("Term: "+constrainedTerm.term());
 //                if (normalRules.size() > rulesFromIndex.size() && rulesFromIndex.size() ==1){
 //                    more1++;
 //                }
@@ -396,15 +402,15 @@ public class SymbolicRewriter {
 //                }
 //                System.out.println(normalRules.size() +" "+rulesFromIndex.size());
 //                System.out.println("equal1: "+equal1+" | equal: "+equalNot1+" | less: "+less+" | more1: "+more1+" | moreNot1: "+moreNot1);
-//                System.out.println("No. of Normal rules: "+normalRules.size());
+                System.out.println("No. of Normal rules: "+normalRules.size());
 //                System.out.println("No. of rules from index: "+rulesFromIndex.size()+"\n");
-//
-//                System.out.println("Normal rules: "+normalRules);
+
+                System.out.println("Normal rules: "+normalRules);
 //                System.out.println("Rules from index: " + rulesFromIndex );
 //                System.out.println();
-////                System.out.println("===================================="+ "\n");
-//            }
-//        }
+//                System.out.println("===================================="+ "\n");
+            }
+        }
 
         // Applying a strategy to a set of rules divides the rules up into
         // equivalence classes of rules. We iterate through these equivalence

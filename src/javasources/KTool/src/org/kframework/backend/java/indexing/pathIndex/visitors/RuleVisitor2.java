@@ -14,7 +14,7 @@ import java.util.List;
  * Date: 1/20/14
  * Time: 1:50 PM
  */
-public class RuleVisitor extends LocalVisitor {
+public class RuleVisitor2 extends LocalVisitor {
     static final String SEPARATOR = ".";
     private static final String START_STRING = "@.";
     private final Context context;
@@ -25,7 +25,7 @@ public class RuleVisitor extends LocalVisitor {
 
     private int position = 0;
 
-    public RuleVisitor(Context context) {
+    public RuleVisitor2(Context context) {
         this.context = context;
         this.pString = START_STRING;
         this.pStrings = new ArrayList<>();
