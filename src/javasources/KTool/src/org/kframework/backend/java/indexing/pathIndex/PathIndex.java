@@ -53,7 +53,7 @@ public class PathIndex {
         }
 
         assert indexedRules.size() == definition.rules().size();
-        printIndices(indexedRules, pStringMap);
+//        printIndices(indexedRules, pStringMap);
 
         //intitialize the trie
         trie = new org.kframework.backend.java.indexing.pathIndex.trie.PathIndexTrie();
@@ -112,8 +112,8 @@ public class PathIndex {
 
     public Set<Rule> getRulesForTerm(Term term) {
         ArrayList<String> pStrings = getTermPString2(term);
-        System.out.println("K-testgen? "+ K.do_concrete_exec);
-        System.out.println("PStrings: "+pStrings);
+//        System.out.println("K-testgen? "+ K.do_concrete_exec);
+//        System.out.println("PStrings: "+pStrings);
         Set<Rule> rules = new HashSet<>();
         //find the intersection of all the sets returned
         Set<Integer> nextRetrieved = null;
@@ -146,7 +146,11 @@ public class PathIndex {
             }
 
         } else if (pStrings.size() == 1) {
-            matchingIndices.addAll(trie.retrieve(trie.getRoot(), pStrings.get(0)));
+            if (trie.retrieve(trie.getRoot(), pStrings.get(0)) != null) {
+                matchingIndices.addAll(trie.retrieve(trie.getRoot(), pStrings.get(0)));
+            } else{
+                matchingIndices.addAll(getClosestIndices(pStrings));
+            }
         }
         //TODO(OwolabiL): Bad hack to be removed. Manipulate sorts instead
         //this is needed if we had multiple pStrings that do not match any rules

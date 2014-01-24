@@ -95,8 +95,8 @@ public class TermVisitorGeneral extends LocalVisitor {
                 kItem.kLabel().accept(this);
                 kItem.kList().accept(this);
             } else {
-                if (kItem.kList().size() == 0){
-                    System.out.println("%%% "+kItem.sort());
+                if (kItem.kList().size() == 0 && currentLabel.equals("List{\",\"}")){
+//                    System.out.println("current label: "+currentLabel);
                     pStrings.add(pString + SEPARATOR + currentPosition + SEPARATOR + "'.List{\",\"}");
                 } else {
                     pStrings.add(pString + SEPARATOR + currentPosition + SEPARATOR + kItem.sort());
@@ -109,8 +109,9 @@ public class TermVisitorGeneral extends LocalVisitor {
     public void visit(KList kList) {
         if (kList.size() == 0) {
 //            pStrings.add(pString + ".1." + "#ListOf#Bot{\",\"}");
-            System.out.println("currentLabel: "+currentLabel);
-            pStrings.add(pString + ".1." + currentLabel);
+//            System.out.println("currentLabel: "+currentLabel);
+//            pStrings.add(pString + ".1." + currentLabel);
+            pStrings.add(pString);
         } else {
             for (int i = 0; i < kList.size(); i++) {
                 currentPosition = i + 1;
