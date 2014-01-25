@@ -373,43 +373,43 @@ public class SymbolicRewriter {
         }
 
         //checking how the rules from index do against existing indexing scheme
-        if (K.do_indexing){
-            Set<Rule> normalRules = getNonIndexedRules(constrainedTerm.term());
-            Set<Rule> rulesFromIndex = pathIndex.getRulesForTerm(constrainedTerm.term());
-
-            if (rulesFromIndex != null) {
-                System.out.println("====================================");
-                System.out.println("Term: "+constrainedTerm.term());
-                if (normalRules.size() > rulesFromIndex.size() && rulesFromIndex.size() ==1){
-                    more1++;
-                }
-
-                if (normalRules.size() > rulesFromIndex.size() && rulesFromIndex.size() !=1){
-                    moreNot1++;
-                }
-
-                if (normalRules.size() < rulesFromIndex.size()){
-                    less++;
-                }
-
-                if (normalRules.size() == rulesFromIndex.size()){
-                    if(normalRules.size() == 1){
-                        equalNot1++;
-                    } else{
-                        equal1++;
-                    }
-                }
-//                System.out.println(normalRules.size() +" "+rulesFromIndex.size());
-                System.out.println("equal1: "+equal1+" | equal: "+equalNot1+" | less: "+less+" | more1: "+more1+" | moreNot1: "+moreNot1);
-                System.out.println("No. of Normal rules: "+normalRules.size());
-                System.out.println("No. of rules from index: "+rulesFromIndex.size()+"\n");
-
-//                System.out.println("Normal rules: "+normalRules);
-                System.out.println("Rules from index: " + rulesFromIndex );
-//                System.out.println();
-//                System.out.println("===================================="+ "\n");
-            }
-        }
+//        if (K.do_indexing){
+//            Set<Rule> normalRules = getNonIndexedRules(constrainedTerm.term());
+//            Set<Rule> rulesFromIndex = pathIndex.getRulesForTerm(constrainedTerm.term());
+//
+//            if (rulesFromIndex != null) {
+//                System.out.println("====================================");
+//                System.out.println("Term: "+constrainedTerm.term());
+//                if (normalRules.size() > rulesFromIndex.size() && rulesFromIndex.size() ==1){
+//                    more1++;
+//                }
+//
+//                if (normalRules.size() > rulesFromIndex.size() && rulesFromIndex.size() !=1){
+//                    moreNot1++;
+//                }
+//
+//                if (normalRules.size() < rulesFromIndex.size()){
+//                    less++;
+//                }
+//
+//                if (normalRules.size() == rulesFromIndex.size()){
+//                    if(normalRules.size() == 1){
+//                        equal1++;
+//                    } else{
+//                        equalNot1++;
+//                    }
+//                }
+////                System.out.println(normalRules.size() +" "+rulesFromIndex.size());
+//                System.out.println("equal1: "+equal1+" | equal: "+equalNot1+" | less: "+less+" | more1: "+more1+" | moreNot1: "+moreNot1);
+//                System.out.println("No. of Normal rules: "+normalRules.size());
+//                System.out.println("No. of rules from index: "+rulesFromIndex.size()+"\n");
+//
+////                System.out.println("Normal rules: "+normalRules);
+//                System.out.println("Rules from index: " + rulesFromIndex );
+////                System.out.println();
+////                System.out.println("===================================="+ "\n");
+//            }
+//        }
 
         // Applying a strategy to a set of rules divides the rules up into
         // equivalence classes of rules. We iterate through these equivalence

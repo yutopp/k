@@ -49,7 +49,7 @@ public class CoolingRuleVisitor extends RuleVisitor{
 
     @Override
     public void visit(KItem kItem) {
-        System.out.println("kItem: "+kItem);
+//        System.out.println("kItem: "+kItem);
         visit(kItem.kLabel());
         visit(kItem.kList());
         this.proceed = false;
@@ -74,8 +74,8 @@ public class CoolingRuleVisitor extends RuleVisitor{
 //                pStrings.add(pString+(i+1)+SEPARATOR+ ((Variable) frozenTerm).sort());
                 ArrayList<Production> productions = (ArrayList<Production>) context.productionsOf(currentLabel);
                 Production p = productions.get(0);
-                System.out.println("variable: "+frozenTerm);
-                System.out.println("child sort: "+p.getChildSort(i));
+//                System.out.println("variable: "+frozenTerm);
+//                System.out.println("child sort: "+p.getChildSort(i));
                 pStrings.add(pString+(i+1)+SEPARATOR+ p.getChildSort(i));
 //                sort = p.getChildSort(counter-1);
             }

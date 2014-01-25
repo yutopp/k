@@ -54,7 +54,7 @@ public class PathIndex {
         }
 
         assert indexedRules.size() == definition.rules().size();
-        printIndices(indexedRules, pStringMap);
+//        printIndices(indexedRules, pStringMap);
 
         //intitialize the trie
         trie = new org.kframework.backend.java.indexing.pathIndex.trie.PathIndexTrie();
@@ -114,7 +114,7 @@ public class PathIndex {
     public Set<Rule> getRulesForTerm(Term term) {
         ArrayList<String> pStrings = getTermPString2(term);
 //        System.out.println("K-testgen? "+ K.do_concrete_exec);
-        System.out.println("PStrings: "+pStrings);
+//        System.out.println("PStrings: "+pStrings);
         Set<Rule> rules = new HashSet<>();
         //find the intersection of all the sets returned
         Set<Integer> nextRetrieved = null;
@@ -127,13 +127,13 @@ public class PathIndex {
 //                }
 //            }
             currentMatch = trie.retrieve(trie.getRoot(), pStrings.get(0));
-            System.out.println("initial match: "+currentMatch);
+//            System.out.println("initial match: "+currentMatch);
             String possible = getHigherPString(pStrings.get(0),0);
-            System.out.println("Possible: "+possible);
+//            System.out.println("Possible: "+possible);
 
             if (possible != null && currentMatch != null) {
                 currentMatch = Sets.union(currentMatch, trie.retrieve(trie.getRoot(), possible));
-                System.out.println("XXX "+currentMatch);
+//                System.out.println("XXX "+currentMatch);
 //                if (currentMatch != null) {
 //                } else{
 //                    currentMatch = trie.retrieve(trie.getRoot(), pStrings.get(1));
@@ -141,16 +141,16 @@ public class PathIndex {
             }
 
             if (currentMatch != null && currentMatch.size() > 1 && pStrings.size() > 1){
-                System.out.println("YYY "+trie.retrieve(trie.getRoot(), pStrings.get(1)));
+//                System.out.println("YYY "+trie.retrieve(trie.getRoot(), pStrings.get(1)));
                 if (trie.retrieve(trie.getRoot(), pStrings.get(1)) != null) {
                     Set<Integer> possibleIntersection = Sets.intersection(currentMatch,trie.retrieve(trie.getRoot(), pStrings.get(1)));
                     if (possibleIntersection.size() > 0){
                         currentMatch = Sets.intersection(currentMatch,trie.retrieve(trie.getRoot(), pStrings.get(1)));
                     }
                 } else {
-                    System.out.println("hahaha");
+//                    System.out.println("hahaha");
                     String nextPossible = getHigherPString(pStrings.get(1),1);
-                    System.out.println("nextPossible: "+nextPossible);
+//                    System.out.println("nextPossible: "+nextPossible);
                     if (nextPossible != null) {
                         currentMatch = Sets.intersection(currentMatch, trie.retrieve(trie.getRoot(),nextPossible));
                     }
@@ -163,7 +163,7 @@ public class PathIndex {
             }
 
 
-            System.out.println("zzz: "+currentMatch);
+//            System.out.println("zzz: "+currentMatch);
 //            for (String pString : pStrings.subList(1, pStrings.size())) {
 //                nextRetrieved = trie.retrieve(trie.getRoot(),getHigherPString pString);
 //                if (nextRetrieved != null && currentMatch != null) {
@@ -235,7 +235,7 @@ public class PathIndex {
         strings.add(pString);
         Set<String> sorts = getSortsFromPStrings(strings);
         for (String sort : sorts){
-            System.out.println("UUU "+ sort);
+//            System.out.println("UUU "+ sort);
             if (sort.equals("HOLE")){
                 return null;
             }
@@ -244,10 +244,10 @@ public class PathIndex {
 
                 String [] split =pString.split("\\.");
                 ArrayList<String> splitList = new ArrayList<>(Arrays.asList(split));
-                System.out.println("$$$$ "+pString);
-                System.out.println("$$$$ "+splitList.size());
+//                System.out.println("$$$$ "+pString);
+//                System.out.println("$$$$ "+splitList.size());
                 int pos = splitList.size() - 3;
-                System.out.println("$$$ "+splitList.get(pos));
+//                System.out.println("$$$ "+splitList.get(pos));
 //                System.out.println("&&&"+replacement);
                 String currentLabel = splitList.get(pos);
 //                String currentLabel = replacement.substring(replacement.indexOf(".")+1,replacement.lastIndexOf("."));
@@ -266,10 +266,10 @@ public class PathIndex {
                 String [] split =pString.split("\\.");
                 ArrayList<String> splitList = new ArrayList<>(Arrays.asList(split));
                 if (splitList.size() > 2){
-                    System.out.println("$$$$ "+pString);
-                    System.out.println("$$$$ "+splitList.size());
+//                    System.out.println("$$$$ "+pString);
+//                    System.out.println("$$$$ "+splitList.size());
                     int pos = splitList.size() - 3;
-                    System.out.println("$$$ "+splitList.get(pos));
+//                    System.out.println("$$$ "+splitList.get(pos));
 //                System.out.println("&&&"+replacement);
                     String currentLabel = splitList.get(pos);
 //                String currentLabel = replacement.substring(replacement.indexOf(".")+1,replacement.lastIndexOf("."));
