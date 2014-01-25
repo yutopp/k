@@ -17,7 +17,7 @@ import java.util.List;
 public class RuleVisitor extends LocalVisitor {
     static final String SEPARATOR = ".";
     private static final String START_STRING = "@.";
-    private final Context context;
+    final Context context;
     protected String pString;
     protected List<String> pStrings;
     boolean isKSequence = false;
@@ -63,8 +63,6 @@ public class RuleVisitor extends LocalVisitor {
     public void visit(KList kList) {
         String base = pString;
         if (kList.size() == 0) {
-            //TODO(OwolabiL): adding 1 to position for now seems to work. may need to change
-//            pStrings.add(pString + SEPARATOR + (position+1) + SEPARATOR + "#ListOf#Bot{\",\"}");
             pStrings.add(pString);
         }
         for (int i = 0; i < kList.size(); i++) {
@@ -75,11 +73,11 @@ public class RuleVisitor extends LocalVisitor {
                 if (kList.get(i) instanceof KItem) {
                     pStrings.add(pending + SEPARATOR + ((KItem) kList.get(i)).sort());
                 } else {
-                    if (context.isSubsorted("KResult",((Variable)kList.get(i)).sort())){
+//                    if (context.isSubsorted("KResult",((Variable)kList.get(i)).sort())){
                         pStrings.add(pending + SEPARATOR + ((Variable) kList.get(i)).sort());
-                    } else {
-                        pStrings.add(pending + SEPARATOR + "KItem");
-                    }
+//                    } else {
+//                        pStrings.add(pending + SEPARATOR + "KItem");
+//                    }
                 }
             } else {
                 pString = base + SEPARATOR + position + SEPARATOR;
@@ -95,7 +93,7 @@ public class RuleVisitor extends LocalVisitor {
 
     @Override
     public void visit(BoolToken boolToken) {
-        pStrings.add(pString + boolToken.value());
+        pStrings.add(pString + boolToken.sort());
     }
 
     public List<String> getpStrings() {

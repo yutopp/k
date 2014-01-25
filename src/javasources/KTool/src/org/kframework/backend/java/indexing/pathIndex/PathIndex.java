@@ -5,6 +5,7 @@ import org.apache.commons.collections15.MultiMap;
 import org.apache.commons.collections15.multimap.MultiHashMap;
 import org.kframework.backend.java.indexing.pathIndex.visitors.*;
 import org.kframework.backend.java.kil.*;
+import org.kframework.kil.Production;
 import org.kframework.krun.K;
 
 import java.util.*;
@@ -53,7 +54,7 @@ public class PathIndex {
         }
 
         assert indexedRules.size() == definition.rules().size();
-//        printIndices(indexedRules, pStringMap);
+        printIndices(indexedRules, pStringMap);
 
         //intitialize the trie
         trie = new org.kframework.backend.java.indexing.pathIndex.trie.PathIndexTrie();
@@ -113,53 +114,98 @@ public class PathIndex {
     public Set<Rule> getRulesForTerm(Term term) {
         ArrayList<String> pStrings = getTermPString2(term);
 //        System.out.println("K-testgen? "+ K.do_concrete_exec);
-//        System.out.println("PStrings: "+pStrings);
+        System.out.println("PStrings: "+pStrings);
         Set<Rule> rules = new HashSet<>();
         //find the intersection of all the sets returned
         Set<Integer> nextRetrieved = null;
         Set<Integer> currentMatch = null;
         Set<Integer> matchingIndices = new HashSet<>();
-        if (pStrings.size() > 1) {
-            currentMatch = trie.retrieve(trie.getRoot(), pStrings.get(0));
-            for (String pString : pStrings.subList(1, pStrings.size())) {
-                nextRetrieved = trie.retrieve(trie.getRoot(), pString);
-                if (nextRetrieved != null && currentMatch != null) {
-                    currentMatch = Sets.intersection(currentMatch, nextRetrieved);
-                }
-
-//                if (nextRetrieved != null && currentMatch == null) {
-//                    currentMatch = nextRetrieved;
+        if (pStrings.size() >= 1) {
+//            for (int i = 0; i < pStrings.size(); i++) {
+//                if (trie.retrieve(trie.getRoot(), pStrings.get(i)) != null) {
+//                    matchingIndices.addAll(trie.retrieve(trie.getRoot(), pStrings.get(i)));
 //                }
+//            }
+            currentMatch = trie.retrieve(trie.getRoot(), pStrings.get(0));
+            System.out.println("initial match: "+currentMatch);
+            String possible = getHigherPString(pStrings.get(0),0);
+            System.out.println("Possible: "+possible);
 
-                //TODO(OwolabiL):Another terrible hack that should be removed!!! Needed with general sorts
-                //This is a result of not yet knowing how to manipulate the sort hierarchy in
-                // the index
-                if (nextRetrieved == null && currentMatch != null){
-                    ArrayList<String> list = new ArrayList<>();
-                    list.add(pString);
-                    currentMatch = Sets.union(currentMatch,getClosestIndices(list));
-//                    currentMatch = Sets.intersection(currentMatch,getClosestIndices2(pStrings));
+            if (possible != null && currentMatch != null) {
+                currentMatch = Sets.union(currentMatch, trie.retrieve(trie.getRoot(), possible));
+                System.out.println("XXX "+currentMatch);
+//                if (currentMatch != null) {
+//                } else{
+//                    currentMatch = trie.retrieve(trie.getRoot(), pStrings.get(1));
+//                }
+            }
+
+            if (currentMatch != null && currentMatch.size() > 1 && pStrings.size() > 1){
+                System.out.println("YYY "+trie.retrieve(trie.getRoot(), pStrings.get(1)));
+                if (trie.retrieve(trie.getRoot(), pStrings.get(1)) != null) {
+                    Set<Integer> possibleIntersection = Sets.intersection(currentMatch,trie.retrieve(trie.getRoot(), pStrings.get(1)));
+                    if (possibleIntersection.size() > 0){
+                        currentMatch = Sets.intersection(currentMatch,trie.retrieve(trie.getRoot(), pStrings.get(1)));
+                    }
+                } else {
+                    System.out.println("hahaha");
+                    String nextPossible = getHigherPString(pStrings.get(1),1);
+                    System.out.println("nextPossible: "+nextPossible);
+                    if (nextPossible != null) {
+                        currentMatch = Sets.intersection(currentMatch, trie.retrieve(trie.getRoot(),nextPossible));
+                    }
                 }
             }
+
+
+            if (currentMatch == null){
+                currentMatch = trie.retrieve(trie.getRoot(), pStrings.get(1));
+            }
+
+
+            System.out.println("zzz: "+currentMatch);
+//            for (String pString : pStrings.subList(1, pStrings.size())) {
+//                nextRetrieved = trie.retrieve(trie.getRoot(),getHigherPString pString);
+//                if (nextRetrieved != null && currentMatch != null) {
+//                    System.out.println("currentmatch: "+currentMatch);
+//                    System.out.println("next: "+nextRetrieved);
+//                    currentMatch = Sets.intersection(currentMatch, nextRetrieved);
+//                }                                             nextPossible
+//
+////                if (nextRetrieved != null && currentMatch == null) {
+////                    currentMatch = nextRetrieved;
+////                }
+//
+//                //TODO(OwolabiL):Another terrible hack that should be removed!!! Needed with general sorts
+//                //This is a result of not yet knowing how to manipulate the sort hierarchy in
+//                // the index
+////                if (nextRetrieved == null && currentMatch != null){
+////                    ArrayList<String> list = new ArrayList<>();
+////                    list.add(pString);
+////                    currentMatch = Sets.union(currentMatch,getClosestIndices(list));
+//////                    currentMatch = Sets.intersection(currentMatch,getClosestIndices2(pStrings));
+////                }
+//            }
             if (currentMatch != null) {
                 matchingIndices.addAll(currentMatch);
             }
 
-        } else if (pStrings.size() == 1) {
-            if (trie.retrieve(trie.getRoot(), pStrings.get(0)) != null) {
-                matchingIndices.addAll(trie.retrieve(trie.getRoot(), pStrings.get(0)));
-            } else{
-                matchingIndices.addAll(getClosestIndices(pStrings));
-            }
+//        } else if (pStrings.size() == 1) {
+//            if (trie.retrieve(trie.getRoot(), pStrings.get(0)) != null) {
+//                matchingIndices.addAll(trie.retrieve(trie.getRoot(), pStrings.get(0)));
+//            } else{
+//                matchingIndices.addAll(getClosestIndices(pStrings));
+//            }
         }
         //TODO(OwolabiL): Bad hack to be removed. Manipulate sorts instead
         //this is needed if we had multiple pStrings that do not match any rules
         //e.g. for imp, [@.'_+_.1.Id] should match [@.'_+_.1.KItem] or [@.'_+_.1.AExp] but it
         // currently doesn't
-        if (matchingIndices.size() == 0 && pStrings.size() != 0) {
-            Set<Integer> closestIndices = getClosestIndices(pStrings);
-            matchingIndices.addAll(closestIndices);
-        }
+//        if (matchingIndices.size() == 0 && pStrings.size() != 0) {
+//            System.out.println("here!");
+//            Set<Integer> closestIndices = getClosestIndices(pStrings);
+//            matchingIndices.addAll(closestIndices);
+//        }
 
         for (Integer n : matchingIndices) {
             rules.add(indexedRules.get(n));
@@ -180,6 +226,69 @@ public class PathIndex {
             }
         }
         return candidates;
+    }
+
+    private String getHigherPString(String pString, int n){
+        String newString = null;
+        String newPString = null;
+        ArrayList<String> strings = new ArrayList<>();
+        strings.add(pString);
+        Set<String> sorts = getSortsFromPStrings(strings);
+        for (String sort : sorts){
+            System.out.println("UUU "+ sort);
+            if (sort.equals("HOLE")){
+                return null;
+            }
+            if (definition.context().isSubsorted("KResult",sort)){
+                String replacement = pString.substring(0,pString.lastIndexOf("."))+".";
+
+                String [] split =pString.split("\\.");
+                ArrayList<String> splitList = new ArrayList<>(Arrays.asList(split));
+                System.out.println("$$$$ "+pString);
+                System.out.println("$$$$ "+splitList.size());
+                int pos = splitList.size() - 3;
+                System.out.println("$$$ "+splitList.get(pos));
+//                System.out.println("&&&"+replacement);
+                String currentLabel = splitList.get(pos);
+//                String currentLabel = replacement.substring(replacement.indexOf(".")+1,replacement.lastIndexOf("."));
+//                currentLabel = currentLabel.substring(0,currentLabel.lastIndexOf("."));
+//                System.out.println("currentLabel: "+currentLabel);
+                ArrayList<Production> productions = (ArrayList<Production>) definition.context().productionsOf(currentLabel);
+                Production p = productions.get(0);
+                newString = p.getChildSort(n);
+//                System.out.println("### "+newString);
+                replacement = replacement + newString;
+//                System.out.println("replaced: "+replacement);
+                newPString = replacement;
+            }else {
+                String replacement = pString.substring(0,pString.lastIndexOf("."))+".";
+
+                String [] split =pString.split("\\.");
+                ArrayList<String> splitList = new ArrayList<>(Arrays.asList(split));
+                if (splitList.size() > 2){
+                    System.out.println("$$$$ "+pString);
+                    System.out.println("$$$$ "+splitList.size());
+                    int pos = splitList.size() - 3;
+                    System.out.println("$$$ "+splitList.get(pos));
+//                System.out.println("&&&"+replacement);
+                    String currentLabel = splitList.get(pos);
+//                String currentLabel = replacement.substring(replacement.indexOf(".")+1,replacement.lastIndexOf("."));
+//                currentLabel = currentLabel.substring(0,currentLabel.lastIndexOf("."));
+//                System.out.println("currentLabel: "+currentLabel);
+                    if (!definition.context().productionsOf(currentLabel).isEmpty()){
+                        ArrayList<Production> productions = (ArrayList<Production>) definition.context().productionsOf(currentLabel);
+                        Production p = productions.get(0);
+                        newString = p.getChildSort(n);
+                        replacement = replacement + newString;
+                        newPString = replacement;
+                    }
+                }
+//                System.out.println("### "+newString);
+//                System.out.println("replaced: "+replacement);
+            }
+        }
+
+        return newPString;
     }
 
 //    private Set<Integer> getClosestIndices2(ArrayList<String> pStrings) {
@@ -246,18 +355,18 @@ public class PathIndex {
 //        return candidates;
 //    }
 
-//    private Set<String> getSortsFromPStrings(ArrayList<String> pStrings) {
-//        Set<String> sorts = new HashSet<>();
-//        for (String pString : pStrings){
-//            String sub = pString.substring(pString.lastIndexOf(".")+1);
-//            if (sub.equals("HOLE")){
-//                sub = "KItem";
-//            }
-//            sorts.add(sub);
-//        }
-//
-//        return sorts;
-//    }
+    private Set<String> getSortsFromPStrings(ArrayList<String> pStrings) {
+        Set<String> sorts = new HashSet<>();
+        for (String pString : pStrings){
+            String sub = pString.substring(pString.lastIndexOf(".")+1);
+            if (sub.equals("HOLE")){
+                sub = "HOLE";
+            }
+            sorts.add(sub);
+        }
+
+        return sorts;
+    }
 
     private ArrayList<String> getTermPString(Term term) {
         TermVisitor termVisitor = new TermVisitor(definition.context());

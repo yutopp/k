@@ -1,6 +1,7 @@
 package org.kframework.backend.java.indexing.pathIndex.visitors;
 
 import org.kframework.backend.java.kil.*;
+import org.kframework.kil.Production;
 import org.kframework.kil.loader.Context;
 
 import java.util.*;
@@ -13,6 +14,7 @@ import java.util.*;
 public class HeatingRuleVisitor extends RuleVisitor {
     private final Rule rule;
     private final Context context;
+    private String currentLabel = null;
 
     private int counter = 0;
 
@@ -35,6 +37,7 @@ public class HeatingRuleVisitor extends RuleVisitor {
 
     @Override
     public void visit(KLabel kLabel) {
+        currentLabel = kLabel.toString();
         pString = pString.concat(kLabel.toString()+SEPARATOR);
     }
 
@@ -54,7 +57,12 @@ public class HeatingRuleVisitor extends RuleVisitor {
         if(isRequiredToBeKResult(variable, rule)){
             sort = getKResultSort(variable);
         }else{
-            sort = variable.sort();
+//            sort = variable.sort();
+            ArrayList<Production> productions = (ArrayList<Production>) context.productionsOf(currentLabel);
+            Production p = productions.get(0);
+//            System.out.println("variable: "+variable);
+//            System.out.println("child sort: "+p.getChildSort(counter-1));
+            sort = p.getChildSort(counter-1);
         }
         pStrings.add(pString+counter+"."+sort);
     }

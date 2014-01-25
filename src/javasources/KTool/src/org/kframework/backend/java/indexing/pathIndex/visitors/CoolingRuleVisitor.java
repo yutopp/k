@@ -1,7 +1,10 @@
 package org.kframework.backend.java.indexing.pathIndex.visitors;
 
 import org.kframework.backend.java.kil.*;
+import org.kframework.kil.Production;
 import org.kframework.kil.loader.Context;
+
+import java.util.ArrayList;
 
 /**
  * Author: OwolabiL
@@ -10,6 +13,7 @@ import org.kframework.kil.loader.Context;
  */
 public class CoolingRuleVisitor extends RuleVisitor{
     private Rule rule;
+    private String currentLabel;
 
 
     public CoolingRuleVisitor(Rule rule, Context context) {
@@ -45,6 +49,7 @@ public class CoolingRuleVisitor extends RuleVisitor{
 
     @Override
     public void visit(KItem kItem) {
+        System.out.println("kItem: "+kItem);
         visit(kItem.kLabel());
         visit(kItem.kList());
         this.proceed = false;
@@ -52,6 +57,7 @@ public class CoolingRuleVisitor extends RuleVisitor{
 
     @Override
     public void visit(KLabel kLabel) {
+        currentLabel = kLabel.toString();
         pString = pString.concat(kLabel.toString()+".");
     }
 
@@ -65,7 +71,13 @@ public class CoolingRuleVisitor extends RuleVisitor{
                 pStrings.add(pString+(i+1)+".HOLE");
             } else {
                 //is it always a variable?
-                pStrings.add(pString+(i+1)+SEPARATOR+ ((Variable) frozenTerm).sort());
+//                pStrings.add(pString+(i+1)+SEPARATOR+ ((Variable) frozenTerm).sort());
+                ArrayList<Production> productions = (ArrayList<Production>) context.productionsOf(currentLabel);
+                Production p = productions.get(0);
+                System.out.println("variable: "+frozenTerm);
+                System.out.println("child sort: "+p.getChildSort(i));
+                pStrings.add(pString+(i+1)+SEPARATOR+ p.getChildSort(i));
+//                sort = p.getChildSort(counter-1);
             }
         }
     }

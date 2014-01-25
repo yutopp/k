@@ -96,9 +96,10 @@ public class TermVisitorGeneral extends LocalVisitor {
                 kItem.kList().accept(this);
             } else {
                 if (kItem.kList().size() == 0 && currentLabel.equals("List{\",\"}")){
-//                    System.out.println("current label: "+currentLabel);
                     pStrings.add(pString + SEPARATOR + currentPosition + SEPARATOR + "'.List{\",\"}");
-                } else {
+                } else if (kItem.kList().size() == 0 && kItem.sort().equals("#ListOf#Bot{\",\"}")){
+                    pStrings.add(pString + SEPARATOR + currentPosition + SEPARATOR + "'.List{\",\"}");
+                } else{
                     pStrings.add(pString + SEPARATOR + currentPosition + SEPARATOR + kItem.sort());
                 }
             }
