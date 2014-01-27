@@ -2,4 +2,4 @@ print("Input two numbers: ");
 int x,y;
 x = read();
 y = read();
-print("Their sum is: ", x+y, "\n")
+print("Their sum is: ", x+y, "\n");
