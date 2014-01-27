@@ -420,6 +420,17 @@ public class SymbolicRewriter {
 //            transition = strategy.nextIsTransition();
 //            Collection<Rule> rules = strategy.next();
 //            for (Rule rule : rules) {
+
+        System.out.println("Term: "+ constrainedTerm.term());
+        System.out.println("Rules: "+getRules(constrainedTerm.term()));
+        System.out.println("No of Rules: "+getRules(constrainedTerm.term()).size());
+        System.out.println("================== Definition ===============");
+        System.out.println("definition rules size: "+definition.rules().size());
+        for (Rule rule : definition.rules()){
+            System.out.println(rule+"\n");
+        }
+        System.out.println("=============================================");
+
         for (Rule rule : getRules(constrainedTerm.term())) {
                 ruleStopwatch.reset();
                 ruleStopwatch.start();
