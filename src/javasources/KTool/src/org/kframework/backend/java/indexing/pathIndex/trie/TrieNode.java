@@ -1,6 +1,8 @@
 package org.kframework.backend.java.indexing.pathIndex.trie;
 
 import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Author: Owolabi Legunsen
@@ -10,12 +12,13 @@ public class TrieNode {
     private String value;
     private ArrayList<TrieNode> children;
 
-    TrieNode() {
-    }
+    private Set<Integer> indices;
 
     public TrieNode(String value) {
         this.value = value;
+        indices = new HashSet<>();
     }
+
 
     public boolean inChildren(String value){
         boolean contained = false;
@@ -38,17 +41,6 @@ public class TrieNode {
         return child;
     }
 
-//    public TrieNode getChild(TrieNode startNode,String pString, int position){
-//        TrieNode child = startNode;
-//        int i = 0;
-//        // seek the child node containing the value just before position in pString
-//        while(i <= position){
-////            child = child.getChild(pString.charAt(i));
-//            i++;
-//        }
-//
-//        return child;
-//    }
 
     public String getValue() {
         return value;
@@ -89,5 +81,9 @@ public class TrieNode {
         int result = value.hashCode();
         result = 31 * result + (children != null ? children.hashCode() : 0);
         return result;
+    }
+
+    public Set<Integer> getIndices() {
+        return indices;
     }
 }

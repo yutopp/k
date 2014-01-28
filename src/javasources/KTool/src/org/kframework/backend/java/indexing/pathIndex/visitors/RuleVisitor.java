@@ -79,7 +79,6 @@ public class RuleVisitor extends LocalVisitor {
                         pStrings.add(pending + SEPARATOR + ((Variable) kList.get(i)).sort());
                 }
             } else {
-                System.out.println("Huhuhu... !");
                 pString = base + SEPARATOR + position + SEPARATOR;
                 kList.get(i).accept(this);
             }

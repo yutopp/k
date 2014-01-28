@@ -45,8 +45,6 @@ public class PathIndex {
         //Step 2: extract a p-string PS(i) from the LHS of each rule(i)
         //Step 3: assign a numeric index to identify the rule IND(i)
         for (Rule rule : definition.rules()) {
-            System.out.println("Rule: "+rule);
-            System.out.println("Rule: "+rule);
             if (rule.containsAttribute("heat") || rule.containsAttribute("print")) {
                 pStringMap.putAll(createRulePString(rule, count, RuleType.HEATING));
             } else if (rule.containsAttribute("cool")) {
@@ -63,7 +61,7 @@ public class PathIndex {
         }
 
         assert indexedRules.size() == definition.rules().size();
-        printIndices(indexedRules, pStringMap);
+//        printIndices(indexedRules, pStringMap);
 
         //intitialize the trie
         trie = new PathIndexTrie();
@@ -129,8 +127,8 @@ public class PathIndex {
     public Set<Rule> getRulesForTerm(Term term) {
         ArrayList<String> pStrings = getTermPString2(term);
 
-        System.out.println("Term: "+term);
-        System.out.println("PStrings: "+pStrings);
+//        System.out.println("Term: "+term);
+//        System.out.println("PStrings: "+pStrings);
 
         Set<Rule> rules = new HashSet<>();
         //find the intersection of all the sets returned
@@ -162,8 +160,12 @@ public class PathIndex {
             }
 
 
-            if (currentMatch == null){
-                currentMatch = trie.retrieve(trie.getRoot(), pStrings.get(1));
+            if (currentMatch == null ){
+                if (pStrings.size() > 1){
+                    currentMatch = trie.retrieve(trie.getRoot(), pStrings.get(1));
+                }else{
+                    //TODO(OwolabiL): use a substring of pString.get(0)
+                }
             }
 
             if (currentMatch != null) {
@@ -175,8 +177,8 @@ public class PathIndex {
         for (Integer n : matchingIndices) {
             rules.add(indexedRules.get(n));
         }
-        System.out.println("matching: "+matchingIndices);
-        System.out.println("Rules: "+rules);
+//        System.out.println("matching: "+matchingIndices);
+//        System.out.println("Rules: "+rules);
         return rules;
     }
 

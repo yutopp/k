@@ -97,10 +97,6 @@ public class TermVisitorGeneral extends LocalVisitor {
                 } else if (kItem.kList().size() == 0 && kItem.sort().equals("#ListOf#Bot{\",\"}")){
                     pStrings.add(pString + SEPARATOR + currentPosition + SEPARATOR + "'.List{\",\"}");
                 } else{
-                    System.out.println("hahaha...!");
-                    ArrayList<Production> productions = (ArrayList<Production>) context.productionsOf(currentLabel);
-                    Production p = productions.get(0);
-                    System.out.println("The production: "+p.toString());
                     pStrings.add(pString + SEPARATOR + currentPosition + SEPARATOR + kItem.sort());
                 }
             }

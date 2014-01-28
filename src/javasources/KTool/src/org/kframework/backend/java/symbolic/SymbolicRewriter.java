@@ -260,14 +260,7 @@ public class SymbolicRewriter {
     private Set<Rule> getRules(Term term) {
         Set<Rule> rules = new HashSet<Rule>();
         if (K.do_indexing){
-            pathIndex.getRulesForTerm(term);
-//           rules.addAll(pathIndex.getRulesForTerm(term));
-           rules.addAll(getNonIndexedRules(term));
-//            System.out.println();
-//            System.out.println("Term: "+term);
-//            System.out.println("size of indexing rules: "+rules.size());
-//            System.out.println("indexing rules: "+rules);
-//            System.out.println("===================================="+ "\n");
+           rules.addAll(pathIndex.getRulesForTerm(term));
         } else{
             rules.addAll(getNonIndexedRules(term));
         }
