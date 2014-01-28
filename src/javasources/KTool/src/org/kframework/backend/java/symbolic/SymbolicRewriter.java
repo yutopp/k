@@ -260,7 +260,9 @@ public class SymbolicRewriter {
     private Set<Rule> getRules(Term term) {
         Set<Rule> rules = new HashSet<Rule>();
         if (K.do_indexing){
-           rules.addAll(pathIndex.getRulesForTerm(term));
+            pathIndex.getRulesForTerm(term);
+//           rules.addAll(pathIndex.getRulesForTerm(term));
+           rules.addAll(getNonIndexedRules(term));
 //            System.out.println();
 //            System.out.println("Term: "+term);
 //            System.out.println("size of indexing rules: "+rules.size());
@@ -421,15 +423,17 @@ public class SymbolicRewriter {
 //            Collection<Rule> rules = strategy.next();
 //            for (Rule rule : rules) {
 
-        System.out.println("Term: "+ constrainedTerm.term());
-        System.out.println("Rules: "+getRules(constrainedTerm.term()));
-        System.out.println("No of Rules: "+getRules(constrainedTerm.term()).size());
-        System.out.println("================== Definition ===============");
-        System.out.println("definition rules size: "+definition.rules().size());
-        for (Rule rule : definition.rules()){
-            System.out.println(rule+"\n");
-        }
-        System.out.println("=============================================");
+//        System.out.println("Term: "+ constrainedTerm.term());
+//        System.out.println("Rules: "+getRules(constrainedTerm.term()));
+//        System.out.println("No of Rules: "+getRules(constrainedTerm.term()).size());
+//        System.out.println("================== Definition ===============");
+//        System.out.println("configuration: "+definition.context().cells);
+//        System.out.println("definition rules size: "+definition.rules().size());
+//        for (Rule rule : definition.rules()){
+//            System.out.println(rule);
+//            System.out.println("Attributes: "+rule.getAttributes()+"\n");
+//        }
+//        System.out.println("=============================================");
 
         for (Rule rule : getRules(constrainedTerm.term())) {
                 ruleStopwatch.reset();

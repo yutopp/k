@@ -44,7 +44,10 @@ public class RuleVisitor extends LocalVisitor {
     @Override
     public void visit(KSequence kSequence) {
         isKSequence = true;
-        kSequence.get(0).accept(this);
+        //taking care of .K
+        if (kSequence.size() > 0){
+            kSequence.get(0).accept(this);
+        }
     }
 
     @Override
@@ -73,13 +76,10 @@ public class RuleVisitor extends LocalVisitor {
                 if (kList.get(i) instanceof KItem) {
                     pStrings.add(pending + SEPARATOR + ((KItem) kList.get(i)).sort());
                 } else {
-//                    if (context.isSubsorted("KResult",((Variable)kList.get(i)).sort())){
                         pStrings.add(pending + SEPARATOR + ((Variable) kList.get(i)).sort());
-//                    } else {
-//                        pStrings.add(pending + SEPARATOR + "KItem");
-//                    }
                 }
             } else {
+                System.out.println("Huhuhu... !");
                 pString = base + SEPARATOR + position + SEPARATOR;
                 kList.get(i).accept(this);
             }
