@@ -76,7 +76,7 @@ public class RuleVisitor2 extends LocalVisitor {
                     pStrings.add(pending + SEPARATOR + ((KItem) kList.get(i)).sort());
                 } else {
 //                    if (context.isSubsorted("KResult",((Variable)kList.get(i)).sort())){
-                        pStrings.add(pending + SEPARATOR + ((Variable) kList.get(i)).sort());
+                    pStrings.add(pending + SEPARATOR + ((Variable) kList.get(i)).sort());
 //                    } else {
 //                        pStrings.add(pending + SEPARATOR + "KItem");
 //                    }

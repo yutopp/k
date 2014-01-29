@@ -20,10 +20,10 @@ public class TrieNode {
     }
 
 
-    public boolean inChildren(String value){
+    public boolean inChildren(String value) {
         boolean contained = false;
-        for (TrieNode node:getChildren()){
-            if (node.getValue().equals(value)){
+        for (TrieNode node : getChildren()) {
+            if (node.getValue().equals(value)) {
                 contained = true;
                 break;
             }
@@ -31,16 +31,15 @@ public class TrieNode {
         return contained;
     }
 
-    public TrieNode getChild(String value){
+    public TrieNode getChild(String value) {
         TrieNode child = null;
-        for (TrieNode node: getChildren()){
-            if(node.getValue().equals(value)){
+        for (TrieNode node : getChildren()) {
+            if (node.getValue().equals(value)) {
                 child = node;
             }
         }
         return child;
     }
-
 
     public String getValue() {
         return value;
@@ -73,7 +72,6 @@ public class TrieNode {
         if (children != null ? !children.equals(trieNode.children) : trieNode.children != null)
             return false;
         return value.equals(trieNode.value);
-
     }
 
     @Override

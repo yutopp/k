@@ -38,13 +38,13 @@ public class HeatingRuleVisitor extends RuleVisitor {
     @Override
     public void visit(KLabel kLabel) {
         currentLabel = kLabel.toString();
-        pString = pString.concat(kLabel.toString()+SEPARATOR);
+        pString = pString.concat(kLabel.toString() + SEPARATOR);
     }
 
     @Override
     public void visit(KList kList) {
         for (int i = 0; i < kList.size(); i++) {
-            counter = i+1;
+            counter = i + 1;
 //            visit((Variable)kList.get(i));
             kList.get(i).accept(this);
         }
@@ -54,17 +54,17 @@ public class HeatingRuleVisitor extends RuleVisitor {
     @Override
     public void visit(Variable variable) {
         String sort;
-        if(isRequiredToBeKResult(variable, rule)){
+        if (isRequiredToBeKResult(variable, rule)) {
             sort = getKResultSort(variable);
-        }else{
+        } else {
 //            sort = variable.sort();
             ArrayList<Production> productions = (ArrayList<Production>) context.productionsOf(currentLabel);
             Production p = productions.get(0);
 //            System.out.println("variable: "+variable);
 //            System.out.println("child sort: "+p.getChildSort(counter-1));
-            sort = p.getChildSort(counter-1);
+            sort = p.getChildSort(counter - 1);
         }
-        pStrings.add(pString+counter+"."+sort);
+        pStrings.add(pString + counter + "." + sort);
     }
 
     private String getKResultSort(Term term) {
@@ -84,11 +84,11 @@ public class HeatingRuleVisitor extends RuleVisitor {
     //TODO(OwolabiL): Use visitor for traversing the rule instead
     private boolean isRequiredToBeKResult(Term term, Rule rule) {
         boolean required = false;
-        for (Term require : rule.requires()){
-            if (require instanceof KItem){
+        for (Term require : rule.requires()) {
+            if (require instanceof KItem) {
                 if (((KItem) require).kLabel().toString().equals("isKResult") &&
                         ((KItem) require).kList().size() == 1 &&
-                        ((KItem) require).kList().get(0).equals(term)){
+                        ((KItem) require).kList().get(0).equals(term)) {
                     required = true;
                 }
             }

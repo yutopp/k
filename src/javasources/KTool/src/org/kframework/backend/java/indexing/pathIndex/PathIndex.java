@@ -51,9 +51,9 @@ public class PathIndex {
                 pStringMap.putAll(createRulePString(rule, count, RuleType.COOLING));
             } else if (rule.containsAttribute("stdout") || rule.containsAttribute("stderr")) {
                 pStringMap.putAll(createRulePString(rule, count, RuleType.OUT));
-            }else if (rule.containsAttribute("stdin")) {
+            } else if (rule.containsAttribute("stdin")) {
                 pStringMap.putAll(createRulePString(rule, count, RuleType.IN));
-            }else {
+            } else {
                 pStringMap.putAll(createRulePString(rule, count, RuleType.OTHER));
             }
             indexedRules.put(count, rule);
@@ -110,10 +110,10 @@ public class PathIndex {
                 ruleVisitor = new RuleVisitor(definition.context());
                 break;
             case OUT:
-                pStrings.put(n,"@.out");
+                pStrings.put(n, "@.out");
                 return pStrings;
             case IN:
-                pStrings.put(n,"@.in");
+                pStrings.put(n, "@.in");
                 return pStrings;
             default:
                 throw new IllegalArgumentException("Cannot create P-String for unknown rule type:" + type);
@@ -137,33 +137,39 @@ public class PathIndex {
         Set<Integer> matchingIndices = new HashSet<>();
         if (pStrings.size() >= 1) {
             currentMatch = trie.retrieve(trie.getRoot(), pStrings.get(0));
-            String possible = getHigherPString(pStrings.get(0),0);
+//            System.out.println("current match A: "+currentMatch);
+            String possible = getHigherPString(pStrings.get(0), 0);
 
             if (possible != null && currentMatch != null) {
                 if (trie.retrieve(trie.getRoot(), possible) != null) {
                     currentMatch = Sets.union(currentMatch, trie.retrieve(trie.getRoot(), possible));
+//                    System.out.println("current match B: "+currentMatch);
                 }
             }
 
-            if (currentMatch != null && currentMatch.size() > 1 && pStrings.size() > 1){
+            if (currentMatch != null && currentMatch.size() > 1 && pStrings.size() > 1) {
                 if (trie.retrieve(trie.getRoot(), pStrings.get(1)) != null) {
-                    Set<Integer> possibleIntersection = Sets.intersection(currentMatch,trie.retrieve(trie.getRoot(), pStrings.get(1)));
-                    if (possibleIntersection.size() > 0){
-                        currentMatch = Sets.intersection(currentMatch,trie.retrieve(trie.getRoot(), pStrings.get(1)));
+                    Set<Integer> possibleIntersection = Sets.intersection(currentMatch, trie.retrieve(trie.getRoot(), pStrings.get(1)));
+                    if (possibleIntersection.size() > 0) {
+//                        System.out.println("PossibleIntersection: "+possibleIntersection);
+                        currentMatch = Sets.intersection(currentMatch, trie.retrieve(trie.getRoot(), pStrings.get(1)));
+//                        System.out.println("current match c: "+currentMatch);
                     }
                 } else {
-                    String nextPossible = getHigherPString(pStrings.get(1),1);
+                    String nextPossible = getHigherPString(pStrings.get(1), 1);
                     if (nextPossible != null) {
-                        currentMatch = Sets.intersection(currentMatch, trie.retrieve(trie.getRoot(),nextPossible));
+                        currentMatch = Sets.intersection(currentMatch, trie.retrieve(trie.getRoot(), nextPossible));
+//                        System.out.println("current match d: "+currentMatch);
                     }
                 }
             }
 
 
-            if (currentMatch == null ){
-                if (pStrings.size() > 1){
+            if (currentMatch == null) {
+                if (pStrings.size() > 1) {
                     currentMatch = trie.retrieve(trie.getRoot(), pStrings.get(1));
-                }else{
+//                    System.out.println("current match e: "+currentMatch);
+                } else {
                     //TODO(OwolabiL): use a substring of pString.get(0)
                 }
             }
@@ -196,20 +202,20 @@ public class PathIndex {
         return candidates;
     }
 
-    private String getHigherPString(String pString, int n){
+    private String getHigherPString(String pString, int n) {
         String newString = null;
         String newPString = null;
         ArrayList<String> strings = new ArrayList<>();
         strings.add(pString);
         Set<String> sorts = getSortsFromPStrings(strings);
-        for (String sort : sorts){
-            if (sort.equals("HOLE")){
+        for (String sort : sorts) {
+            if (sort.equals("HOLE")) {
                 return null;
             }
-            if (definition.context().isSubsorted("KResult",sort)){
-                String replacement = pString.substring(0,pString.lastIndexOf("."))+".";
+            if (definition.context().isSubsorted("KResult", sort)) {
+                String replacement = pString.substring(0, pString.lastIndexOf(".")) + ".";
 
-                String [] split =pString.split("\\.");
+                String[] split = pString.split("\\.");
                 ArrayList<String> splitList = new ArrayList<>(Arrays.asList(split));
                 int pos = splitList.size() - 3;
                 String currentLabel = splitList.get(pos);
@@ -218,15 +224,15 @@ public class PathIndex {
                 newString = p.getChildSort(n);
                 replacement = replacement + newString;
                 newPString = replacement;
-            }else {
-                String replacement = pString.substring(0,pString.lastIndexOf("."))+".";
+            } else {
+                String replacement = pString.substring(0, pString.lastIndexOf(".")) + ".";
 
-                String [] split =pString.split("\\.");
+                String[] split = pString.split("\\.");
                 ArrayList<String> splitList = new ArrayList<>(Arrays.asList(split));
-                if (splitList.size() > 2){
+                if (splitList.size() > 2) {
                     int pos = splitList.size() - 3;
                     String currentLabel = splitList.get(pos);
-                    if (!definition.context().productionsOf(currentLabel).isEmpty()){
+                    if (!definition.context().productionsOf(currentLabel).isEmpty()) {
                         ArrayList<Production> productions = (ArrayList<Production>) definition.context().productionsOf(currentLabel);
                         Production p = productions.get(0);
                         newString = p.getChildSort(n);
@@ -242,9 +248,9 @@ public class PathIndex {
 
     private Set<String> getSortsFromPStrings(ArrayList<String> pStrings) {
         Set<String> sorts = new HashSet<>();
-        for (String pString : pStrings){
-            String sub = pString.substring(pString.lastIndexOf(".")+1);
-            if (sub.equals("HOLE")){
+        for (String pString : pStrings) {
+            String sub = pString.substring(pString.lastIndexOf(".") + 1);
+            if (sub.equals("HOLE")) {
                 sub = "HOLE";
             }
             sorts.add(sub);

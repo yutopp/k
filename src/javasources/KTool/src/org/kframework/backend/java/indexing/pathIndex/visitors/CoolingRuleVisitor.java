@@ -11,7 +11,7 @@ import java.util.ArrayList;
  * Date: 1/20/14
  * Time: 12:40 PM
  */
-public class CoolingRuleVisitor extends RuleVisitor{
+public class CoolingRuleVisitor extends RuleVisitor {
     private Rule rule;
     private String currentLabel;
 
@@ -24,7 +24,7 @@ public class CoolingRuleVisitor extends RuleVisitor{
     @Override
     public void visit(KSequence kSequence) {
         kSequence.get(0).accept(this);
-        ((KItem)kSequence.get(1)).kLabel().accept(this);
+        ((KItem) kSequence.get(1)).kLabel().accept(this);
     }
 
     //TODO(OwolabiL): This method can be greatly improved!
@@ -39,7 +39,7 @@ public class CoolingRuleVisitor extends RuleVisitor{
             //TODO(OwolabiL): this should never happen!! throw exception?
             firstSort = variable.sort();
         }
-        pString = pString.concat(firstSort+".1.");
+        pString = pString.concat(firstSort + ".1.");
     }
 
     @Override
@@ -58,7 +58,7 @@ public class CoolingRuleVisitor extends RuleVisitor{
     @Override
     public void visit(KLabel kLabel) {
         currentLabel = kLabel.toString();
-        pString = pString.concat(kLabel.toString()+".");
+        pString = pString.concat(kLabel.toString() + ".");
     }
 
     @Override
@@ -68,7 +68,7 @@ public class CoolingRuleVisitor extends RuleVisitor{
             frozenTerm = kList.get(i);
             //TODO(OwolabiL): remove instanceof!!
             if (frozenTerm instanceof Hole) {
-                pStrings.add(pString+(i+1)+".HOLE");
+                pStrings.add(pString + (i + 1) + ".HOLE");
             } else {
                 //is it always a variable?
 //                pStrings.add(pString+(i+1)+SEPARATOR+ ((Variable) frozenTerm).sort());
@@ -76,7 +76,7 @@ public class CoolingRuleVisitor extends RuleVisitor{
                 Production p = productions.get(0);
 //                System.out.println("variable: "+frozenTerm);
 //                System.out.println("child sort: "+p.getChildSort(i));
-                pStrings.add(pString+(i+1)+SEPARATOR+ p.getChildSort(i));
+                pStrings.add(pString + (i + 1) + SEPARATOR + p.getChildSort(i));
 //                sort = p.getChildSort(counter-1);
             }
         }

@@ -55,7 +55,7 @@ public class TermVisitor extends LocalVisitor {
     public void visit(Token token) {
         if (pString == null) {
             if (context.isSubsorted("KResult", token.sort())) {
-                pString = START_STRING+"KResult";
+                pString = START_STRING + "KResult";
             } else {
                 //TODO(OwolabiL): Use a better check than the nullity of pString
                 pStrings.add(START_STRING + token.sort());
@@ -72,7 +72,7 @@ public class TermVisitor extends LocalVisitor {
             } else {
                 ArrayList<Production> productions = (ArrayList<Production>) context.productionsOf(currentLabel);
                 Production p = productions.get(0);
-                pStrings.add(pString + SEPARATOR+ currentPosition + SEPARATOR + p.getChildSort(0));
+                pStrings.add(pString + SEPARATOR + currentPosition + SEPARATOR + p.getChildSort(0));
 
             }
         }
