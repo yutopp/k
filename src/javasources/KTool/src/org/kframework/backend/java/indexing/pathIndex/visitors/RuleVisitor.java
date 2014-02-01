@@ -45,7 +45,7 @@ public class RuleVisitor extends LocalVisitor {
     public void visit(KSequence kSequence) {
         isKSequence = true;
         //taking care of .K
-        if (kSequence.size() > 0){
+        if (kSequence.size() > 0) {
             kSequence.get(0).accept(this);
         }
     }
@@ -76,7 +76,7 @@ public class RuleVisitor extends LocalVisitor {
                 if (kList.get(i) instanceof KItem) {
                     pStrings.add(pending + SEPARATOR + ((KItem) kList.get(i)).sort());
                 } else {
-                        pStrings.add(pending + SEPARATOR + ((Variable) kList.get(i)).sort());
+                    pStrings.add(pending + SEPARATOR + ((Variable) kList.get(i)).sort());
                 }
             } else {
                 pString = base + SEPARATOR + position + SEPARATOR;

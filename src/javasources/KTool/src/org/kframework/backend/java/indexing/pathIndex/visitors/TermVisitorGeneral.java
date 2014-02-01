@@ -32,7 +32,13 @@ public class TermVisitorGeneral extends LocalVisitor {
 
     @Override
     public void visit(Term node) {
-        (LookupCell.find(node, "k")).accept(this);
+        Term lookedUpK = LookupCell.find(node, "k");
+//        System.out.println("Looked Up: "+LookupCell.find(node, "k"));
+//        pStrings.add("@.in");
+//        pStrings.add("@.out");
+        if (lookedUpK != null) {
+            (LookupCell.find(node, "k")).accept(this);
+        }
     }
 
 
@@ -44,18 +50,33 @@ public class TermVisitorGeneral extends LocalVisitor {
     @Override
     public void visit(KSequence kSequence) {
         if (kSequence.size() > 0) {
-            kSequence.get(0).accept(this);
-            if (kSequence.get(0) instanceof Token) {
-                kSequence.get(1).accept(this);
+//            System.out.println("1st: "+(KItem)kSequence.get(0));
+            if (kSequence.get(0) instanceof KItem){
+                boolean isKResult = context.isSubsorted("KResult", ((KItem) kSequence.get(0)).sort());
+                if (isKResult){
+                    pString = START_STRING + "KResult";
+                    kSequence.get(1).accept(this);
+                } else {
+                    kSequence.get(0).accept(this);
+                    if (kSequence.get(0) instanceof Token) {
+                        kSequence.get(1).accept(this);
+                    }
+                }
+            } else {
+                kSequence.get(0).accept(this);
+                if (kSequence.get(0) instanceof Token) {
+                    kSequence.get(1).accept(this);
+                }
             }
         }
     }
 
     @Override
     public void visit(Token token) {
+
         if (pString == null) {
             if (context.isSubsorted("KResult", token.sort())) {
-                pString = START_STRING+"KResult";
+                pString = START_STRING + "KResult";
             } else {
                 //TODO(OwolabiL): Use a better check than the nullity of pString
                 pStrings.add(START_STRING + token.sort());
@@ -63,14 +84,25 @@ public class TermVisitorGeneral extends LocalVisitor {
         }
 
         if (inner) {
+            ArrayList<Production> productions = (ArrayList<Production>) context.productionsOf(currentLabel);
+            Production p = productions.get(0);
             if (context.isSubsorted("KResult", token.sort())) {
                 if (pString != null) {
-                    pStrings.add(pString + SEPARATOR + currentPosition + SEPARATOR + token.sort());
+                    if (productions.size() == 1){
+                        pStrings.add(pString + SEPARATOR + currentPosition + SEPARATOR + token.sort());
+                    }
+                    else{
+                        pStrings.add(pString + SEPARATOR + currentPosition + SEPARATOR + "UserList");
+//                        pStrings.add(pString + SEPARATOR + currentPosition + SEPARATOR + token.sort());
+                    }
                 }
             } else {
-                ArrayList<Production> productions = (ArrayList<Production>) context.productionsOf(currentLabel);
-                Production p = productions.get(0);
-                pStrings.add(pString + SEPARATOR+ currentPosition + SEPARATOR + p.getChildSort(0));
+                if (productions.size() == 1){
+                    pStrings.add(pString + SEPARATOR + currentPosition + SEPARATOR + p.getChildSort(0));
+                } else{
+                    pStrings.add(pString + SEPARATOR + currentPosition + SEPARATOR + "UserList");
+//                    pStrings.add(pString + SEPARATOR + currentPosition + SEPARATOR + p.getChildSort(0));
+                }
 //                pStrings.add(pString + SEPARATOR+ currentPosition + SEPARATOR + "KItem");
             }
         }
@@ -92,12 +124,20 @@ public class TermVisitorGeneral extends LocalVisitor {
                 kItem.kLabel().accept(this);
                 kItem.kList().accept(this);
             } else {
-                if (kItem.kList().size() == 0 && currentLabel.equals("List{\",\"}")){
+                if (kItem.kList().size() == 0 && currentLabel.equals("List{\",\"}")) {
                     pStrings.add(pString + SEPARATOR + currentPosition + SEPARATOR + "'.List{\",\"}");
-                } else if (kItem.kList().size() == 0 && kItem.sort().equals("#ListOf#Bot{\",\"}")){
+                } else if (kItem.kList().size() == 0 && kItem.sort().equals("#ListOf#Bot{\",\"}")) {
                     pStrings.add(pString + SEPARATOR + currentPosition + SEPARATOR + "'.List{\",\"}");
-                } else{
-                    pStrings.add(pString + SEPARATOR + currentPosition + SEPARATOR + kItem.sort());
+                } else {
+                    if (context.isListSort(kItem.sort())){
+//                        kItem.kList().accept(this);
+                        pStrings.add(pString + SEPARATOR + currentPosition + SEPARATOR + "UserList");
+//                        pStrings.add(pString + SEPARATOR + currentPosition + SEPARATOR + currentLabel + SEPARATOR + "UserList");
+//                        pStrings.add(pString + SEPARATOR + currentPosition + SEPARATOR + kItem.sort());
+
+                    } else{
+                        pStrings.add(pString + SEPARATOR + currentPosition + SEPARATOR + kItem.sort());
+                    }
                 }
             }
         }

@@ -2,6 +2,7 @@ package org.kframework.backend.java.indexing.pathIndex.visitors;
 
 import org.kframework.backend.java.kil.*;
 import org.kframework.kil.Production;
+import org.kframework.kil.UserList;
 import org.kframework.kil.loader.Context;
 
 import java.util.*;
@@ -31,6 +32,7 @@ public class HeatingRuleVisitor extends RuleVisitor {
 
     @Override
     public void visit(KItem kItem) {
+
         visit(kItem.kLabel());
         visit(kItem.kList());
     }
@@ -38,13 +40,13 @@ public class HeatingRuleVisitor extends RuleVisitor {
     @Override
     public void visit(KLabel kLabel) {
         currentLabel = kLabel.toString();
-        pString = pString.concat(kLabel.toString()+SEPARATOR);
+        pString = pString.concat(kLabel.toString() + SEPARATOR);
     }
 
     @Override
     public void visit(KList kList) {
         for (int i = 0; i < kList.size(); i++) {
-            counter = i+1;
+            counter = i + 1;
 //            visit((Variable)kList.get(i));
             kList.get(i).accept(this);
         }
@@ -54,17 +56,50 @@ public class HeatingRuleVisitor extends RuleVisitor {
     @Override
     public void visit(Variable variable) {
         String sort;
-        if(isRequiredToBeKResult(variable, rule)){
+        if (isRequiredToBeKResult(variable, rule)) {
             sort = getKResultSort(variable);
-        }else{
+        } else {
 //            sort = variable.sort();
             ArrayList<Production> productions = (ArrayList<Production>) context.productionsOf(currentLabel);
-            Production p = productions.get(0);
+            if (productions.size() == 1){
+                Production p = productions.get(0);
 //            System.out.println("variable: "+variable);
 //            System.out.println("child sort: "+p.getChildSort(counter-1));
-            sort = p.getChildSort(counter-1);
+                sort = p.getChildSort(counter - 1);
+                pStrings.add(pString + counter + "." + sort);
+            } else {
+                if (productions.size() > 1) {
+                    //find the exact sort of this variable before it was transformed as part of this rule
+                    pStrings.add(pString + counter + "." + "UserList");
+
+//                System.out.println("Variable: "+variable);
+//                System.out.println("Variable Sort: "+variable.sort());
+//
+//                    for (Production p : productions) {
+//                        System.out.println("========================================");
+//                        System.out.println("production: " + p);
+//                        System.out.println("production cons: " + p.getCons());
+//                        System.out.println("production sort: " + p.getSort());
+//                        System.out.println("production isListDecl: " + p.isListDecl());
+//                        System.out.println("production items: " + p.getItems());
+//                        System.out.println("p.getItems().size: " + p.getItems().size());
+//                        System.out.println("p.getItems().get(0): " + p.getItems().get(0));
+//                        System.out.println("user List? :" + (p.getItems().get(0) instanceof UserList));
+//                        System.out.println("user List class :" + (p.getItems().get(0)).getClass());
+//                        if (p.getItems().get(0) instanceof UserList) {
+//                            System.out.println("((UserList) p.getItems().get(0)).getSort(): " + ((UserList) p.getItems().get(0)).getSort());
+//                            System.out.println("((UserList) p.getItems().get(0)).getListType(): " + ((UserList) p.getItems().get(0)).getListType());
+//                        }
+//                        System.out.println("========================================");
+//                    }
+
+                }
+            }
+
+
+
+
         }
-        pStrings.add(pString+counter+"."+sort);
     }
 
     private String getKResultSort(Term term) {
@@ -84,11 +119,11 @@ public class HeatingRuleVisitor extends RuleVisitor {
     //TODO(OwolabiL): Use visitor for traversing the rule instead
     private boolean isRequiredToBeKResult(Term term, Rule rule) {
         boolean required = false;
-        for (Term require : rule.requires()){
-            if (require instanceof KItem){
+        for (Term require : rule.requires()) {
+            if (require instanceof KItem) {
                 if (((KItem) require).kLabel().toString().equals("isKResult") &&
                         ((KItem) require).kList().size() == 1 &&
-                        ((KItem) require).kList().get(0).equals(term)){
+                        ((KItem) require).kList().get(0).equals(term)) {
                     required = true;
                 }
             }
