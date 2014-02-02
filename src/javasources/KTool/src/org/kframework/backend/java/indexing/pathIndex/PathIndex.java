@@ -148,16 +148,19 @@ public class PathIndex {
         for (String pString : pStrings) {
             String[] split = pString.split("\\.");
             int i = split.length;
-            currentMatch = trie.retrieve(trie.getRoot(), pStrings.get(0));
+            currentMatch = trie.retrieve(trie.getRoot(), pString);
             subString = pString;
-            while (i > 0 && subString.lastIndexOf("\\.") >= 0) {
-                subString = pString.substring(0, subString.lastIndexOf("\\."));
-                currentMatch.addAll(trie.retrieve(trie.getRoot(), subString));
+            while (i > 0 && subString.lastIndexOf('.') > 1) {
+                subString = pString.substring(0, subString.lastIndexOf('.') - 2);
+                if (trie.retrieve(trie.getRoot(),subString) != null){
+                    currentMatch.addAll(trie.retrieve(trie.getRoot(), subString));
+                }
             }
 
             if (matchingIndices.isEmpty()) {
                 matchingIndices = currentMatch;
             } else {
+                //should be an intersection?
                 matchingIndices = Sets.union(matchingIndices, currentMatch);
             }
         }

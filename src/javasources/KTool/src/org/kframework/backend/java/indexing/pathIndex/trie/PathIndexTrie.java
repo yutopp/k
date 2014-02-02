@@ -201,6 +201,9 @@ public class PathIndexTrie implements Trie {
     }
 
     private Set<Integer> retrieveSet(TrieNode trieNode, ArrayList<String> splitList) {
+        if (splitList.size() == 0){
+            return new HashSet<>();
+        }
         String firstString = splitList.get(0);
         ArrayList<String> subList = new ArrayList<>(splitList.subList(1, splitList.size()));
         TrieNode child = trieNode.getChild(firstString);

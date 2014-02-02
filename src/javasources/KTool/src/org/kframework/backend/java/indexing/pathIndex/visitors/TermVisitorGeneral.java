@@ -21,6 +21,7 @@ public class TermVisitorGeneral extends LocalVisitor {
     private String pString;
     private int currentPosition = 0;
     private boolean inner = false;
+    private boolean inKList = false;
     private String currentLabel;
     private final String SEPARATOR = ".";
     private final String START_STRING = "@.";
@@ -51,6 +52,7 @@ public class TermVisitorGeneral extends LocalVisitor {
     public void visit(KSequence kSequence) {
         if (kSequence.size() > 0) {
 //            System.out.println("1st: "+(KItem)kSequence.get(0));
+            //TODO (OwolabiL): This is too messy. Restructure the conditionals
             if (kSequence.get(0) instanceof KItem){
                 boolean isKResult = context.isSubsorted("KResult", ((KItem) kSequence.get(0)).sort());
                 if (isKResult){
@@ -132,7 +134,6 @@ public class TermVisitorGeneral extends LocalVisitor {
                     if (context.isListSort(kItem.sort())){
 //                        kItem.kList().accept(this);
                         pStrings.add(pString + SEPARATOR + currentPosition + SEPARATOR + "UserList");
-//                        pStrings.add(pString + SEPARATOR + currentPosition + SEPARATOR + currentLabel + SEPARATOR + "UserList");
 //                        pStrings.add(pString + SEPARATOR + currentPosition + SEPARATOR + kItem.sort());
 
                     } else{
@@ -145,6 +146,7 @@ public class TermVisitorGeneral extends LocalVisitor {
 
     @Override
     public void visit(KList kList) {
+        inKList = true;
         if (kList.size() == 0) {
             pStrings.add(pString);
         } else {
@@ -158,6 +160,15 @@ public class TermVisitorGeneral extends LocalVisitor {
     @Override
     public void visit(KLabel kLabel) {
         pString = START_STRING + kLabel.toString();
+    }
+
+    /**
+     * The environment recovery will need this
+     * @param builtinMap
+     */
+    @Override
+    public void visit(BuiltinMap builtinMap) {
+        pStrings.add(pString + SEPARATOR + currentPosition + SEPARATOR + builtinMap.sort());
     }
 
     public List<String> getpStrings() {

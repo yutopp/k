@@ -16,7 +16,7 @@ import java.util.List;
  */
 public class RuleVisitor extends LocalVisitor {
     static final String SEPARATOR = ".";
-    private static final String START_STRING = "@.";
+    static final String START_STRING = "@.";
     final Context context;
     protected String pString;
     protected List<String> pStrings;

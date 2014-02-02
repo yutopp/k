@@ -40,7 +40,13 @@ public class HeatingRuleVisitor extends RuleVisitor {
     @Override
     public void visit(KLabel kLabel) {
         currentLabel = kLabel.toString();
-        pString = pString.concat(kLabel.toString() + SEPARATOR);
+        if (pString.equals(START_STRING)){
+            //we are at the initial pString
+            pString = pString.concat(kLabel.toString() + SEPARATOR);
+        } else{
+            //the original pString has been modified along the way
+            pString = pString.concat(counter + SEPARATOR + kLabel.toString() + SEPARATOR);
+        }
     }
 
     @Override
