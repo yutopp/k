@@ -8,7 +8,6 @@ import org.kframework.backend.java.indexing.pathIndex.visitors.*;
 import org.kframework.backend.java.kil.*;
 import org.kframework.backend.java.util.LookupCell;
 import org.kframework.kil.Production;
-import org.kframework.krun.K;
 
 import java.util.*;
 import java.util.Collection;
@@ -24,7 +23,7 @@ public class PathIndex {
     private org.kframework.backend.java.indexing.pathIndex.trie.PathIndexTrie trie;
     private MultiMap<Integer, String> pStringMap;
     private boolean applyOutPutRules = false;
-    private int baseOutSize = 2;
+    private int baseIOCellSize = 2;
 
     public enum RuleType {
         COOLING,
@@ -132,33 +131,10 @@ public class PathIndex {
 
 //        System.out.println("Term: " + term);
 //        System.out.println("PStrings: " + pStrings);
-//
-//        check the out cell
-        Cell out = LookupCell.find(term,"out");
-        List<Term> outCellList = ((BuiltinList) out.getContent()).elements();
-
-        if (outCellList.size() > baseOutSize){
-            pStrings.add(pStrings.size(),"@.out");
-        } else if (out.getContent() instanceof BuiltinList){
-            for (int i = 0; i < outCellList.size(); i++) {
-                Term outCellElement = outCellList.get(i);
-                if (outCellElement instanceof KItem){
-                    if (((KItem) outCellElement).kLabel().equals("#buffer")){
-                        Term bufferTerm = ((KItem) outCellElement).kList().get(0);
-                        if (bufferTerm instanceof Token){
-                            String bufferContent = ((Token) bufferTerm).value();
-                            if (!bufferContent.equals("\"\"")){
-                                pStrings.add(pStrings.size(),"@.out");
-                            }
-                        }
-                    }
-                }
-            }
-        }
 
         Set<Rule> rules = new HashSet<>();
         //find the intersection of all the sets returned
-        Set<Integer> nextRetrieved = null;
+        Set<Integer> outSet = null;
         Set<Integer> currentMatch = null;
         Set<Integer> matchingIndices = new HashSet<>();
         String subString = null;
@@ -182,16 +158,49 @@ public class PathIndex {
             }
         }
 
-//        if (currentMatch != null) {
-//            matchingIndices.addAll(currentMatch);
-//        }
+        //        check the out cell
+        Cell out = LookupCell.find(term,"out");
+        List<Term> outCellList = ((BuiltinList) out.getContent()).elements();
+
+        //maybe cache this value at indexing time instead of always computing it here
+        outSet = trie.retrieve(trie.getRoot(), "@.out");
+        if (outCellList.size() > baseIOCellSize){
+            matchingIndices = Sets.union(matchingIndices, outSet);
+        }
+
+        if (out.getContent() instanceof BuiltinList){
+            for (int i = 0; i < outCellList.size(); i++) {
+                Term outCellElement = outCellList.get(i);
+                if (outCellElement instanceof KItem){
+                    if (((KItem) outCellElement).kLabel().toString().equals("#buffer")){
+                        Term bufferTerm = ((KItem) outCellElement).kList().get(0);
+                        if (bufferTerm instanceof Token){
+                            String bufferContent = ((Token) bufferTerm).value();
+                            if (!bufferContent.equals("\"\"")){
+                                matchingIndices = Sets.union(matchingIndices, outSet);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // check the in cell
+        Cell in = LookupCell.find(term,"in");
+        List<Term> inCellList = ((BuiltinList) in.getContent()).elements();
+
+        //maybe cache the value of inSet at indexing time instead of always computing it here
+        Set<Integer> inSet = trie.retrieve(trie.getRoot(), "@.in");
+        if (inCellList.size() > baseIOCellSize){
+            matchingIndices = Sets.union(matchingIndices, inSet);
+        }
 
         for (Integer n : matchingIndices) {
             rules.add(indexedRules.get(n));
         }
 
 //        System.out.println("matching: "+matchingIndices);
-//        System.out.println("rules: "+rules);
+//        System.out.println("rules: "+rules +"\n");
         return rules;
     }
 
@@ -259,82 +268,82 @@ public class PathIndex {
 //        return rules;
 //    }
 
-    private Set<Integer> getClosestIndices(ArrayList<String> pStrings) {
-        Set<Integer> candidates = new HashSet<>();
-        String firstPString = pStrings.get(0);
-        String sub = firstPString.substring(0, firstPString.lastIndexOf("."));
-        for (Map.Entry<Integer, Collection<String>> entry : pStringMap.entrySet()) {
-            for (String str : entry.getValue()) {
-                if (str.startsWith(sub)) {
-                    candidates.add(entry.getKey());
-                }
-            }
-        }
-        return candidates;
-    }
+//    private Set<Integer> getClosestIndices(ArrayList<String> pStrings) {
+//        Set<Integer> candidates = new HashSet<>();
+//        String firstPString = pStrings.get(0);
+//        String sub = firstPString.substring(0, firstPString.lastIndexOf("."));
+//        for (Map.Entry<Integer, Collection<String>> entry : pStringMap.entrySet()) {
+//            for (String str : entry.getValue()) {
+//                if (str.startsWith(sub)) {
+//                    candidates.add(entry.getKey());
+//                }
+//            }
+//        }
+//        return candidates;
+//    }
+//
+//    private String getHigherPString(String pString, int n) {
+//        String newString = null;
+//        String newPString = null;
+//        ArrayList<String> strings = new ArrayList<>();
+//        strings.add(pString);
+//        Set<String> sorts = getSortsFromPStrings(strings);
+//        for (String sort : sorts) {
+//            if (sort.equals("HOLE")) {
+//                return null;
+//            }
+//            if (definition.context().isSubsorted("KResult", sort)) {
+//                String replacement = pString.substring(0, pString.lastIndexOf(".")) + ".";
+//
+//                String[] split = pString.split("\\.");
+//                ArrayList<String> splitList = new ArrayList<>(Arrays.asList(split));
+//                int pos = splitList.size() - 3;
+//                String currentLabel = splitList.get(pos);
+//                ArrayList<Production> productions = (ArrayList<Production>) definition.context().productionsOf(currentLabel);
+//                Production p = productions.get(0);
+//                newString = p.getChildSort(n);
+//                replacement = replacement + newString;
+//                newPString = replacement;
+//            } else {
+//                String replacement = pString.substring(0, pString.lastIndexOf(".")) + ".";
+//
+//                String[] split = pString.split("\\.");
+//                ArrayList<String> splitList = new ArrayList<>(Arrays.asList(split));
+//                if (splitList.size() > 2) {
+//                    int pos = splitList.size() - 3;
+//                    String currentLabel = splitList.get(pos);
+//                    if (!definition.context().productionsOf(currentLabel).isEmpty()) {
+//                        ArrayList<Production> productions = (ArrayList<Production>) definition.context().productionsOf(currentLabel);
+//                        Production p = productions.get(0);
+//                        newString = p.getChildSort(n);
+//                        replacement = replacement + newString;
+//                        newPString = replacement;
+//                    }
+//                }
+//            }
+//        }
+//
+//        return newPString;
+//    }
 
-    private String getHigherPString(String pString, int n) {
-        String newString = null;
-        String newPString = null;
-        ArrayList<String> strings = new ArrayList<>();
-        strings.add(pString);
-        Set<String> sorts = getSortsFromPStrings(strings);
-        for (String sort : sorts) {
-            if (sort.equals("HOLE")) {
-                return null;
-            }
-            if (definition.context().isSubsorted("KResult", sort)) {
-                String replacement = pString.substring(0, pString.lastIndexOf(".")) + ".";
-
-                String[] split = pString.split("\\.");
-                ArrayList<String> splitList = new ArrayList<>(Arrays.asList(split));
-                int pos = splitList.size() - 3;
-                String currentLabel = splitList.get(pos);
-                ArrayList<Production> productions = (ArrayList<Production>) definition.context().productionsOf(currentLabel);
-                Production p = productions.get(0);
-                newString = p.getChildSort(n);
-                replacement = replacement + newString;
-                newPString = replacement;
-            } else {
-                String replacement = pString.substring(0, pString.lastIndexOf(".")) + ".";
-
-                String[] split = pString.split("\\.");
-                ArrayList<String> splitList = new ArrayList<>(Arrays.asList(split));
-                if (splitList.size() > 2) {
-                    int pos = splitList.size() - 3;
-                    String currentLabel = splitList.get(pos);
-                    if (!definition.context().productionsOf(currentLabel).isEmpty()) {
-                        ArrayList<Production> productions = (ArrayList<Production>) definition.context().productionsOf(currentLabel);
-                        Production p = productions.get(0);
-                        newString = p.getChildSort(n);
-                        replacement = replacement + newString;
-                        newPString = replacement;
-                    }
-                }
-            }
-        }
-
-        return newPString;
-    }
-
-    private Set<String> getSortsFromPStrings(ArrayList<String> pStrings) {
-        Set<String> sorts = new HashSet<>();
-        for (String pString : pStrings) {
-            String sub = pString.substring(pString.lastIndexOf(".") + 1);
-            if (sub.equals("HOLE")) {
-                sub = "HOLE";
-            }
-            sorts.add(sub);
-        }
-
-        return sorts;
-    }
-
-    private ArrayList<String> getTermPString(Term term) {
-        TermVisitor termVisitor = new TermVisitor(definition.context());
-        term.accept(termVisitor);
-        return (ArrayList<String>) termVisitor.getpStrings();
-    }
+//    private Set<String> getSortsFromPStrings(ArrayList<String> pStrings) {
+//        Set<String> sorts = new HashSet<>();
+//        for (String pString : pStrings) {
+//            String sub = pString.substring(pString.lastIndexOf(".") + 1);
+//            if (sub.equals("HOLE")) {
+//                sub = "HOLE";
+//            }
+//            sorts.add(sub);
+//        }
+//
+//        return sorts;
+//    }
+//
+//    private ArrayList<String> getTermPString(Term term) {
+//        TermVisitor termVisitor = new TermVisitor(definition.context());
+//        term.accept(termVisitor);
+//        return (ArrayList<String>) termVisitor.getpStrings();
+//    }
 
     private ArrayList<String> getTermPString2(Term term) {
         TermVisitorGeneral termVisitor = new TermVisitorGeneral(definition.context());
