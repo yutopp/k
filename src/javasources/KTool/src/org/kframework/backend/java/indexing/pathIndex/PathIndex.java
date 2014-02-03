@@ -23,6 +23,8 @@ public class PathIndex {
     private Definition definition;
     private org.kframework.backend.java.indexing.pathIndex.trie.PathIndexTrie trie;
     private MultiMap<Integer, String> pStringMap;
+    private boolean applyOutPutRules = false;
+    private int baseOutSize = 2;
 
     public enum RuleType {
         COOLING,
@@ -132,12 +134,25 @@ public class PathIndex {
 //        System.out.println("PStrings: " + pStrings);
 //
 //        check the out cell
-//        Cell out = LookupCell.find(term,"out");
-//        System.out.println("out.contentKind: "+out.contentKind());
-//        System.out.println("out.content: "+out.getContent());
-//        System.out.println("out.getLabel: "+out.getLabel());
-//        System.out.println("output?: "+out.containsAttribute("stdout"));
-//        System.out.println("attributes: "+out.getAttributes());
+        Cell out = LookupCell.find(term,"out");
+        int outCellListSize = ((BuiltinList) out.getContent()).elements().size();
+        if (outCellListSize > baseOutSize){
+            pStrings.add(pStrings.size(),"@.out");
+        }
+        if (out.getContent() instanceof BuiltinList){
+            for (int i = 0; i < ((BuiltinList) out.getContent()).elements().size(); i++) {
+                if (((BuiltinList) out.getContent()).elements().get(i) instanceof KItem){
+                    if (((KItem)((BuiltinList) out.getContent()).elements().get(i)).kLabel().toString().equals("#buffer")){
+                        if (((KItem)((BuiltinList) out.getContent()).elements().get(i)).kList().get(0) instanceof Token){
+                            String bufferContent = ((Token) ((KItem)((BuiltinList) out.getContent()).elements().get(i)).kList().get(0)).value();
+                            if (!bufferContent.equals("\"\"")){
+                                pStrings.add(pStrings.size(),"@.out");
+                            }
+                        }
+                    }
+                }
+            }
+        }
 
         Set<Rule> rules = new HashSet<>();
         //find the intersection of all the sets returned
