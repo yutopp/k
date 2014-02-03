@@ -135,16 +135,18 @@ public class PathIndex {
 //
 //        check the out cell
         Cell out = LookupCell.find(term,"out");
-        int outCellListSize = ((BuiltinList) out.getContent()).elements().size();
-        if (outCellListSize > baseOutSize){
+        List<Term> outCellList = ((BuiltinList) out.getContent()).elements();
+
+        if (outCellList.size() > baseOutSize){
             pStrings.add(pStrings.size(),"@.out");
-        }
-        if (out.getContent() instanceof BuiltinList){
-            for (int i = 0; i < ((BuiltinList) out.getContent()).elements().size(); i++) {
-                if (((BuiltinList) out.getContent()).elements().get(i) instanceof KItem){
-                    if (((KItem)((BuiltinList) out.getContent()).elements().get(i)).kLabel().toString().equals("#buffer")){
-                        if (((KItem)((BuiltinList) out.getContent()).elements().get(i)).kList().get(0) instanceof Token){
-                            String bufferContent = ((Token) ((KItem)((BuiltinList) out.getContent()).elements().get(i)).kList().get(0)).value();
+        } else if (out.getContent() instanceof BuiltinList){
+            for (int i = 0; i < outCellList.size(); i++) {
+                Term outCellElement = outCellList.get(i);
+                if (outCellElement instanceof KItem){
+                    if (((KItem) outCellElement).kLabel().equals("#buffer")){
+                        Term bufferTerm = ((KItem) outCellElement).kList().get(0);
+                        if (bufferTerm instanceof Token){
+                            String bufferContent = ((Token) bufferTerm).value();
                             if (!bufferContent.equals("\"\"")){
                                 pStrings.add(pStrings.size(),"@.out");
                             }
