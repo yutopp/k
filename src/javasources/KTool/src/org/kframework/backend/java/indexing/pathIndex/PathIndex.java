@@ -5,12 +5,26 @@ import org.apache.commons.collections15.MultiMap;
 import org.apache.commons.collections15.multimap.MultiHashMap;
 import org.kframework.backend.java.indexing.pathIndex.trie.PathIndexTrie;
 import org.kframework.backend.java.indexing.pathIndex.visitors.*;
+import org.kframework.backend.java.indexing.util.MultiplicityStarCellHolder;
 import org.kframework.backend.java.kil.*;
+import org.kframework.backend.java.kil.Cell;
+import org.kframework.backend.java.kil.Definition;
+import org.kframework.backend.java.kil.Rule;
+import org.kframework.backend.java.kil.Term;
+import org.kframework.backend.java.kil.Token;
+import org.kframework.backend.java.symbolic.KILtoBackendJavaKILTransformer;
 import org.kframework.backend.java.util.LookupCell;
-import org.kframework.kil.Production;
+import org.kframework.compile.utils.ConfigurationStructure;
+import org.kframework.kil.*;
+import org.kframework.kil.loader.*;
+import org.kframework.kil.loader.Context;
+import org.kframework.kil.visitors.exceptions.TransformerException;
 
 import java.util.*;
 import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Author: Owolabi Legunsen
@@ -22,6 +36,7 @@ public class PathIndex {
     private Definition definition;
     private org.kframework.backend.java.indexing.pathIndex.trie.PathIndexTrie trie;
     private MultiMap<Integer, String> pStringMap;
+    MultiplicityStarCellHolder holder = null;
     private boolean applyOutPutRules = false;
     private int baseIOCellSize = 2;
 
@@ -37,7 +52,39 @@ public class PathIndex {
         this.definition = definition;
         this.indexedRules = new HashMap<>();
         constructIndex(definition);
+        checkForMultiplicityStar(definition.context());
     }
+
+    private MultiplicityStarCellHolder checkForMultiplicityStar(Context context) {
+
+        for (Map.Entry<String, ConfigurationStructure> entry : definition.context().getConfigurationStructureMap().entrySet()){
+
+            //for now I am assuming that there is only one cell which (1) has multiplicity* and
+            // (2) has children which can contain kCells
+            if (entry.getValue().multiplicity.equals(org.kframework.kil.Cell.Multiplicity.ANY)){
+                Term backendKILCell = null;
+                try {
+                    backendKILCell = (Cell)entry.getValue().cell.accept(new KILtoBackendJavaKILTransformer(definition.context()));
+                    Term kCell = LookupCell.find(backendKILCell, "k");
+                    if (LookupCell.find(kCell, "k") != null){
+                        System.out.println("Cell "+entry.getKey()+" has multiplicity* and contains a K cell!");
+//                        cellWithMultipleK = entry.getKey();
+//                        parentOfCellWithMultipleK = entry.getValue().parent.cell.getId();
+                        holder = new MultiplicityStarCellHolder();
+
+                        holder.setCellWithMultipleK(entry.getKey());
+                        holder.setParentOfCellWithMultipleK(entry.getValue().parent.cell.getId());
+                    }
+                } catch (TransformerException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+
+        return holder;
+    }
+
+
 
     private void constructIndex(Definition definition) {
         pStringMap = new MultiHashMap<>();
@@ -127,10 +174,71 @@ public class PathIndex {
     }
 
     public Set<Rule> getRulesForTerm(Term term) {
-        ArrayList<String> pStrings = getTermPString2(term);
+        ArrayList<String> pStrings;// = getTermPString2(term);
 
 //        System.out.println("Term: " + term);
 //        System.out.println("PStrings: " + pStrings);
+
+//        String cellWithMultipleK = null;
+//        String parentOfCellWithMultipleK = null;
+//
+//        for (Map.Entry<String, ConfigurationStructure> entry : definition.context().getConfigurationStructureMap().entrySet()){
+//
+//            //for now I am assuming that there is only one cell which (1) has multiplicity* and
+//            // (2) has children which can contain kCells
+//            if (entry.getValue().multiplicity.equals(org.kframework.kil.Cell.Multiplicity.ANY)){
+//                Term backendKILCell = null;
+//                try {
+//                    backendKILCell = (Cell)entry.getValue().cell.accept(new KILtoBackendJavaKILTransformer(definition.context()));
+//                    Term kCell = LookupCell.find(backendKILCell, "k");
+//                    if (LookupCell.find(kCell, "k") != null){
+//                        System.out.println("Cell "+entry.getKey()+" has multiplicity* and contains a K cell!");
+//                        cellWithMultipleK = entry.getKey();
+//                        parentOfCellWithMultipleK = entry.getValue().parent.cell.getId();
+//                    }
+//                } catch (TransformerException e) {
+//                    e.printStackTrace();
+//                }
+//            }
+//
+//        }
+
+        //ArrayList<String>  = new ArrayList<>();
+        if (holder != null) {
+               pStrings = getPStringsFromMultiple(term, holder.getParentOfCellWithMultipleK());
+//            Cell threadsCell = LookupCell.find(term,parentOfCellWithMultipleK); //use parent instead
+////            System.out.println("Thread Cells: " + threadsCell);
+////            System.out.println("Content Class: "+ threadsCell.getContent().getClass());
+//            for (Cell cell : ((CellCollection)threadsCell.getContent()).cells()){
+//               if (LookupCell.find(cell,"k") != null){
+//                   cells.add(LookupCell.find(cell,"k"));
+//               }
+//            }
+//
+////            System.out.println("cellzz: " + cells);
+////            System.out.println("cellzz size: " + cells.size());
+//            System.out.println();
+//
+//            TermVisitorGeneral visitor = new TermVisitorGeneral(definition.context());
+//            ArrayList<String> possible = new ArrayList<>();
+////            if (cells.size() > 1){
+//                for (Cell cell:cells){
+//                    //ensure that these are k cells
+//                    cell.accept(visitor);
+//                    possible.addAll(visitor.getpStrings());
+//                    //TODO(OwolabiL): remember to reset the visitor in a better way than this
+//                    visitor = new TermVisitorGeneral(definition.context());
+//                }
+//            }
+//            System.out.println("possiblesss: "+possible);
+//            pStrings = possible;
+        } else {
+            pStrings = getTermPString2(term);
+        }
+
+
+
+
 
         Set<Rule> rules = new HashSet<>();
         //find the intersection of all the sets returned
@@ -202,6 +310,35 @@ public class PathIndex {
 //        System.out.println("matching: "+matchingIndices);
 //        System.out.println("rules: "+rules +"\n");
         return rules;
+    }
+
+    private ArrayList<String> getPStringsFromMultiple(Term term, String parentOfCellWithMultipleK) {
+        ArrayList<Cell> cells = new ArrayList<>();
+        Cell threadsCell = LookupCell.find(term,parentOfCellWithMultipleK); //use parent instead
+//            System.out.println("Thread Cells: " + threadsCell);
+//            System.out.println("Content Class: "+ threadsCell.getContent().getClass());
+        for (Cell cell : ((CellCollection)threadsCell.getContent()).cells()){
+            if (LookupCell.find(cell,"k") != null){
+                cells.add(LookupCell.find(cell,"k"));
+            }
+        }
+
+//            System.out.println("cellzz: " + cells);
+//            System.out.println("cellzz size: " + cells.size());
+        System.out.println();
+
+        TermVisitorGeneral visitor = new TermVisitorGeneral(definition.context());
+        ArrayList<String> possible = new ArrayList<>();
+//            if (cells.size() > 1){
+        for (Cell cell:cells){
+            //ensure that these are k cells
+            cell.accept(visitor);
+            possible.addAll(visitor.getpStrings());
+            //TODO(OwolabiL): remember to reset the visitor in a better way than this
+            visitor = new TermVisitorGeneral(definition.context());
+        }
+
+        return possible;
     }
 
 //    public Set<Rule> getRulesForTerm(Term term) {

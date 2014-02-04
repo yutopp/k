@@ -18,6 +18,7 @@ public class TermVisitorGeneral extends LocalVisitor {
     private List<String> pStrings;
 
     private final Context context;
+
     private String pString;
     private int currentPosition = 0;
     private boolean inner = false;
@@ -25,7 +26,6 @@ public class TermVisitorGeneral extends LocalVisitor {
     private String currentLabel;
     private final String SEPARATOR = ".";
     private final String START_STRING = "@.";
-
     public TermVisitorGeneral(Context context) {
         pStrings = new ArrayList<>();
         this.context = context;
@@ -42,11 +42,11 @@ public class TermVisitorGeneral extends LocalVisitor {
         }
     }
 
-
     @Override
     public void visit(Cell cell) {
         cell.getContent().accept(this);
     }
+
 
     @Override
     public void visit(KSequence kSequence) {
@@ -86,7 +86,12 @@ public class TermVisitorGeneral extends LocalVisitor {
         }
 
         if (inner) {
-            ArrayList<Production> productions = (ArrayList<Production>) context.productionsOf(currentLabel);
+            List<Production> productions1 = context.productionsOf(currentLabel);
+            //the production of .K is empty
+            if (productions1.isEmpty()){
+                return;
+            }
+            ArrayList<Production> productions = (ArrayList<Production>) productions1;
             Production p = productions.get(0);
             if (context.isSubsorted("KResult", token.sort())) {
                 if (pString != null) {
@@ -109,7 +114,6 @@ public class TermVisitorGeneral extends LocalVisitor {
             }
         }
     }
-
 
     @Override
     public void visit(KItem kItem) {
@@ -144,6 +148,7 @@ public class TermVisitorGeneral extends LocalVisitor {
         }
     }
 
+
     @Override
     public void visit(KList kList) {
         inKList = true;
@@ -173,6 +178,10 @@ public class TermVisitorGeneral extends LocalVisitor {
 
     public List<String> getpStrings() {
         return pStrings;
+    }
+
+    public void setpStrings(List<String> pStrings) {
+        this.pStrings = pStrings;
     }
 
     private class TokenVisitor extends TermVisitorGeneral {

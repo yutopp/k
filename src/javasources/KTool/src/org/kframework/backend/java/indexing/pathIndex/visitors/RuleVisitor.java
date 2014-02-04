@@ -38,6 +38,7 @@ public class RuleVisitor extends LocalVisitor {
 
     @Override
     public void visit(Cell cell) {
+
         cell.getContent().accept(this);
     }
 
@@ -47,6 +48,11 @@ public class RuleVisitor extends LocalVisitor {
         //taking care of .K
         if (kSequence.size() > 0) {
             kSequence.get(0).accept(this);
+        } else if (kSequence.size() == 0){
+            //there may be more than one k cell in the rule and one of them may be empty
+            //e.g. the join rule in IMP++. The solution is to get the other one.
+            System.out.println("size: "+kSequence.size());
+            System.out.println("the kSequence: "+kSequence);
         }
     }
 

@@ -76,8 +76,9 @@ public class HeatingRuleVisitor extends RuleVisitor {
             } else {
                 if (productions.size() > 1) {
                     //find the exact sort of this variable before it was transformed as part of this rule
+//                    System.out.println("rule: "+rule);
                     pStrings.add(pString + counter + "." + "UserList");
-
+//                    System.out.println("productions: "+productions);
 //                System.out.println("Variable: "+variable);
 //                System.out.println("Variable Sort: "+variable.sort());
 //
