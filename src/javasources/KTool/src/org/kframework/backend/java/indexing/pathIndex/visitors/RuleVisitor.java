@@ -23,8 +23,6 @@ public class RuleVisitor extends LocalVisitor {
     protected List<String> pStrings;
     boolean isKSequence = false;
     private String currentKLabel;
-    private Rule rule = null;
-    private String multipleKCells;
 
     private int position = 0;
 
@@ -32,12 +30,10 @@ public class RuleVisitor extends LocalVisitor {
         this.context = context;
         this.pString = START_STRING;
         this.pStrings = new ArrayList<>();
-        this.multipleKCells = multipleKCells;
     }
 
     @Override
     public void visit(Rule rule) {
-        this.rule = rule;
         visit(LookupCell.find(rule.leftHandSide(), "k"));
     }
 
@@ -53,19 +49,10 @@ public class RuleVisitor extends LocalVisitor {
         //taking care of .K
         if (kSequence.size() > 0) {
             kSequence.get(0).accept(this);
-        } else if (kSequence.size() == 0){
-            //there may be more than one k cell in the rule and one of them may be empty
-            //e.g. the join rule in IMP++. The solution is to get the other one.
-//            System.out.println("size: "+kSequence.size());
-//            System.out.println("the kSequence: "+kSequence);
-//            ArrayList<Cell> kCells = MultipleCellUtil.checkRuleForMultiplicityStar(rule, multipleKCells);
-//            if (kCells.size() > 1){
-//                for (Cell kCell: kCells){
-//                    kCell.accept(this);
-//                }
-//                this.proceed = false;
-//
-//            }
+        } else if (kSequence.size() == 0) {
+            //TODO(OwolabiL): there may be more than one k cell in the rule and one of them may be
+            // empty e.g. the join rule in IMP++. The correct solution is to get pStrings from all
+            // kCells.
         }
     }
 

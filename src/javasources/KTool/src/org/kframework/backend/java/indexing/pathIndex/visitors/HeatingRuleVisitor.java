@@ -39,10 +39,10 @@ public class HeatingRuleVisitor extends RuleVisitor {
     @Override
     public void visit(KLabel kLabel) {
         currentLabel = kLabel.toString();
-        if (pString.equals(START_STRING)){
+        if (pString.equals(START_STRING)) {
             //we are at the initial pString
             pString = pString.concat(kLabel.toString() + SEPARATOR);
-        } else{
+        } else {
             //the original pString has been modified along the way
             pString = pString.concat(counter + SEPARATOR + kLabel.toString() + SEPARATOR);
         }
@@ -52,7 +52,6 @@ public class HeatingRuleVisitor extends RuleVisitor {
     public void visit(KList kList) {
         for (int i = 0; i < kList.size(); i++) {
             counter = i + 1;
-//            visit((Variable)kList.get(i));
             kList.get(i).accept(this);
         }
         this.proceed = false;
@@ -64,47 +63,19 @@ public class HeatingRuleVisitor extends RuleVisitor {
         if (isRequiredToBeKResult(variable, rule)) {
             sort = getKResultSort(variable);
         } else {
-//            sort = variable.sort();
-            ArrayList<Production> productions = (ArrayList<Production>) context.productionsOf(currentLabel);
-            if (productions.size() == 1){
+            ArrayList<Production> productions =
+                    (ArrayList<Production>) context.productionsOf(currentLabel);
+            if (productions.size() == 1) {
                 Production p = productions.get(0);
-//            System.out.println("variable: "+variable);
-//            System.out.println("child sort: "+p.getChildSort(counter-1));
                 sort = p.getChildSort(counter - 1);
                 pStrings.add(pString + counter + "." + sort);
             } else {
                 if (productions.size() > 1) {
-                    //find the exact sort of this variable before it was transformed as part of this rule
-//                    System.out.println("rule: "+rule);
+                    //TODO(OwolabiL): find the exact sort of this variable before it was transformed
+                    // as part of this rule
                     pStrings.add(pString + counter + "." + "UserList");
-//                    System.out.println("productions: "+productions);
-//                System.out.println("Variable: "+variable);
-//                System.out.println("Variable Sort: "+variable.sort());
-//
-//                    for (Production p : productions) {
-//                        System.out.println("========================================");
-//                        System.out.println("production: " + p);
-//                        System.out.println("production cons: " + p.getCons());
-//                        System.out.println("production sort: " + p.getSort());
-//                        System.out.println("production isListDecl: " + p.isListDecl());
-//                        System.out.println("production items: " + p.getItems());
-//                        System.out.println("p.getItems().size: " + p.getItems().size());
-//                        System.out.println("p.getItems().get(0): " + p.getItems().get(0));
-//                        System.out.println("user List? :" + (p.getItems().get(0) instanceof UserList));
-//                        System.out.println("user List class :" + (p.getItems().get(0)).getClass());
-//                        if (p.getItems().get(0) instanceof UserList) {
-//                            System.out.println("((UserList) p.getItems().get(0)).getSort(): " + ((UserList) p.getItems().get(0)).getSort());
-//                            System.out.println("((UserList) p.getItems().get(0)).getListType(): " + ((UserList) p.getItems().get(0)).getListType());
-//                        }
-//                        System.out.println("========================================");
-//                    }
-
                 }
             }
-
-
-
-
         }
     }
 
@@ -136,5 +107,4 @@ public class HeatingRuleVisitor extends RuleVisitor {
         }
         return required;
     }
-
 }

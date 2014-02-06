@@ -36,8 +36,7 @@ public class CoolingRuleVisitor extends RuleVisitor {
         if (rule.requires().toString().contains(requiredKResult)) {
             firstSort = "KResult";
         } else {
-            //TODO(OwolabiL): this should never happen!! throw exception?
-            firstSort = variable.sort();
+            throw new IllegalStateException("First term in K cell is not a K result: \n" + rule);
         }
         pString = pString.concat(firstSort + ".1.");
     }
@@ -49,7 +48,6 @@ public class CoolingRuleVisitor extends RuleVisitor {
 
     @Override
     public void visit(KItem kItem) {
-//        System.out.println("kItem: "+kItem);
         visit(kItem.kLabel());
         visit(kItem.kList());
         this.proceed = false;
@@ -70,14 +68,9 @@ public class CoolingRuleVisitor extends RuleVisitor {
             if (frozenTerm instanceof Hole) {
                 pStrings.add(pString + (i + 1) + ".HOLE");
             } else {
-                //is it always a variable?
-//                pStrings.add(pString+(i+1)+SEPARATOR+ ((Variable) frozenTerm).sort());
                 ArrayList<Production> productions = (ArrayList<Production>) context.productionsOf(currentLabel);
                 Production p = productions.get(0);
-//                System.out.println("variable: "+frozenTerm);
-//                System.out.println("child sort: "+p.getChildSort(i));
                 pStrings.add(pString + (i + 1) + SEPARATOR + p.getChildSort(i));
-//                sort = p.getChildSort(counter-1);
             }
         }
     }

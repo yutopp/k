@@ -1,7 +1,6 @@
 package org.kframework.backend.java.indexing.util;
 
-import com.google.common.collect.Multimap;
-import org.kframework.backend.java.indexing.pathIndex.visitors.TermVisitorGeneral;
+import org.kframework.backend.java.indexing.pathIndex.visitors.TermVisitor;
 import org.kframework.backend.java.kil.Cell;
 import org.kframework.backend.java.kil.CellCollection;
 import org.kframework.backend.java.kil.Rule;
@@ -70,21 +69,18 @@ public class MultipleCellUtil {
     }
 
     public static ArrayList<String> getPStringsFromMultiple(Term term, String parentOfCellWithMultipleK, Context context) {
-        ArrayList<Cell> cells = new ArrayList<>();
         Cell threadsCell = LookupCell.find(term,parentOfCellWithMultipleK);
+        TermVisitor visitor = new TermVisitor(context);
+        ArrayList<String> possible = new ArrayList<>();
+
         for (Cell cell : ((CellCollection)threadsCell.getContent()).cells()){
             if (LookupCell.find(cell,"k") != null){
-                cells.add(LookupCell.find(cell,"k"));
+                Cell kCell = LookupCell.find(cell,"k");
+                kCell.accept(visitor);
+                possible.addAll(visitor.getpStrings());
+                //TODO(OwolabiL): remember to reset the visitor in a better way than this?
+                visitor = new TermVisitor(context);
             }
-        }
-
-        TermVisitorGeneral visitor = new TermVisitorGeneral(context);
-        ArrayList<String> possible = new ArrayList<>();
-        for (Cell cell:cells){
-            cell.accept(visitor);
-            possible.addAll(visitor.getpStrings());
-            //TODO(OwolabiL): remember to reset the visitor in a better way than this?
-            visitor = new TermVisitorGeneral(context);
         }
 
         return possible;

@@ -28,11 +28,13 @@ import java.util.Set;
 public class PathIndex {
     private Map<Integer, Rule> indexedRules;
     private Definition definition;
-    private org.kframework.backend.java.indexing.pathIndex.trie.PathIndexTrie trie;
+    private PathIndexTrie trie;
     private MultiMap<Integer, String> pStringMap;
-    MultiplicityStarCellHolder holder = null;
-    private boolean applyOutPutRules = false;
-    private int baseIOCellSize = 2;
+    MultiplicityStarCellHolder multiCellInfoHolder = null;
+    private final int baseIOCellSize = 2;
+    //TODO(OwolabiL): use list instead of set?
+    Set<Integer> outputRuleIndices = new HashSet<>();
+    Set<Integer> inputRuleIndices = new HashSet<>();
 
     public enum RuleType {
         COOLING,
@@ -45,46 +47,14 @@ public class PathIndex {
     public PathIndex(Definition definition) {
         this.definition = definition;
         this.indexedRules = new HashMap<>();
-        holder = MultipleCellUtil.checkDefinitionForMultiplicityStar(definition.context());
+        multiCellInfoHolder = MultipleCellUtil.checkDefinitionForMultiplicityStar(definition.context());
         constructIndex(definition);
     }
-
-//    public MultiplicityStarCellHolder checkDefinitionForMultiplicityStar(Context context) {
-//        MultiplicityStarCellHolder starCellHolder = null;
-//        for (Map.Entry<String, ConfigurationStructure> entry : definition.context().getConfigurationStructureMap().entrySet()){
-//
-//            //for now I am assuming that there is only one cell in the definition which (1) has
-//            // multiplicity* and (2) has children which can contain kCells
-//            if (entry.getValue().multiplicity.equals(org.kframework.kil.Cell.Multiplicity.ANY)){
-//                Term backendKILCell = null;
-//                try {
-//                    backendKILCell = (Cell)entry.getValue().cell.accept(new KILtoBackendJavaKILTransformer(definition.context()));
-//                    Term kCell = LookupCell.find(backendKILCell, "k");
-//                    if (LookupCell.find(kCell, "k") != null){
-//                        System.out.println("Cell "+entry.getKey()+" has multiplicity* and contains a K cell!");
-//
-//                        starCellHolder = new MultiplicityStarCellHolder();
-//                        starCellHolder.setCellWithMultipleK(entry.getKey());
-//                        starCellHolder.setParentOfCellWithMultipleK(entry.getValue().parent.cell.getId());
-//                    }
-//                } catch (TransformerException e) {
-//                    e.printStackTrace();
-//                }
-//            }
-//        }
-//
-//        return starCellHolder;
-//    }
-
-
 
     private void constructIndex(Definition definition) {
         pStringMap = new MultiHashMap<>();
         int count = 1;
-        //Step 1: initialize the Trie
 
-        //Step 2: extract a p-string PS(i) from the LHS of each rule(i)
-        //Step 3: assign a numeric index to identify the rule IND(i)
         for (Rule rule : definition.rules()) {
             if (rule.containsAttribute("heat") || rule.containsAttribute("print")) {
                 pStringMap.putAll(createRulePString(rule, count, RuleType.HEATING));
@@ -136,7 +106,6 @@ public class PathIndex {
         }
     }
 
-
     private MultiMap<Integer, String> createRulePString(Rule rule, int n, RuleType type) {
         MultiMap<Integer, String> pStrings = new MultiHashMap<>();
         RuleVisitor ruleVisitor;
@@ -150,26 +119,28 @@ public class PathIndex {
                 ruleVisitor = new HeatingRuleVisitor(rule, definition.context());
                 break;
             case OTHER:
-                ruleVisitor = new RuleVisitor(definition.context(),holder.getParentOfCellWithMultipleK());
-                kCells = MultipleCellUtil.checkRuleForMultiplicityStar(rule, holder.getParentOfCellWithMultipleK());
+                ruleVisitor = new RuleVisitor(definition.context(), multiCellInfoHolder.getParentOfCellWithMultipleK());
+                //TODO(OwolabiL): Move this to the RuleVisitor class
+                kCells = MultipleCellUtil.checkRuleForMultiplicityStar(rule, multiCellInfoHolder.getParentOfCellWithMultipleK());
                 break;
             case OUT:
                 pStrings.put(n, "@.out");
+                outputRuleIndices.add(n);
                 return pStrings;
             case IN:
                 pStrings.put(n, "@.in");
+                inputRuleIndices.add(n);
                 return pStrings;
             default:
                 throw new IllegalArgumentException("Cannot create P-String for unknown rule type:" + type);
         }
 
-
         //TODO(OwolabiL): Move this check to the RuleVisitor class
-        if (kCells.size() > 1){
-            for (Cell kCell: kCells){
+        if (kCells.size() > 1) {
+            for (Cell kCell : kCells) {
                 kCell.accept(ruleVisitor);
             }
-        }else{
+        } else {
             rule.accept(ruleVisitor);
         }
 
@@ -180,9 +151,12 @@ public class PathIndex {
     public Set<Rule> getRulesForTerm(Term term) {
         ArrayList<String> pStrings;
 
-        if (holder != null) {
+        //check if the definition has a cell with multiplicity* which contains a k cell
+        //if such a cell is found, the multiCellInfoHolder field should have been set at index creation time and
+        // getting pStrings from it is done differently
+        if (multiCellInfoHolder != null) {
             pStrings = MultipleCellUtil.getPStringsFromMultiple(term,
-                    holder.getParentOfCellWithMultipleK(),
+                    multiCellInfoHolder.getParentOfCellWithMultipleK(),
                     definition.context());
         } else {
             pStrings = getTermPString2(term);
@@ -190,18 +164,20 @@ public class PathIndex {
 
         Set<Rule> rules = new HashSet<>();
         //find the intersection of all the sets returned
-        Set<Integer> outSet = null;
+//        Set<Integer> outputRuleIndices = null;
         Set<Integer> currentMatch = null;
         Set<Integer> matchingIndices = new HashSet<>();
         String subString = null;
+
         for (String pString : pStrings) {
             String[] split = pString.split("\\.");
             int i = split.length;
             currentMatch = trie.retrieve(trie.getRoot(), pString);
             subString = pString;
+
             while (i > 0 && subString.lastIndexOf('.') > 1) {
                 subString = pString.substring(0, subString.lastIndexOf('.') - 2);
-                if (trie.retrieve(trie.getRoot(),subString) != null){
+                if (trie.retrieve(trie.getRoot(), subString) != null) {
                     currentMatch.addAll(trie.retrieve(trie.getRoot(), subString));
                 }
             }
@@ -215,25 +191,24 @@ public class PathIndex {
         }
 
         //        check the out cell
-        Cell out = LookupCell.find(term,"out");
+        Cell out = LookupCell.find(term, "out");
         List<Term> outCellList = ((BuiltinList) out.getContent()).elements();
 
-        //maybe cache this value at indexing time instead of always computing it here
-        outSet = trie.retrieve(trie.getRoot(), "@.out");
-        if (outCellList.size() > baseIOCellSize){
-            matchingIndices = Sets.union(matchingIndices, outSet);
+        if (outCellList.size() > baseIOCellSize) {
+            matchingIndices = Sets.union(matchingIndices, outputRuleIndices);
         }
 
-        if (out.getContent() instanceof BuiltinList){
+        //TODO(OwolabiL): Write a visitor for this
+        if (out.getContent() instanceof BuiltinList) {
             for (int i = 0; i < outCellList.size(); i++) {
                 Term outCellElement = outCellList.get(i);
-                if (outCellElement instanceof KItem){
-                    if (((KItem) outCellElement).kLabel().toString().equals("#buffer")){
+                if (outCellElement instanceof KItem) {
+                    if (((KItem) outCellElement).kLabel().toString().equals("#buffer")) {
                         Term bufferTerm = ((KItem) outCellElement).kList().get(0);
-                        if (bufferTerm instanceof Token){
+                        if (bufferTerm instanceof Token) {
                             String bufferContent = ((Token) bufferTerm).value();
-                            if (!bufferContent.equals("\"\"")){
-                                matchingIndices = Sets.union(matchingIndices, outSet);
+                            if (!bufferContent.equals("\"\"")) {
+                                matchingIndices = Sets.union(matchingIndices, outputRuleIndices);
                             }
                         }
                     }
@@ -242,13 +217,11 @@ public class PathIndex {
         }
 
         // check the in cell
-        Cell in = LookupCell.find(term,"in");
+        Cell in = LookupCell.find(term, "in");
         List<Term> inCellList = ((BuiltinList) in.getContent()).elements();
 
-        //maybe cache the value of inSet at indexing time instead of always computing it here
-        Set<Integer> inSet = trie.retrieve(trie.getRoot(), "@.in");
-        if (inCellList.size() > baseIOCellSize){
-            matchingIndices = Sets.union(matchingIndices, inSet);
+        if (inCellList.size() > baseIOCellSize) {
+            matchingIndices = Sets.union(matchingIndices, inputRuleIndices);
         }
 
         for (Integer n : matchingIndices) {
@@ -261,9 +234,8 @@ public class PathIndex {
     }
 
 
-
     private ArrayList<String> getTermPString2(Term term) {
-        TermVisitorGeneral termVisitor = new TermVisitorGeneral(definition.context());
+        TermVisitor termVisitor = new TermVisitor(definition.context());
         term.accept(termVisitor);
         return (ArrayList<String>) termVisitor.getpStrings();
     }
