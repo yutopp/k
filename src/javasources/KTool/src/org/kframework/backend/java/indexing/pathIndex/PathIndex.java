@@ -18,7 +18,6 @@ import org.kframework.backend.java.util.LookupCell;
 import java.util.*;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * Author: Owolabi Legunsen
@@ -30,9 +29,8 @@ public class PathIndex {
     private final Definition definition;
     private PathIndexTrie trie;
     private MultiplicityStarCellHolder multiCellInfoHolder = null;
-    //TODO(OwolabiL): use list instead of set?
-    private final Set<Integer> outputRuleIndices = new HashSet<>();
-    private final Set<Integer> inputRuleIndices = new HashSet<>();
+    private final ArrayList<Integer> outputRuleIndices = new ArrayList<>();
+    private final ArrayList<Integer> inputRuleIndices = new ArrayList<>();
 
     public enum RuleType {
         COOLING,
@@ -164,8 +162,8 @@ public class PathIndex {
 
         Set<Rule> rules = new HashSet<>();
 
-        Set<Integer> currentMatch;
-        Set<Integer> matchingIndices = new HashSet<>();
+        ArrayList<Integer> currentMatch;
+        ArrayList<Integer> matchingIndices = new ArrayList<>();
         String subString;
 
         for (String pString : pStrings) {
@@ -185,19 +183,19 @@ public class PathIndex {
                 matchingIndices = currentMatch;
             } else {
                 //should it be an intersection?
-                matchingIndices = Sets.union(matchingIndices, currentMatch);
+                matchingIndices.addAll(currentMatch);
             }
         }
 
         // check the out cell
         int baseIOCellSize = 2;
         if (!outputRuleIndices.isEmpty()) {
-            matchingIndices = addOutCellIndices(term, matchingIndices, baseIOCellSize);
+            matchingIndices = addOutputCellIndices(term, matchingIndices, baseIOCellSize);
         }
 
         // check the in cell
         if (!inputRuleIndices.isEmpty()) {
-            matchingIndices = addOutputCellIndices(term, matchingIndices, baseIOCellSize);
+            matchingIndices = addInputCellIndices(term, matchingIndices, baseIOCellSize);
         }
 
         for (Integer n : matchingIndices) {
@@ -209,23 +207,23 @@ public class PathIndex {
         return rules;
     }
 
-    private Set<Integer> addOutputCellIndices(Term term, Set<Integer> matchingIndices, int baseIOCellSize) {
+    private ArrayList<Integer> addInputCellIndices(Term term, ArrayList<Integer> matchingIndices, int baseIOCellSize) {
         Cell in = LookupCell.find(term, "in");
         List<Term> inCellList = ((BuiltinList) in.getContent()).elements();
 
         if (inCellList.size() > baseIOCellSize) {
-            matchingIndices = Sets.union(matchingIndices, inputRuleIndices);
+            matchingIndices.addAll(inputRuleIndices);
         }
         return matchingIndices;
     }
 
-    private Set<Integer> addOutCellIndices(Term term, Set<Integer> matchingIndices, int baseIOCellSize) {
+    private ArrayList<Integer> addOutputCellIndices(Term term, ArrayList<Integer> matchingIndices, int baseIOCellSize) {
         Cell out = LookupCell.find(term, "out");
         List<Term> outCellList = ((BuiltinList) out.getContent()).elements();
 
 
         if (outCellList.size() > baseIOCellSize) {
-            matchingIndices = Sets.union(matchingIndices, outputRuleIndices);
+            matchingIndices.addAll(outputRuleIndices);
         }
 
         //TODO(OwolabiL): Write a visitor for this
@@ -234,7 +232,7 @@ public class PathIndex {
                 if (outCellElement instanceof KItem && ((KItem) outCellElement).kLabel().toString().equals("#buffer")) {
                     Term bufferTerm = ((KItem) outCellElement).kList().get(0);
                     if (bufferTerm instanceof Token && !((Token) bufferTerm).value().equals("\"\"")) {
-                        matchingIndices = Sets.union(matchingIndices, outputRuleIndices);
+                        matchingIndices.addAll(outputRuleIndices);
                     }
                 }
             }

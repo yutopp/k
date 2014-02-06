@@ -16,8 +16,6 @@ public class PathIndexTrie implements Trie {
 
     /**
      * This method adds a new string to the index
-     * TODO: how to make the value kept by the leaf a set instead of a single value
-     * TODO: how to represent and work with variables at the nodes (needed for K)
      * TODO: convert this to a graph labelled by the chars in the string (like in "Term Indexing" book
      * TODO: How much faster is this stuff?
      *
@@ -33,31 +31,23 @@ public class PathIndexTrie implements Trie {
         if (pString.length() == 0) {
             return;
         }
-//        System.out.println("pString: "+pString);
         String[] split = pString.split(delimiter);
         ArrayList<String> splitList = new ArrayList<>(Arrays.asList(split));
         add(trieNode, splitList, value);
     }
 
     private void add(TrieNode trieNode, ArrayList<String> strings, int value) {
-//        System.out.println("strings: "+strings);
 
         if (strings.size() == 0) {
             return;
         }
-//        System.out.println("SP: "+strings);
-//        System.out.println(splitList.size());
-//        for (int i = 0; i < splitList.size(); i++) {
-//            String elem = splitList.get(i);
-//            System.out.println(elem);
-//        }
 
         String elem = strings.get(0);
 
         ArrayList<String> splitList1 = new ArrayList<>(strings.subList(1, strings.size()));
 
         if (trieNode.getChildren() == null) {
-//            //if we are also at the end of the pString
+            //if we are also at the end of the pString
             if (strings.size() == 1) {
                 //if the current node is a leaf, add value to its value set and return
                 if (trieNode instanceof TrieLeaf) {
@@ -196,16 +186,16 @@ public class PathIndexTrie implements Trie {
      * @return the set of indices associated with the query pString, or null if it is not found
      */
     @Override
-    public Set<Integer> retrieve(TrieNode trieNode, String queryString) {
+    public ArrayList<Integer> retrieve(TrieNode trieNode, String queryString) {
         String[] split = queryString.split(delimiter);
         ArrayList<String> splitList = new ArrayList<>(Arrays.asList(split));
         ArrayList<String> subList = new ArrayList<>(splitList.subList(1, splitList.size()));
         return retrieveSet(trieNode, subList);
     }
 
-    private Set<Integer> retrieveSet(TrieNode trieNode, ArrayList<String> splitList) {
+    private ArrayList<Integer> retrieveSet(TrieNode trieNode, ArrayList<String> splitList) {
         if (splitList.size() == 0) {
-            return new HashSet<>();
+            return new ArrayList<>();
         }
         String firstString = splitList.get(0);
         ArrayList<String> subList = new ArrayList<>(splitList.subList(1, splitList.size()));
@@ -291,5 +281,4 @@ public class PathIndexTrie implements Trie {
     public TrieNode getRoot() {
         return root;
     }
-
 }

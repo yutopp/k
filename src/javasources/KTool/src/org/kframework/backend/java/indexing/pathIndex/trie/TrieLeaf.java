@@ -1,23 +1,22 @@
 package org.kframework.backend.java.indexing.pathIndex.trie;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.ArrayList;
 
 /**
  * Author: Owolabi Legunsen
  * 1/2/14: 7:30 PM
  */
 public class TrieLeaf extends TrieNode {
-    public Set<Integer> getIndices() {
+    public ArrayList<Integer> getIndices() {
         return indices;
     }
 
-    private final Set<Integer> indices;
+    private final ArrayList<Integer> indices;
 
     public TrieLeaf(String value, int index) {
         super(value);
 
-        indices = new HashSet<>();
+        indices = new ArrayList<>();
         indices.add(index);
     }
 

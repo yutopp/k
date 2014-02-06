@@ -1,8 +1,6 @@
 package org.kframework.backend.java.indexing.pathIndex.trie;
 
 import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.Set;
 
 /**
  * Author: Owolabi Legunsen
@@ -12,11 +10,11 @@ public class TrieNode {
     private final String value;
     private ArrayList<TrieNode> children;
 
-    private final Set<Integer> indices;
+    private final ArrayList<Integer> indices;
 
     public TrieNode(String value) {
         this.value = value;
-        indices = new HashSet<>();
+        indices = new ArrayList<>();
     }
 
 
@@ -77,7 +75,7 @@ public class TrieNode {
         return result;
     }
 
-    public Set<Integer> getIndices() {
+    public ArrayList<Integer> getIndices() {
         return indices;
     }
 }

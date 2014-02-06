@@ -1,6 +1,6 @@
 package org.kframework.backend.java.indexing.pathIndex.trie;
 
-import java.util.Set;
+import java.util.ArrayList;
 
 /**
  * Author: Owolabi Legunsen
@@ -11,7 +11,7 @@ public interface Trie {
 
     public void removeIndex(TrieNode trieNode, String pString, int value);
 
-    public Set<Integer> retrieve(TrieNode trieNode, String queryString);
+    public ArrayList<Integer> retrieve(TrieNode trieNode, String queryString);
 
     public boolean isMember(TrieNode trieNode, String queryString);
 
