@@ -8,7 +8,7 @@ import java.util.*;
  */
 public class PathIndexTrie implements Trie {
     private final TrieNode root;
-    private String delimiter = "\\.";
+    private final String delimiter = "\\.";
 
     public PathIndexTrie() {
         root = new TrieNode("@");
@@ -61,7 +61,7 @@ public class PathIndexTrie implements Trie {
             if (strings.size() == 1) {
                 //if the current node is a leaf, add value to its value set and return
                 if (trieNode instanceof TrieLeaf) {
-                    ((TrieLeaf) trieNode).getIndices().add(value);
+                    trieNode.getIndices().add(value);
                     return;
                 } else {
                     TrieNode leaf = new TrieLeaf(elem, value);
@@ -88,7 +88,7 @@ public class PathIndexTrie implements Trie {
             if (trieNode.inChildren(elem)) {
                 TrieNode node = trieNode.getChild(elem);
                 if (node instanceof TrieLeaf && elem.equals(node.getValue())) {
-                    ((TrieLeaf) node).getIndices().add(value);
+                    node.getIndices().add(value);
                     return;
                 }
 
@@ -169,20 +169,23 @@ public class PathIndexTrie implements Trie {
             }
         }
 
-        if (child == null) {
-//            result = false;
-        } else if (newSuffix.size() == 0) {
-            if (child instanceof TrieLeaf && ((TrieLeaf) child).getIndices().size() > 0) {
+//        if (child == null) {
+////            result = false;
+//        } else
+
+        if (newSuffix.size() == 0) {
+            if (child instanceof TrieLeaf && child.getIndices().size() > 0) {
                 children.remove(child);
             }
         } else {
             remove(child, newSuffix, value);
 
-            if (child.getChildren().size() == 0) {
-                children.remove(child);
+            if (child != null) {
+                if (child.getChildren().size() == 0) {
+                    children.remove(child);
+                }
             }
         }
-
     }
 
     /**
@@ -201,7 +204,7 @@ public class PathIndexTrie implements Trie {
     }
 
     private Set<Integer> retrieveSet(TrieNode trieNode, ArrayList<String> splitList) {
-        if (splitList.size() == 0){
+        if (splitList.size() == 0) {
             return new HashSet<>();
         }
         String firstString = splitList.get(0);
@@ -232,7 +235,7 @@ public class PathIndexTrie implements Trie {
     /**
      * Check membership of a key in the index
      *
-     * @param trieNode    the node to start searchung from
+     * @param trieNode    the node to start searching from
      * @param queryString the string to find
      * @return True if and only if queryString is an key in the index trie
      *         which starts from trieNode. In order words, if rob => X is in
@@ -269,20 +272,20 @@ public class PathIndexTrie implements Trie {
         return tree.toString();
     }
 
-    public int size(TrieNode node) {
-        if (node == null) {
-            //TODO(OwolabiL): Throw an exception instead
-            return -1000;
-        }
-        int size = 1;
-        if (node.getChildren() != null) {
-            for (TrieNode trieNode : node.getChildren()) {
-                size += size(trieNode);
-            }
-        }
-
-        return size;
-    }
+//    int size(TrieNode node) {
+//        if (node == null) {
+//            //TODO(OwolabiL): Throw an exception instead
+//            return -1000;
+//        }
+//        int size = 1;
+//        if (node.getChildren() != null) {
+//            for (TrieNode trieNode : node.getChildren()) {
+//                size += size(trieNode);
+//            }
+//        }
+//
+//        return size;
+//    }
 
     @Override
     public TrieNode getRoot() {

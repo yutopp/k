@@ -26,15 +26,13 @@ import java.util.Set;
  */
 //TODO(OwolabiL): How to deal with macros and function rules? (imp has none)
 public class PathIndex {
-    private Map<Integer, Rule> indexedRules;
-    private Definition definition;
+    private final Map<Integer, Rule> indexedRules;
+    private final Definition definition;
     private PathIndexTrie trie;
-    private MultiMap<Integer, String> pStringMap;
-    MultiplicityStarCellHolder multiCellInfoHolder = null;
-    private final int baseIOCellSize = 2;
+    private MultiplicityStarCellHolder multiCellInfoHolder = null;
     //TODO(OwolabiL): use list instead of set?
-    Set<Integer> outputRuleIndices = new HashSet<>();
-    Set<Integer> inputRuleIndices = new HashSet<>();
+    private final Set<Integer> outputRuleIndices = new HashSet<>();
+    private final Set<Integer> inputRuleIndices = new HashSet<>();
 
     public enum RuleType {
         COOLING,
@@ -52,7 +50,7 @@ public class PathIndex {
     }
 
     private void constructIndex(Definition definition) {
-        pStringMap = new MultiHashMap<>();
+        MultiMap<Integer, String> pStringMap = new MultiHashMap<>();
         int count = 1;
 
         for (Rule rule : definition.rules()) {
@@ -74,7 +72,7 @@ public class PathIndex {
         assert indexedRules.size() == definition.rules().size();
 //        printIndices(indexedRules, pStringMap);
 
-        //intitialize the trie
+        //initialise the trie
         trie = new PathIndexTrie();
 
         //add all the pStrings to the trie
@@ -87,24 +85,24 @@ public class PathIndex {
         }
     }
 
-    private void printIndices(Map<Integer, Rule> indexedRules, MultiMap<Integer,
-            String> pString) {
-        for (Integer n : indexedRules.keySet()) {
-            System.out.println("Rule " + n + ": ");
-            System.out.println(indexedRules.get(n));
-            System.out.println("Rule Attribute:");
-            System.out.println(indexedRules.get(n).getAttributes());
-            System.out.println("P-Strings: ");
-            ArrayList<String> p_strings = (ArrayList<String>) pString.get(n);
-            //There should be no null p-string!!
-            if (p_strings != null) {
-                for (int i = 0; i < p_strings.size(); i++) {
-                    System.out.println((i + 1) + ": " + p_strings.get(i));
-                }
-            }
-            System.out.println();
-        }
-    }
+//    private void printIndices(Map<Integer, Rule> indexedRules, MultiMap<Integer,
+//            String> pString) {
+//        for (Integer n : indexedRules.keySet()) {
+//            System.out.println("Rule " + n + ": ");
+//            System.out.println(indexedRules.get(n));
+//            System.out.println("Rule Attribute:");
+//            System.out.println(indexedRules.get(n).getAttributes());
+//            System.out.println("P-Strings: ");
+//            ArrayList<String> p_strings = (ArrayList<String>) pString.get(n);
+//            //There should be no null p-string!!
+//            if (p_strings != null) {
+//                for (int i = 0; i < p_strings.size(); i++) {
+//                    System.out.println((i + 1) + ": " + p_strings.get(i));
+//                }
+//            }
+//            System.out.println();
+//        }
+//    }
 
     private MultiMap<Integer, String> createRulePString(Rule rule, int n, RuleType type) {
         MultiMap<Integer, String> pStrings = new MultiHashMap<>();
@@ -116,7 +114,7 @@ public class PathIndex {
                 ruleVisitor = new CoolingRuleVisitor(rule, definition.context());
                 break;
             case HEATING:
-                ruleVisitor = new HeatingRuleVisitor(rule, definition.context());
+                ruleVisitor = new HeatingRuleVisitor(definition.context());
                 break;
             case OTHER:
                 ruleVisitor = new RuleVisitor(definition.context());
@@ -154,8 +152,8 @@ public class PathIndex {
         ArrayList<String> pStrings;
 
         //check if the definition has a cell with multiplicity* which contains a k cell
-        //if such a cell is found, the multiCellInfoHolder field should have been set at index creation time and
-        // getting pStrings from it is done differently
+        //if such a cell is found, the multiCellInfoHolder field should have been set at index
+        // creation time and getting pStrings from it is done differently
         if (multiCellInfoHolder != null) {
             pStrings = MultipleCellUtil.getPStringsFromMultiple(term,
                     multiCellInfoHolder.getParentOfCellWithMultipleK(),
@@ -165,11 +163,10 @@ public class PathIndex {
         }
 
         Set<Rule> rules = new HashSet<>();
-        //find the intersection of all the sets returned
-//        Set<Integer> outputRuleIndices = null;
-        Set<Integer> currentMatch = null;
+
+        Set<Integer> currentMatch;
         Set<Integer> matchingIndices = new HashSet<>();
-        String subString = null;
+        String subString;
 
         for (String pString : pStrings) {
             String[] split = pString.split("\\.");
@@ -187,49 +184,20 @@ public class PathIndex {
             if (matchingIndices.isEmpty()) {
                 matchingIndices = currentMatch;
             } else {
-                //should be an intersection?
+                //should it be an intersection?
                 matchingIndices = Sets.union(matchingIndices, currentMatch);
             }
         }
 
-        //        check the out cell
-        if (!outputRuleIndices.isEmpty()){
-            Cell out = LookupCell.find(term, "out");
-            List<Term> outCellList = ((BuiltinList) out.getContent()).elements();
-
-
-        if (outCellList.size() > baseIOCellSize) {
-            matchingIndices = Sets.union(matchingIndices, outputRuleIndices);
-        }
-
-        //TODO(OwolabiL): Write a visitor for this
-        if (out.getContent() instanceof BuiltinList) {
-            for (int i = 0; i < outCellList.size(); i++) {
-                Term outCellElement = outCellList.get(i);
-                if (outCellElement instanceof KItem) {
-                    if (((KItem) outCellElement).kLabel().toString().equals("#buffer")) {
-                        Term bufferTerm = ((KItem) outCellElement).kList().get(0);
-                        if (bufferTerm instanceof Token) {
-                            String bufferContent = ((Token) bufferTerm).value();
-                            if (!bufferContent.equals("\"\"")) {
-                                matchingIndices = Sets.union(matchingIndices, outputRuleIndices);
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
+        // check the out cell
+        int baseIOCellSize = 2;
+        if (!outputRuleIndices.isEmpty()) {
+            matchingIndices = addOutCellIndices(term, matchingIndices, baseIOCellSize);
         }
 
         // check the in cell
-        if (!inputRuleIndices.isEmpty()){
-            Cell in = LookupCell.find(term, "in");
-            List<Term> inCellList = ((BuiltinList) in.getContent()).elements();
-
-            if (inCellList.size() > baseIOCellSize) {
-                matchingIndices = Sets.union(matchingIndices, inputRuleIndices);
-            }
+        if (!inputRuleIndices.isEmpty()) {
+            matchingIndices = addOutputCellIndices(term, matchingIndices, baseIOCellSize);
         }
 
         for (Integer n : matchingIndices) {
@@ -239,6 +207,39 @@ public class PathIndex {
 //        System.out.println("matching: "+matchingIndices);
 //        System.out.println("rules: "+rules +"\n");
         return rules;
+    }
+
+    private Set<Integer> addOutputCellIndices(Term term, Set<Integer> matchingIndices, int baseIOCellSize) {
+        Cell in = LookupCell.find(term, "in");
+        List<Term> inCellList = ((BuiltinList) in.getContent()).elements();
+
+        if (inCellList.size() > baseIOCellSize) {
+            matchingIndices = Sets.union(matchingIndices, inputRuleIndices);
+        }
+        return matchingIndices;
+    }
+
+    private Set<Integer> addOutCellIndices(Term term, Set<Integer> matchingIndices, int baseIOCellSize) {
+        Cell out = LookupCell.find(term, "out");
+        List<Term> outCellList = ((BuiltinList) out.getContent()).elements();
+
+
+        if (outCellList.size() > baseIOCellSize) {
+            matchingIndices = Sets.union(matchingIndices, outputRuleIndices);
+        }
+
+        //TODO(OwolabiL): Write a visitor for this
+        if (out.getContent() instanceof BuiltinList) {
+            for (Term outCellElement : outCellList) {
+                if (outCellElement instanceof KItem && ((KItem) outCellElement).kLabel().toString().equals("#buffer")) {
+                    Term bufferTerm = ((KItem) outCellElement).kList().get(0);
+                    if (bufferTerm instanceof Token && !((Token) bufferTerm).value().equals("\"\"")) {
+                        matchingIndices = Sets.union(matchingIndices, outputRuleIndices);
+                    }
+                }
+            }
+        }
+        return matchingIndices;
     }
 
 

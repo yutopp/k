@@ -9,10 +9,10 @@ import java.util.Set;
  * 1/2/14: 7:23 PM
  */
 public class TrieNode {
-    private String value;
+    private final String value;
     private ArrayList<TrieNode> children;
 
-    private Set<Integer> indices;
+    private final Set<Integer> indices;
 
     public TrieNode(String value) {
         this.value = value;
@@ -43,10 +43,6 @@ public class TrieNode {
 
     public String getValue() {
         return value;
-    }
-
-    public void setValue(String value) {
-        this.value = value;
     }
 
     public ArrayList<TrieNode> getChildren() {

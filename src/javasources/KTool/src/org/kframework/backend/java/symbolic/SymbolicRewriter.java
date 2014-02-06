@@ -445,8 +445,6 @@ public class SymbolicRewriter {
                     constrainedTerm.termContext());
 
             for (SymbolicConstraint constraint1 : constrainedTerm.unify(leftHandSide)) {
-//                System.out.println("The term: "+constrainedTerm.term());
-//                System.out.println("Unifiable Rule: "+rule+"\n");
                 constraint1.orientSubstitution(rule.variableSet(), constrainedTerm.termContext());
                 constraint1.addAll(rule.ensures());
                     /* rename rule variables in the constraints */

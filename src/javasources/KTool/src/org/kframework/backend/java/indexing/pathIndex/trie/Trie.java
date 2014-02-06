@@ -8,8 +8,12 @@ import java.util.Set;
  */
 public interface Trie {
     public void addIndex(TrieNode trie, String pString, int value);
+
     public void removeIndex(TrieNode trieNode, String pString, int value);
+
     public Set<Integer> retrieve(TrieNode trieNode, String queryString);
+
     public boolean isMember(TrieNode trieNode, String queryString);
+
     public TrieNode getRoot();
 }

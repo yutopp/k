@@ -12,15 +12,13 @@ import java.util.*;
  * Time: 10:25 AM
  */
 public class HeatingRuleVisitor extends RuleVisitor {
-    private final Rule rule;
     private final Context context;
     private String currentLabel = null;
 
     private int counter = 0;
 
-    public HeatingRuleVisitor(Rule rule, Context context) {
+    public HeatingRuleVisitor(Context context) {
         super(context);
-        this.rule = rule;
         this.context = context;
     }
 
@@ -60,51 +58,47 @@ public class HeatingRuleVisitor extends RuleVisitor {
     @Override
     public void visit(Variable variable) {
         String sort;
-        if (isRequiredToBeKResult(variable, rule)) {
-            sort = getKResultSort(variable);
+        ArrayList<Production> productions =
+                (ArrayList<Production>) context.productionsOf(currentLabel);
+        if (productions.size() == 1) {
+            Production p = productions.get(0);
+            sort = p.getChildSort(counter - 1);
+            pStrings.add(pString + counter + "." + sort);
         } else {
-            ArrayList<Production> productions =
-                    (ArrayList<Production>) context.productionsOf(currentLabel);
-            if (productions.size() == 1) {
-                Production p = productions.get(0);
-                sort = p.getChildSort(counter - 1);
-                pStrings.add(pString + counter + "." + sort);
-            } else {
-                if (productions.size() > 1) {
-                    //TODO(OwolabiL): find the exact sort of this variable before it was transformed
-                    // as part of this rule
-                    pStrings.add(pString + counter + "." + "UserList");
-                }
+            if (productions.size() > 1) {
+                //TODO(OwolabiL): find the exact sort of this variable before it was transformed
+                // as part of this rule
+                pStrings.add(pString + counter + "." + "UserList");
             }
         }
     }
 
-    private String getKResultSort(Term term) {
-        String sort = null;
-        Set<String> sorts = new HashSet<>();
-        sorts.add(((Variable) term).sort());
-
-        java.util.Collection<String> commonSubsorts = context.getCommonSubsorts(sorts);
-        if (commonSubsorts.size() == 1) {
-            for (String s : commonSubsorts) {
-                sort = s;
-            }
-        }
-        return sort;
-    }
-
-    //TODO(OwolabiL): Use visitor for traversing the rule instead
-    private boolean isRequiredToBeKResult(Term term, Rule rule) {
-        boolean required = false;
-        for (Term require : rule.requires()) {
-            if (require instanceof KItem) {
-                if (((KItem) require).kLabel().toString().equals("isKResult") &&
-                        ((KItem) require).kList().size() == 1 &&
-                        ((KItem) require).kList().get(0).equals(term)) {
-                    required = true;
-                }
-            }
-        }
-        return required;
-    }
+//    private String getKResultSort(Term term) {
+//        String sort = null;
+//        Set<String> sorts = new HashSet<>();
+//        sorts.add(((Variable) term).sort());
+//
+//        java.util.Collection<String> commonSubsorts = context.getCommonSubsorts(sorts);
+//        if (commonSubsorts.size() == 1) {
+//            for (String s : commonSubsorts) {
+//                sort = s;
+//            }
+//        }
+//        return sort;
+//    }
+//
+//    //TODO(OwolabiL): Use visitor for traversing the rule instead
+//    private boolean isRequiredToBeKResult(Term term, Rule rule) {
+//        boolean required = false;
+//        for (Term require : rule.requires()) {
+//            if (require instanceof KItem) {
+//                if (((KItem) require).kLabel().toString().equals("isKResult") &&
+//                        ((KItem) require).kList().size() == 1 &&
+//                        ((KItem) require).kList().get(0).equals(term)) {
+//                    required = true;
+//                }
+//            }
+//        }
+//        return required;
+//    }
 }

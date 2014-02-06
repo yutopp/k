@@ -19,12 +19,9 @@ public class RuleVisitor extends LocalVisitor {
     static final String SEPARATOR = ".";
     static final String START_STRING = "@.";
     final Context context;
-    protected String pString;
-    protected List<String> pStrings;
-    boolean isKSequence = false;
-    private String currentKLabel;
-
-    private int position = 0;
+    String pString;
+    final List<String> pStrings;
+    private boolean isKSequence = false;
 
     public RuleVisitor(Context context) {
         this.context = context;
@@ -49,11 +46,13 @@ public class RuleVisitor extends LocalVisitor {
         //taking care of .K
         if (kSequence.size() > 0) {
             kSequence.get(0).accept(this);
-        } else if (kSequence.size() == 0) {
+        }
+
+        //else if (kSequence.size() == 0) {
             //TODO(OwolabiL): there may be more than one k cell in the rule and one of them may be
             // empty e.g. the join rule in IMP++. The correct solution is to get pStrings from all
             // kCells.
-        }
+        //}
     }
 
     @Override
@@ -64,8 +63,7 @@ public class RuleVisitor extends LocalVisitor {
 
     @Override
     public void visit(KLabel kLabel) {
-        currentKLabel = kLabel.toString();
-        pString = pString.concat(currentKLabel);
+        pString = pString.concat(kLabel.toString());
     }
 
     @Override
@@ -75,7 +73,7 @@ public class RuleVisitor extends LocalVisitor {
             pStrings.add(pString);
         }
         for (int i = 0; i < kList.size(); i++) {
-            position = i + 1;
+            int position = i + 1;
             if (!isKSequence) {
                 String pending = pString + SEPARATOR + (position);
                 //TODO(OwolabiL): instanceof must be removed!

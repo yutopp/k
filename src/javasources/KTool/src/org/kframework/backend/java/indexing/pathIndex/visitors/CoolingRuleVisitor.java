@@ -12,7 +12,7 @@ import java.util.ArrayList;
  * Time: 12:40 PM
  */
 public class CoolingRuleVisitor extends RuleVisitor {
-    private Rule rule;
+    private final Rule rule;
     private String currentLabel;
 
 

@@ -15,17 +15,17 @@ import java.util.List;
  * Time: 12:05 PM
  */
 public class TermVisitor extends LocalVisitor {
-    private List<String> pStrings;
+    private final List<String> pStrings;
 
     private final Context context;
 
     private String pString;
     private int currentPosition = 0;
     private boolean inner = false;
-    private boolean inKList = false;
     private String currentLabel;
     private final String SEPARATOR = ".";
     private final String START_STRING = "@.";
+
     public TermVisitor(Context context) {
         pStrings = new ArrayList<>();
         this.context = context;
@@ -34,9 +34,6 @@ public class TermVisitor extends LocalVisitor {
     @Override
     public void visit(Term node) {
         Term lookedUpK = LookupCell.find(node, "k");
-//        System.out.println("Looked Up: "+LookupCell.find(node, "k"));
-//        pStrings.add("@.in");
-//        pStrings.add("@.out");
         if (lookedUpK != null) {
             (LookupCell.find(node, "k")).accept(this);
         }
@@ -53,9 +50,9 @@ public class TermVisitor extends LocalVisitor {
         if (kSequence.size() > 0) {
 //            System.out.println("1st: "+(KItem)kSequence.get(0));
             //TODO (OwolabiL): This is too messy. Restructure the conditionals
-            if (kSequence.get(0) instanceof KItem){
+            if (kSequence.get(0) instanceof KItem) {
                 boolean isKResult = context.isSubsorted("KResult", ((KItem) kSequence.get(0)).sort());
-                if (isKResult){
+                if (isKResult) {
                     pString = START_STRING + "KResult";
                     kSequence.get(1).accept(this);
                 } else {
@@ -88,29 +85,25 @@ public class TermVisitor extends LocalVisitor {
         if (inner) {
             List<Production> productions1 = context.productionsOf(currentLabel);
             //the production of .K is empty
-            if (productions1.isEmpty()){
+            if (productions1.isEmpty()) {
                 return;
             }
             ArrayList<Production> productions = (ArrayList<Production>) productions1;
             Production p = productions.get(0);
             if (context.isSubsorted("KResult", token.sort())) {
                 if (pString != null) {
-                    if (productions.size() == 1){
+                    if (productions.size() == 1) {
                         pStrings.add(pString + SEPARATOR + currentPosition + SEPARATOR + token.sort());
-                    }
-                    else{
+                    } else {
                         pStrings.add(pString + SEPARATOR + currentPosition + SEPARATOR + "UserList");
-//                        pStrings.add(pString + SEPARATOR + currentPosition + SEPARATOR + token.sort());
                     }
                 }
             } else {
-                if (productions.size() == 1){
+                if (productions.size() == 1) {
                     pStrings.add(pString + SEPARATOR + currentPosition + SEPARATOR + p.getChildSort(0));
-                } else{
+                } else {
                     pStrings.add(pString + SEPARATOR + currentPosition + SEPARATOR + "UserList");
-//                    pStrings.add(pString + SEPARATOR + currentPosition + SEPARATOR + p.getChildSort(0));
                 }
-//                pStrings.add(pString + SEPARATOR+ currentPosition + SEPARATOR + "KItem");
             }
         }
     }
@@ -135,12 +128,9 @@ public class TermVisitor extends LocalVisitor {
                 } else if (kItem.kList().size() == 0 && kItem.sort().equals("#ListOf#Bot{\",\"}")) {
                     pStrings.add(pString + SEPARATOR + currentPosition + SEPARATOR + "'.List{\",\"}");
                 } else {
-                    if (context.isListSort(kItem.sort())){
-//                        kItem.kList().accept(this);
+                    if (context.isListSort(kItem.sort())) {
                         pStrings.add(pString + SEPARATOR + currentPosition + SEPARATOR + "UserList");
-//                        pStrings.add(pString + SEPARATOR + currentPosition + SEPARATOR + kItem.sort());
-
-                    } else{
+                    } else {
                         pStrings.add(pString + SEPARATOR + currentPosition + SEPARATOR + kItem.sort());
                     }
                 }
@@ -148,10 +138,8 @@ public class TermVisitor extends LocalVisitor {
         }
     }
 
-
     @Override
     public void visit(KList kList) {
-        inKList = true;
         if (kList.size() == 0) {
             pStrings.add(pString);
         } else {
@@ -169,7 +157,8 @@ public class TermVisitor extends LocalVisitor {
 
     /**
      * The environment recovery will need this
-     * @param builtinMap
+     *
+     * @param builtinMap the map to be visited
      */
     @Override
     public void visit(BuiltinMap builtinMap) {
@@ -180,14 +169,10 @@ public class TermVisitor extends LocalVisitor {
         return pStrings;
     }
 
-    public void setpStrings(List<String> pStrings) {
-        this.pStrings = pStrings;
-    }
-
     private class TokenVisitor extends TermVisitor {
-        private String baseString;
+        private final String baseString;
         private String pString;
-        private List<String> candidates;
+        private final List<String> candidates;
 
         public TokenVisitor(Context context, String string) {
             super(context);
