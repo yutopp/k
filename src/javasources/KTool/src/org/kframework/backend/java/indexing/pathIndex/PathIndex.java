@@ -5,6 +5,7 @@ import org.apache.commons.collections15.MultiMap;
 import org.apache.commons.collections15.multimap.MultiHashMap;
 import org.kframework.backend.java.indexing.pathIndex.trie.PathIndexTrie;
 import org.kframework.backend.java.indexing.pathIndex.visitors.*;
+import org.kframework.backend.java.indexing.util.MultipleCellUtil;
 import org.kframework.backend.java.indexing.util.MultiplicityStarCellHolder;
 import org.kframework.backend.java.kil.*;
 import org.kframework.backend.java.kil.Cell;
@@ -12,16 +13,9 @@ import org.kframework.backend.java.kil.Definition;
 import org.kframework.backend.java.kil.Rule;
 import org.kframework.backend.java.kil.Term;
 import org.kframework.backend.java.kil.Token;
-import org.kframework.backend.java.symbolic.KILtoBackendJavaKILTransformer;
 import org.kframework.backend.java.util.LookupCell;
-import org.kframework.compile.utils.ConfigurationStructure;
-import org.kframework.kil.*;
-import org.kframework.kil.loader.*;
-import org.kframework.kil.loader.Context;
-import org.kframework.kil.visitors.exceptions.TransformerException;
 
 import java.util.*;
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -51,38 +45,36 @@ public class PathIndex {
     public PathIndex(Definition definition) {
         this.definition = definition;
         this.indexedRules = new HashMap<>();
+        holder = MultipleCellUtil.checkDefinitionForMultiplicityStar(definition.context());
         constructIndex(definition);
-        checkForMultiplicityStar(definition.context());
     }
 
-    private MultiplicityStarCellHolder checkForMultiplicityStar(Context context) {
-
-        for (Map.Entry<String, ConfigurationStructure> entry : definition.context().getConfigurationStructureMap().entrySet()){
-
-            //for now I am assuming that there is only one cell which (1) has multiplicity* and
-            // (2) has children which can contain kCells
-            if (entry.getValue().multiplicity.equals(org.kframework.kil.Cell.Multiplicity.ANY)){
-                Term backendKILCell = null;
-                try {
-                    backendKILCell = (Cell)entry.getValue().cell.accept(new KILtoBackendJavaKILTransformer(definition.context()));
-                    Term kCell = LookupCell.find(backendKILCell, "k");
-                    if (LookupCell.find(kCell, "k") != null){
-                        System.out.println("Cell "+entry.getKey()+" has multiplicity* and contains a K cell!");
-//                        cellWithMultipleK = entry.getKey();
-//                        parentOfCellWithMultipleK = entry.getValue().parent.cell.getId();
-                        holder = new MultiplicityStarCellHolder();
-
-                        holder.setCellWithMultipleK(entry.getKey());
-                        holder.setParentOfCellWithMultipleK(entry.getValue().parent.cell.getId());
-                    }
-                } catch (TransformerException e) {
-                    e.printStackTrace();
-                }
-            }
-        }
-
-        return holder;
-    }
+//    public MultiplicityStarCellHolder checkDefinitionForMultiplicityStar(Context context) {
+//        MultiplicityStarCellHolder starCellHolder = null;
+//        for (Map.Entry<String, ConfigurationStructure> entry : definition.context().getConfigurationStructureMap().entrySet()){
+//
+//            //for now I am assuming that there is only one cell in the definition which (1) has
+//            // multiplicity* and (2) has children which can contain kCells
+//            if (entry.getValue().multiplicity.equals(org.kframework.kil.Cell.Multiplicity.ANY)){
+//                Term backendKILCell = null;
+//                try {
+//                    backendKILCell = (Cell)entry.getValue().cell.accept(new KILtoBackendJavaKILTransformer(definition.context()));
+//                    Term kCell = LookupCell.find(backendKILCell, "k");
+//                    if (LookupCell.find(kCell, "k") != null){
+//                        System.out.println("Cell "+entry.getKey()+" has multiplicity* and contains a K cell!");
+//
+//                        starCellHolder = new MultiplicityStarCellHolder();
+//                        starCellHolder.setCellWithMultipleK(entry.getKey());
+//                        starCellHolder.setParentOfCellWithMultipleK(entry.getValue().parent.cell.getId());
+//                    }
+//                } catch (TransformerException e) {
+//                    e.printStackTrace();
+//                }
+//            }
+//        }
+//
+//        return starCellHolder;
+//    }
 
 
 
@@ -148,6 +140,8 @@ public class PathIndex {
     private MultiMap<Integer, String> createRulePString(Rule rule, int n, RuleType type) {
         MultiMap<Integer, String> pStrings = new MultiHashMap<>();
         RuleVisitor ruleVisitor;
+        //for rules with multiple K cells
+        ArrayList<Cell> kCells = new ArrayList<>();
         switch (type) {
             case COOLING:
                 ruleVisitor = new CoolingRuleVisitor(rule, definition.context());
@@ -156,7 +150,8 @@ public class PathIndex {
                 ruleVisitor = new HeatingRuleVisitor(rule, definition.context());
                 break;
             case OTHER:
-                ruleVisitor = new RuleVisitor(definition.context());
+                ruleVisitor = new RuleVisitor(definition.context(),holder.getParentOfCellWithMultipleK());
+                kCells = MultipleCellUtil.checkRuleForMultiplicityStar(rule, holder.getParentOfCellWithMultipleK());
                 break;
             case OUT:
                 pStrings.put(n, "@.out");
@@ -168,77 +163,30 @@ public class PathIndex {
                 throw new IllegalArgumentException("Cannot create P-String for unknown rule type:" + type);
         }
 
-        rule.accept(ruleVisitor);
+
+        //TODO(OwolabiL): Move this check to the RuleVisitor class
+        if (kCells.size() > 1){
+            for (Cell kCell: kCells){
+                kCell.accept(ruleVisitor);
+            }
+        }else{
+            rule.accept(ruleVisitor);
+        }
+
         pStrings.putAll(n, ruleVisitor.getpStrings());
         return pStrings;
     }
 
     public Set<Rule> getRulesForTerm(Term term) {
-        ArrayList<String> pStrings;// = getTermPString2(term);
+        ArrayList<String> pStrings;
 
-//        System.out.println("Term: " + term);
-//        System.out.println("PStrings: " + pStrings);
-
-//        String cellWithMultipleK = null;
-//        String parentOfCellWithMultipleK = null;
-//
-//        for (Map.Entry<String, ConfigurationStructure> entry : definition.context().getConfigurationStructureMap().entrySet()){
-//
-//            //for now I am assuming that there is only one cell which (1) has multiplicity* and
-//            // (2) has children which can contain kCells
-//            if (entry.getValue().multiplicity.equals(org.kframework.kil.Cell.Multiplicity.ANY)){
-//                Term backendKILCell = null;
-//                try {
-//                    backendKILCell = (Cell)entry.getValue().cell.accept(new KILtoBackendJavaKILTransformer(definition.context()));
-//                    Term kCell = LookupCell.find(backendKILCell, "k");
-//                    if (LookupCell.find(kCell, "k") != null){
-//                        System.out.println("Cell "+entry.getKey()+" has multiplicity* and contains a K cell!");
-//                        cellWithMultipleK = entry.getKey();
-//                        parentOfCellWithMultipleK = entry.getValue().parent.cell.getId();
-//                    }
-//                } catch (TransformerException e) {
-//                    e.printStackTrace();
-//                }
-//            }
-//
-//        }
-
-        //ArrayList<String>  = new ArrayList<>();
         if (holder != null) {
-               pStrings = getPStringsFromMultiple(term, holder.getParentOfCellWithMultipleK());
-//            Cell threadsCell = LookupCell.find(term,parentOfCellWithMultipleK); //use parent instead
-////            System.out.println("Thread Cells: " + threadsCell);
-////            System.out.println("Content Class: "+ threadsCell.getContent().getClass());
-//            for (Cell cell : ((CellCollection)threadsCell.getContent()).cells()){
-//               if (LookupCell.find(cell,"k") != null){
-//                   cells.add(LookupCell.find(cell,"k"));
-//               }
-//            }
-//
-////            System.out.println("cellzz: " + cells);
-////            System.out.println("cellzz size: " + cells.size());
-//            System.out.println();
-//
-//            TermVisitorGeneral visitor = new TermVisitorGeneral(definition.context());
-//            ArrayList<String> possible = new ArrayList<>();
-////            if (cells.size() > 1){
-//                for (Cell cell:cells){
-//                    //ensure that these are k cells
-//                    cell.accept(visitor);
-//                    possible.addAll(visitor.getpStrings());
-//                    //TODO(OwolabiL): remember to reset the visitor in a better way than this
-//                    visitor = new TermVisitorGeneral(definition.context());
-//                }
-//            }
-//            System.out.println("possiblesss: "+possible);
-//            pStrings = possible;
+            pStrings = MultipleCellUtil.getPStringsFromMultiple(term,
+                    holder.getParentOfCellWithMultipleK(),
+                    definition.context());
         } else {
             pStrings = getTermPString2(term);
         }
-
-
-
-
 
         Set<Rule> rules = new HashSet<>();
         //find the intersection of all the sets returned
@@ -312,175 +260,7 @@ public class PathIndex {
         return rules;
     }
 
-    private ArrayList<String> getPStringsFromMultiple(Term term, String parentOfCellWithMultipleK) {
-        ArrayList<Cell> cells = new ArrayList<>();
-        Cell threadsCell = LookupCell.find(term,parentOfCellWithMultipleK); //use parent instead
-//            System.out.println("Thread Cells: " + threadsCell);
-//            System.out.println("Content Class: "+ threadsCell.getContent().getClass());
-        for (Cell cell : ((CellCollection)threadsCell.getContent()).cells()){
-            if (LookupCell.find(cell,"k") != null){
-                cells.add(LookupCell.find(cell,"k"));
-            }
-        }
 
-//            System.out.println("cellzz: " + cells);
-//            System.out.println("cellzz size: " + cells.size());
-        System.out.println();
-
-        TermVisitorGeneral visitor = new TermVisitorGeneral(definition.context());
-        ArrayList<String> possible = new ArrayList<>();
-//            if (cells.size() > 1){
-        for (Cell cell:cells){
-            //ensure that these are k cells
-            cell.accept(visitor);
-            possible.addAll(visitor.getpStrings());
-            //TODO(OwolabiL): remember to reset the visitor in a better way than this
-            visitor = new TermVisitorGeneral(definition.context());
-        }
-
-        return possible;
-    }
-
-//    public Set<Rule> getRulesForTerm(Term term) {
-//        ArrayList<String> pStrings = getTermPString2(term);
-//
-//        System.out.println("Term: "+term);
-//        System.out.println("PStrings: "+pStrings);
-//
-//        Set<Rule> rules = new HashSet<>();
-//        //find the intersection of all the sets returned
-//        Set<Integer> nextRetrieved = null;
-//        Set<Integer> currentMatch = null;
-//        Set<Integer> matchingIndices = new HashSet<>();
-//        if (pStrings.size() >= 1) {
-//            currentMatch = trie.retrieve(trie.getRoot(), pStrings.get(0));
-//            System.out.println("current match A: "+currentMatch);
-//            String possible = getHigherPString(pStrings.get(0), 0);
-//
-//            if (possible != null && currentMatch != null) {
-//                if (trie.retrieve(trie.getRoot(), possible) != null) {
-//                    currentMatch = Sets.union(currentMatch, trie.retrieve(trie.getRoot(), possible));
-//                    System.out.println("current match B: "+currentMatch);
-//                }
-//            }
-//
-//            if (currentMatch != null && currentMatch.size() > 1 && pStrings.size() > 1) {
-//                if (trie.retrieve(trie.getRoot(), pStrings.get(1)) != null) {
-//                    Set<Integer> possibleIntersection = Sets.intersection(currentMatch, trie.retrieve(trie.getRoot(), pStrings.get(1)));
-//                    if (possibleIntersection.size() > 0) {
-//                        System.out.println("PossibleIntersection: "+possibleIntersection);
-//                        currentMatch = Sets.intersection(currentMatch, trie.retrieve(trie.getRoot(), pStrings.get(1)));
-//                        System.out.println("current match c: "+currentMatch);
-//                    }
-//                } else {
-//                    String nextPossible = getHigherPString(pStrings.get(1), 1);
-//                    if (nextPossible != null) {
-//                        currentMatch = Sets.intersection(currentMatch, trie.retrieve(trie.getRoot(), nextPossible));
-//                        System.out.println("current match d: "+currentMatch);
-//                    }
-//                }
-//            }
-//
-//
-//            if (currentMatch == null) {
-//                if (pStrings.size() > 1) {
-//                    currentMatch = trie.retrieve(trie.getRoot(), pStrings.get(1));
-//                    System.out.println("current match e: "+currentMatch);
-//                } else {
-//                    //TODO(OwolabiL): use a substring of pString.get(0)
-//                }
-//            }
-//
-//            if (currentMatch != null) {
-//                matchingIndices.addAll(currentMatch);
-//            }
-//
-//        }
-//
-//        for (Integer n : matchingIndices) {
-//            rules.add(indexedRules.get(n));
-//        }
-//        System.out.println("matching: "+matchingIndices);
-//        System.out.println("Rules: "+rules);
-//        return rules;
-//    }
-
-//    private Set<Integer> getClosestIndices(ArrayList<String> pStrings) {
-//        Set<Integer> candidates = new HashSet<>();
-//        String firstPString = pStrings.get(0);
-//        String sub = firstPString.substring(0, firstPString.lastIndexOf("."));
-//        for (Map.Entry<Integer, Collection<String>> entry : pStringMap.entrySet()) {
-//            for (String str : entry.getValue()) {
-//                if (str.startsWith(sub)) {
-//                    candidates.add(entry.getKey());
-//                }
-//            }
-//        }
-//        return candidates;
-//    }
-//
-//    private String getHigherPString(String pString, int n) {
-//        String newString = null;
-//        String newPString = null;
-//        ArrayList<String> strings = new ArrayList<>();
-//        strings.add(pString);
-//        Set<String> sorts = getSortsFromPStrings(strings);
-//        for (String sort : sorts) {
-//            if (sort.equals("HOLE")) {
-//                return null;
-//            }
-//            if (definition.context().isSubsorted("KResult", sort)) {
-//                String replacement = pString.substring(0, pString.lastIndexOf(".")) + ".";
-//
-//                String[] split = pString.split("\\.");
-//                ArrayList<String> splitList = new ArrayList<>(Arrays.asList(split));
-//                int pos = splitList.size() - 3;
-//                String currentLabel = splitList.get(pos);
-//                ArrayList<Production> productions = (ArrayList<Production>) definition.context().productionsOf(currentLabel);
-//                Production p = productions.get(0);
-//                newString = p.getChildSort(n);
-//                replacement = replacement + newString;
-//                newPString = replacement;
-//            } else {
-//                String replacement = pString.substring(0, pString.lastIndexOf(".")) + ".";
-//
-//                String[] split = pString.split("\\.");
-//                ArrayList<String> splitList = new ArrayList<>(Arrays.asList(split));
-//                if (splitList.size() > 2) {
-//                    int pos = splitList.size() - 3;
-//                    String currentLabel = splitList.get(pos);
-//                    if (!definition.context().productionsOf(currentLabel).isEmpty()) {
-//                        ArrayList<Production> productions = (ArrayList<Production>) definition.context().productionsOf(currentLabel);
-//                        Production p = productions.get(0);
-//                        newString = p.getChildSort(n);
-//                        replacement = replacement + newString;
-//                        newPString = replacement;
-//                    }
-//                }
-//            }
-//        }
-//
-//        return newPString;
-//    }
-
-//    private Set<String> getSortsFromPStrings(ArrayList<String> pStrings) {
-//        Set<String> sorts = new HashSet<>();
-//        for (String pString : pStrings) {
-//            String sub = pString.substring(pString.lastIndexOf(".") + 1);
-//            if (sub.equals("HOLE")) {
-//                sub = "HOLE";
-//            }
-//            sorts.add(sub);
-//        }
-//
-//        return sorts;
-//    }
-//
-//    private ArrayList<String> getTermPString(Term term) {
-//        TermVisitor termVisitor = new TermVisitor(definition.context());
-//        term.accept(termVisitor);
-//        return (ArrayList<String>) termVisitor.getpStrings();
-//    }
 
     private ArrayList<String> getTermPString2(Term term) {
         TermVisitorGeneral termVisitor = new TermVisitorGeneral(definition.context());

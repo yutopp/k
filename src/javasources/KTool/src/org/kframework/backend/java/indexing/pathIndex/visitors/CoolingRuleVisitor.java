@@ -17,7 +17,7 @@ public class CoolingRuleVisitor extends RuleVisitor {
 
 
     public CoolingRuleVisitor(Rule rule, Context context) {
-        super(context);
+        super(context, null);
         this.rule = rule;
     }
 

@@ -2,7 +2,6 @@ package org.kframework.backend.java.indexing.pathIndex.visitors;
 
 import org.kframework.backend.java.kil.*;
 import org.kframework.kil.Production;
-import org.kframework.kil.UserList;
 import org.kframework.kil.loader.Context;
 
 import java.util.*;
@@ -20,7 +19,7 @@ public class HeatingRuleVisitor extends RuleVisitor {
     private int counter = 0;
 
     public HeatingRuleVisitor(Rule rule, Context context) {
-        super(context);
+        super(context, null);
         this.rule = rule;
         this.context = context;
     }
