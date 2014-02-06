@@ -119,9 +119,11 @@ public class PathIndex {
                 ruleVisitor = new HeatingRuleVisitor(rule, definition.context());
                 break;
             case OTHER:
-                ruleVisitor = new RuleVisitor(definition.context(), multiCellInfoHolder.getParentOfCellWithMultipleK());
+                ruleVisitor = new RuleVisitor(definition.context());
                 //TODO(OwolabiL): Move this to the RuleVisitor class
-                kCells = MultipleCellUtil.checkRuleForMultiplicityStar(rule, multiCellInfoHolder.getParentOfCellWithMultipleK());
+                if (multiCellInfoHolder != null) {
+                    kCells = MultipleCellUtil.checkRuleForMultiplicityStar(rule, multiCellInfoHolder.getParentOfCellWithMultipleK());
+                }
                 break;
             case OUT:
                 pStrings.put(n, "@.out");
@@ -191,8 +193,10 @@ public class PathIndex {
         }
 
         //        check the out cell
-        Cell out = LookupCell.find(term, "out");
-        List<Term> outCellList = ((BuiltinList) out.getContent()).elements();
+        if (!outputRuleIndices.isEmpty()){
+            Cell out = LookupCell.find(term, "out");
+            List<Term> outCellList = ((BuiltinList) out.getContent()).elements();
+
 
         if (outCellList.size() > baseIOCellSize) {
             matchingIndices = Sets.union(matchingIndices, outputRuleIndices);
@@ -216,12 +220,16 @@ public class PathIndex {
             }
         }
 
-        // check the in cell
-        Cell in = LookupCell.find(term, "in");
-        List<Term> inCellList = ((BuiltinList) in.getContent()).elements();
+        }
 
-        if (inCellList.size() > baseIOCellSize) {
-            matchingIndices = Sets.union(matchingIndices, inputRuleIndices);
+        // check the in cell
+        if (!inputRuleIndices.isEmpty()){
+            Cell in = LookupCell.find(term, "in");
+            List<Term> inCellList = ((BuiltinList) in.getContent()).elements();
+
+            if (inCellList.size() > baseIOCellSize) {
+                matchingIndices = Sets.union(matchingIndices, inputRuleIndices);
+            }
         }
 
         for (Integer n : matchingIndices) {

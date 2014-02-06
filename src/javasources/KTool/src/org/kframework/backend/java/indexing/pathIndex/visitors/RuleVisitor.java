@@ -26,7 +26,7 @@ public class RuleVisitor extends LocalVisitor {
 
     private int position = 0;
 
-    public RuleVisitor(Context context, String multipleKCells) {
+    public RuleVisitor(Context context) {
         this.context = context;
         this.pString = START_STRING;
         this.pStrings = new ArrayList<>();

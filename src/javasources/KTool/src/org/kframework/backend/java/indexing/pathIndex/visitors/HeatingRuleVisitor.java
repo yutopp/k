@@ -19,7 +19,7 @@ public class HeatingRuleVisitor extends RuleVisitor {
     private int counter = 0;
 
     public HeatingRuleVisitor(Rule rule, Context context) {
-        super(context, null);
+        super(context);
         this.rule = rule;
         this.context = context;
     }
