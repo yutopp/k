@@ -18,6 +18,9 @@ import org.kframework.main.LastStep;
 import org.kframework.utils.Stopwatch;
 import org.kframework.utils.general.GlobalSettings;
 
+import java.util.Collection;
+import java.util.Collections;
+
 /**
  * Initially created by: Traian Florin Serbanuta
  * <p/>
@@ -25,7 +28,13 @@ import org.kframework.utils.general.GlobalSettings;
  */
 public abstract class BasicBackend implements Backend {
 	protected Stopwatch sw;
-	protected Context context;
+
+    @Override
+    public Collection<String> getHooks() {
+        return Collections.emptyList();
+    }
+
+    protected Context context;
 
 	public BasicBackend(Stopwatch sw, Context context) {
 		this.sw = sw;

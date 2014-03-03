@@ -4,9 +4,15 @@ import org.kframework.compile.utils.CompilerSteps;
 import org.kframework.kil.Definition;
 
 import java.io.IOException;
+import java.util.Collection;
 
 public interface Backend {
-    public void run(Definition definition) throws IOException;
+	public void run(Definition definition) throws IOException;
+
+    /**
+     * @return the collection of hook names specific to this backend.
+     */
+    public Collection<String> getHooks();
 
     public String getDefaultStep();
 

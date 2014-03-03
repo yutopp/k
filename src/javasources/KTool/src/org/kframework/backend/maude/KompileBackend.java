@@ -12,26 +12,35 @@ import org.kframework.utils.general.GlobalSettings;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Collection;
 import java.util.Properties;
 
 public class KompileBackend extends BasicBackend {
+    Properties specialMaudeHooks;
+    Properties maudeHooks;
 
     public KompileBackend(Stopwatch sw, Context context) {
         super(sw, context);
-    }
-
-    @Override
-    public Definition firstStep(Definition javaDef) {
         String fileSep = System.getProperty("file.separator");
         String propPath = KPaths.getKBase(false) + fileSep + "lib" + fileSep + "maude" + fileSep;
-        Properties specialMaudeHooks = new Properties();
-        Properties maudeHooks = new Properties();
+        specialMaudeHooks = new Properties();
+        maudeHooks = new Properties();
         try {
             FileUtil.loadProperties(maudeHooks, propPath + "MaudeHooksMap.properties");
             FileUtil.loadProperties(specialMaudeHooks, propPath + "SpecialMaudeHooks.properties");
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    @Override
+    public Collection<String> getHooks() {
+        return maudeHooks.stringPropertyNames();
+    }
+
+    @Override
+    public Definition firstStep(Definition javaDef) {
+
         MaudeBuiltinsFilter builtinsFilter = new MaudeBuiltinsFilter(maudeHooks, specialMaudeHooks, context);
         javaDef.accept(builtinsFilter);
         final String mainModule = javaDef.getMainModule();
