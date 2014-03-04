@@ -13,6 +13,7 @@ import org.kframework.compile.transformers.*;
 import org.kframework.compile.utils.*;
 import org.kframework.kil.Definition;
 import org.kframework.kil.loader.Context;
+import org.kframework.kil.visitors.exceptions.TransformerException;
 import org.kframework.main.FirstStep;
 import org.kframework.main.LastStep;
 import org.kframework.utils.Stopwatch;
@@ -48,8 +49,13 @@ public abstract class BasicBackend implements Backend {
 
 	@Override
 	public Definition firstStep(Definition def) {
-		return def;
-	}
+		try {
+			def = (Definition) def.accept(new DeleteFunctionRules(context));
+		} catch (TransformerException e) {
+			e.printStackTrace();
+		}
+        return def;
+    }
 
 	@Override
 	public boolean autoinclude() {

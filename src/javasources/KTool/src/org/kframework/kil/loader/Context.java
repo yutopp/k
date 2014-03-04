@@ -3,15 +3,7 @@ package org.kframework.kil.loader;
 import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Formatter;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
@@ -32,6 +24,7 @@ import org.kframework.utils.Poset;
 import org.kframework.utils.errorsystem.KException;
 import org.kframework.utils.errorsystem.KException.ExceptionType;
 import org.kframework.utils.errorsystem.KException.KExceptionGroup;
+import org.kframework.utils.file.FileUtil;
 import org.kframework.utils.general.GlobalSettings;
 
 import com.google.common.collect.ImmutableSet;
@@ -485,5 +478,26 @@ public class Context implements Serializable {
 
         this.tokenSorts = new HashSet<String>(tokenSorts);
     }
+
+    public void setHookedProperties(Properties hookedProperties) {
+        this.hookedProperties = hookedProperties;
+    }
+
+    public Properties getHookedProperties() {
+        return hookedProperties;
+    }
+
+    public void initializeHookedProperties(String fileName) {
+        try {
+            FileUtil.loadProperties(hookedProperties, fileName);
+        } catch (IOException e) {
+           GlobalSettings.kem.register(new KException(KException.ExceptionType.ERROR,
+                    KException.KExceptionGroup.INTERNAL,
+                    "Could not load properties file for Java backend: " +  e.getMessage(),
+                        "Java Symbolic Backend initialization phase", fileName, ""));
+        }
+    }
+
+    Properties hookedProperties = null;
 
 }

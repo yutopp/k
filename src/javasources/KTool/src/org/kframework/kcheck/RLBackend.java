@@ -1,16 +1,11 @@
 package org.kframework.kcheck;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Properties;
 
-import org.kframework.backend.Backend;
-import org.kframework.backend.BasicBackend;
 import org.kframework.backend.java.util.KSorts;
-import org.kframework.backend.maude.MaudeBackend;
-import org.kframework.backend.maude.MaudeBuiltinsFilter;
+import org.kframework.backend.maude.KompileBackend;
 import org.kframework.backend.maude.krun.MaudeKRun;
 import org.kframework.backend.symbolic.AddConditionToConfig;
 import org.kframework.backend.symbolic.AddPathCondition;
@@ -92,13 +87,9 @@ import org.kframework.parser.DefinitionLoader;
 import org.kframework.utils.BinaryLoader;
 import org.kframework.utils.Stopwatch;
 import org.kframework.utils.file.FileUtil;
-import org.kframework.utils.file.KPaths;
 import org.kframework.utils.general.GlobalSettings;
 
-import static org.apache.commons.io.FileUtils.deleteDirectory;
-import static org.apache.commons.io.FileUtils.moveDirectory;
-
-public class RLBackend extends BasicBackend implements Backend {
+public class RLBackend extends KompileBackend {
 
     public static int idx = 5000;
 
@@ -125,68 +116,20 @@ public class RLBackend extends BasicBackend implements Backend {
 
     public RLBackend(Stopwatch sw, Context context) {
         super(sw, context);
-        reachabilityRules = new ArrayList<ASTNode>();
-        programs = new ArrayList<Term>();
+        reachabilityRules = new ArrayList<>();
+        programs = new ArrayList<>();
     }
 
     @Override
     public Definition firstStep(Definition javaDef) {
-        String fileSep = System.getProperty("file.separator");
-        String propPath = KPaths.getKBase(false) + fileSep + "lib" + fileSep
-                + "maude" + fileSep;
-        Properties specialMaudeHooks = new Properties();
-        Properties maudeHooks = new Properties();
-        try {
-            FileUtil.loadProperties(maudeHooks, propPath + "MaudeHooksMap.properties");
-            FileUtil.loadProperties(specialMaudeHooks, propPath + "SpecialMaudeHooks.properties");
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        MaudeBuiltinsFilter builtinsFilter = new MaudeBuiltinsFilter(
-                maudeHooks, specialMaudeHooks, context);
-        javaDef.accept(builtinsFilter);
-        final String mainModule = javaDef.getMainModule();
-        StringBuilder builtins = new StringBuilder().append("mod ")
-            .append(mainModule).append("-BUILTINS is\n")
-            .append(" including ").append(mainModule).append("-BASE .\n")
-            .append(builtinsFilter.getResult()).append("endm\n");
-        FileUtil.save(context.dotk.getAbsolutePath() + "/builtins.maude",
-            builtins);
-        sw.printIntermediate("Generating equations for hooks");
         return super.firstStep(javaDef);
     }
 
     @Override
     public void run(Definition javaDef) throws IOException {
+        super.run(javaDef);
 
-        /******************************
-         * initial setup of definition *
-         *******************************/
-        new MaudeBackend(sw, context).run(javaDef);
-
-        String load = "load \"" + KPaths.getKBase(true) + KPaths.MAUDE_LIB_DIR
-                + "/k-prelude\"\n";
-
-        // load libraries if any
-        String maudeLib = GlobalSettings.lib.equals("") ? "" : "load "
-                + KPaths.windowfyPath(new File(GlobalSettings.lib)
-                        .getAbsolutePath()) + "\n";
-        load += maudeLib;
-
-        final String mainModule = javaDef.getMainModule();
-        // String defFile = javaDef.getMainFile().replaceFirst("\\.[a-zA-Z]+$",
-        // "");
-
-        StringBuilder main = new StringBuilder().append(load).append("load \"base.maude\"\n")
-            .append("load \"builtins.maude\"\n")
-            .append("mod ").append(mainModule).append(" is \n")
-            .append("  including ").append(mainModule).append("-BASE .\n")
-            .append("  including ").append(mainModule).append("-BUILTINS .\n").append("endm\n");
-        FileUtil.save(context.dotk.getAbsolutePath() + "/" + "main.maude", main);
         context.kompiled = context.dotk;
-        /****************
-         * end *
-         ****************/
 
         UnparserFilter unparserFilter = new UnparserFilter(context);
         javaDef.accept(unparserFilter);
@@ -200,7 +143,7 @@ public class RLBackend extends BasicBackend implements Backend {
          * initial setup of krun *
          *****************************/
         K.compiled_def = context.dotk.getAbsolutePath();
-        K.main_module = mainModule;
+        K.main_module = javaDef.getMainModule();
         K.init(context);
         // delete temporary krun directory
 //        deleteDirectory(new File(K.krunDir));
@@ -322,7 +265,7 @@ public class RLBackend extends BasicBackend implements Backend {
 
     @Override
     public CompilerSteps<Definition> getCompilationSteps() {
-        CompilerSteps<Definition> steps = new CompilerSteps<Definition>(context);
+        CompilerSteps<Definition> steps = new CompilerSteps<>(context);
         steps.add(new FirstStep(this, context));
 
         steps.add(new CheckVisitorStep<Definition>(new CheckConfigurationCells(

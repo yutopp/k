@@ -23,9 +23,9 @@ public class MaudeBuiltinsFilter extends BackendFilter {
     private final Properties maudeHooksMap;
     private final Properties specialMaudeHooks;
 
-    public MaudeBuiltinsFilter(Properties maudeHooksMap, Properties specialMaudeHooks, Context context) {
+    public MaudeBuiltinsFilter(Properties specialMaudeHooks, Context context) {
         super(context);
-        this.maudeHooksMap = maudeHooksMap;
+        this.maudeHooksMap = context.getHookedProperties();
         this.specialMaudeHooks = specialMaudeHooks;
     }
 

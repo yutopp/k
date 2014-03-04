@@ -9,19 +9,17 @@ import java.util.Set;
 import java.util.List;
 
 /**
- * Initially created by: Traian Florin Serbanuta
- * <p/>
- * Date: 6/12/13
- * Time: 8:21 AM
  *
  * Delete all rules which define the hooked functions specified in the given set of hooks.
+ *
+ * @author TraianSF
  */
 public class DeleteFunctionRules extends CopyOnWriteTransformer {
     private final Set<String> hooks;
 
-    public DeleteFunctionRules(Set<String> hooks, Context context) {
+    public DeleteFunctionRules(Context context) {
         super("Delete function rules for given function symbols", context);
-        this.hooks = hooks;
+        this.hooks = context.getHookedProperties().stringPropertyNames();
     }
 
     @Override
