@@ -53,6 +53,14 @@ public class BuchiPushdownSystemTest {
         PAutomaton<PAutomatonState<Pair<String, BuchiState>, String>,BuchiPushdownSystemTools.LabelledAlphabet<String,String>> post = bpsTool.getPostStar();
         System.err.println("\n------------------------");
         System.err.println(post.toString());
+
+        TarjanSCC counterExampleGraph = bpsTool.getCounterExample();
+        if (counterExampleGraph == null) {
+            System.err.println("No counterexample found. Property holds.");
+        } else {
+            System.err.println("\n\n\n----CounterExample Graph----");
+            System.err.println(counterExampleGraph.toString());
+        }
     }
 
     @Test
@@ -102,6 +110,14 @@ public class BuchiPushdownSystemTest {
 
         System.err.println("\n\n\n----Strongly Connected Components----");
         System.err.println(repeatedHeads.getSCCSString());
+
+        TarjanSCC counterExampleGraph = bpsTool.getCounterExample();
+        if (counterExampleGraph == null) {
+            System.err.println("No counterexample found. Property holds.");
+        } else {
+            System.err.println("\n\n\n----CounterExample Graph----");
+            System.err.println(counterExampleGraph.toString());
+        }
     }
 
     @Test
@@ -169,6 +185,14 @@ public class BuchiPushdownSystemTest {
 
         System.err.println("\n\n\n----Strongly Connected Components----");
         System.err.println(repeatedHeads.getSCCSString());
+
+        TarjanSCC counterExampleGraph = bpsTool.getCounterExample();
+        if (counterExampleGraph == null) {
+            System.err.println("No counterexample found. Property holds.");
+        } else {
+            System.err.println("\n\n\n----CounterExample Graph----");
+            System.err.println(counterExampleGraph.toString());
+        }
     }
 
     @Test
@@ -235,5 +259,13 @@ public class BuchiPushdownSystemTest {
 
         System.err.println("\n\n\n----Strongly Connected Components----");
         System.err.println(repeatedHeads.getSCCSString());
+
+        TarjanSCC counterExampleGraph = bpsTool.getCounterExample();
+        if (counterExampleGraph == null) {
+            System.err.println("No counterexample found. Property holds.");
+        } else {
+            System.err.println("\n\n\n----CounterExample Graph----");
+            System.err.println(counterExampleGraph.toString());
+        }
     }
 }

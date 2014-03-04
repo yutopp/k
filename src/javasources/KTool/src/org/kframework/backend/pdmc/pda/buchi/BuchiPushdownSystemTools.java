@@ -152,6 +152,8 @@ public class BuchiPushdownSystemTools<Control, Alphabet> {
             LabelledAlphabet<Control, Alphabet>> postStar = null;
     TarjanSCC<ConfigurationHead<Pair<Control, BuchiState>, Alphabet>, Boolean> repeatedHeadsGraph = null;
 
+    TarjanSCC<ConfigurationHead<Pair<Control, BuchiState>, Alphabet>, Boolean> counterExample = null;
+
     public PAutomaton<PAutomatonState<Pair<Control, BuchiState>, Alphabet>,
             LabelledAlphabet<Control, Alphabet>> getPostStar() {
         if (postStar == null)
@@ -163,6 +165,12 @@ public class BuchiPushdownSystemTools<Control, Alphabet> {
         if (repeatedHeadsGraph == null)
             compute();
         return repeatedHeadsGraph;
+    }
+
+    public TarjanSCC<ConfigurationHead<Pair<Control, BuchiState>, Alphabet>, Boolean> getCounterExample() {
+        if (repeatedHeadsGraph == null)
+            compute();
+        return counterExample;
     }
 
     /**
@@ -302,6 +310,21 @@ public class BuchiPushdownSystemTools<Control, Alphabet> {
                 rel.getTransitions(),
                 initialState,
                 Collections.singleton(finalState));
+
+        computeCounteExample();
+    }
+
+    private void computeCounteExample() {
+        Collection<Collection<TarjanSCC<ConfigurationHead<Pair<Control, BuchiState>, Alphabet>, Boolean>.TarjanSCCVertex>> sccs = repeatedHeadsGraph.getStronglyConnectedComponents();
+        for (Collection<TarjanSCC<ConfigurationHead<Pair<Control, BuchiState>, Alphabet>, Boolean>.TarjanSCCVertex> scc : sccs) {
+            TarjanSCC<ConfigurationHead<Pair<Control, BuchiState>, Alphabet>, Boolean> sccSubGraph = repeatedHeadsGraph.getSubgraph(scc);
+            for (Map<ConfigurationHead<Pair<Control, BuchiState>, Alphabet>, Boolean> values : sccSubGraph.getEdgeSet().values()) {
+                if (values.values().contains(Boolean.TRUE)) {
+                    counterExample = sccSubGraph;
+                    return;
+                }
+            }
+        }
     }
 
 }

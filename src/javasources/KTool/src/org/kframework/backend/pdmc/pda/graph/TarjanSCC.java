@@ -12,6 +12,11 @@ import java.util.*;
  */
 public class TarjanSCC<Data, Label> {
     Map<Data,TarjanSCCVertex> vertexSet;
+
+    public Map<Data, Map<Data, Label>> getEdgeSet() {
+        return edgeSet;
+    }
+
     Map<Data, Map<Data, Label>> edgeSet;
 
     public TarjanSCC() {
@@ -66,7 +71,7 @@ public class TarjanSCC<Data, Label> {
 
     Collection<Collection<TarjanSCCVertex>> sccs = null;
 
-    public Collection<Collection<TarjanSCCVertex>> stronglyConnectedComponents() {
+    public Collection<Collection<TarjanSCCVertex>> getStronglyConnectedComponents() {
         if (sccs == null) computeSCC();
         return sccs;
     }
@@ -114,7 +119,7 @@ public class TarjanSCC<Data, Label> {
 
     public String getSCCSString() {
         StringBuilder result = new StringBuilder();
-        Collection<Collection<TarjanSCCVertex>> sccs = stronglyConnectedComponents();
+        Collection<Collection<TarjanSCCVertex>> sccs = getStronglyConnectedComponents();
         for (Collection<TarjanSCCVertex> scc : sccs) {
             result.append("{ ");
             for (TarjanSCCVertex v : scc) {
@@ -125,6 +130,19 @@ public class TarjanSCC<Data, Label> {
             result.append(";\n");
         }
         return result.toString();
+    }
+
+    public TarjanSCC<Data, Label> getSubgraph(Collection<TarjanSCCVertex> vertices) {
+        TarjanSCC<Data, Label> graph = new TarjanSCC<>();
+        for (TarjanSCCVertex v1 : vertices) {
+            for (TarjanSCCVertex v2 : vertices) {
+                Label l = v1.nextVertex.get(v2.data);
+                if (l != null) {
+                    graph.addEdge(v1.data, v2.data, l);
+                }
+            }
+        }
+        return graph;
     }
 
 
