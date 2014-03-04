@@ -489,6 +489,7 @@ public class Context implements Serializable {
 
     public void initializeHookedProperties(String fileName) {
         try {
+            hookedProperties = new Properties();
             FileUtil.loadProperties(hookedProperties, fileName);
         } catch (IOException e) {
            GlobalSettings.kem.register(new KException(KException.ExceptionType.ERROR,
