@@ -19,17 +19,18 @@ import java.io.ByteArrayInputStream;
  */
 public class BuchiPushdownSystemTest {
     @Test
-    public void testProduct() throws Exception {
+    public void testSimpleTrue() throws Exception {
         String promelaString = "" +
-            "never { /* ! (px0 \\/ px1) */\n" +
-            "T0_init:\n"                  +
-            "\tif\n" +
-                "\t:: (1) -> goto T0_init"                           +
-            "\t:: (!px0 && !px1) -> goto accept_all\n" +
-            "\tfi;\n" +
-            "accept_all:\n" +
-            "\tskip\n" +
-            "}\n";
+                "never { /* F(!px0 & !px1) */\n" +
+                "T0_init:\n" +
+                "  if\n" +
+                "  :: ((!(px0)) && (!(px1))) -> goto accept_all\n" +
+                "  :: ((px0) || (px1)) -> goto T0_init\n" +
+                "  fi;\n" +
+                "accept_all:\n" +
+                "  skip\n" +
+                "}" +
+                "";
 
         PromelaBuchi automaton = PromelaBuchiParser.parse(new ByteArrayInputStream(promelaString.getBytes("UTF-8")));
 
@@ -64,7 +65,7 @@ public class BuchiPushdownSystemTest {
     }
 
     @Test
-         public void testProduct1() throws Exception {
+         public void testSimpleFalse() throws Exception {
         String promelaString = "" +
                 "never { /* ! [](px1 -> <> px0) */\n" +
                 "T0_init:\n" +

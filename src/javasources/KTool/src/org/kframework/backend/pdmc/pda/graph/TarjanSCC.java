@@ -42,6 +42,10 @@ public class TarjanSCC<Data, Label> {
             inStack = false;
         }
 
+        public Data getData() {
+            return data;
+        }
+
         Data data;
         Map<Data, Label> nextVertex;
         int index;
