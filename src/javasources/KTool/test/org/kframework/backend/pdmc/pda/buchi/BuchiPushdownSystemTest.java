@@ -51,7 +51,7 @@ public class BuchiPushdownSystemTest {
         BuchiPushdownSystemTools<String, String> bpsTool = new BuchiPushdownSystemTools<>(bps);
         System.err.println("\n------------------------");
 
-        PAutomaton<PAutomatonState<Pair<String, BuchiState>, String>,BuchiPushdownSystemTools.LabelledAlphabet<String,String>> post = bpsTool.getPostStar();
+        PAutomaton<PAutomatonState<Pair<String, BuchiState>, String>, String> post = bpsTool.getPostStar();
         System.err.println("\n------------------------");
         System.err.println(post.toString());
 
@@ -101,7 +101,7 @@ public class BuchiPushdownSystemTest {
         BuchiPushdownSystemTools<String, String> bpsTool = new BuchiPushdownSystemTools<>(bps);
 
 
-        PAutomaton<PAutomatonState<Pair<String, BuchiState>, String>,BuchiPushdownSystemTools.LabelledAlphabet<String,String>> post = bpsTool.getPostStar();
+        PAutomaton<PAutomatonState<Pair<String, BuchiState>, String>, String> post = bpsTool.getPostStar();
         System.err.println("\n\n\n----Post Automaton----");
         System.err.println(post.toString());
 
@@ -176,7 +176,7 @@ public class BuchiPushdownSystemTest {
         BuchiPushdownSystemTools<String, String> bpsTool = new BuchiPushdownSystemTools<>(bps);
 
 
-        PAutomaton<PAutomatonState<Pair<String, BuchiState>, String>,BuchiPushdownSystemTools.LabelledAlphabet<String,String>> post = bpsTool.getPostStar();
+        PAutomaton<PAutomatonState<Pair<String, BuchiState>, String>, String> post = bpsTool.getPostStar();
         System.err.println("\n\n\n----Post Automaton----");
         System.err.println(post.toString());
 
@@ -250,7 +250,7 @@ public class BuchiPushdownSystemTest {
         BuchiPushdownSystemTools<String, String> bpsTool = new BuchiPushdownSystemTools<>(bps);
 
 
-        PAutomaton<PAutomatonState<Pair<String, BuchiState>, String>,BuchiPushdownSystemTools.LabelledAlphabet<String,String>> post = bpsTool.getPostStar();
+        PAutomaton<PAutomatonState<Pair<String, BuchiState>, String>, String> post = bpsTool.getPostStar();
         System.err.println("\n\n\n----Post Automaton----");
         System.err.println(post.toString());
 
