@@ -1,7 +1,9 @@
 package org.kframework.backend.pdmc.pda.buchi;
 
+import org.apache.commons.collections.ArrayStack;
 import org.apache.commons.lang3.tuple.Pair;
 import org.kframework.backend.pdmc.automaton.Transition;
+import org.kframework.backend.pdmc.automaton.TransitionIndex;
 import org.kframework.backend.pdmc.pda.Configuration;
 import org.kframework.backend.pdmc.pda.ConfigurationHead;
 import org.kframework.backend.pdmc.pda.Rule;
@@ -192,8 +194,6 @@ public class BuchiPushdownSystemTools<Control, Alphabet> {
         IndexedTransitions<PAutomatonState<Pair<Control, BuchiState>, Alphabet>, Alphabet> rel =
                 new IndexedTransitions<>();
 
-        repeatedHeadsGraph = new TarjanSCC<>();
-
         Configuration<Pair<Control, BuchiState>, Alphabet> initial = bps.initialConfiguration();
         ConfigurationHead<Pair<Control, BuchiState>, Alphabet> initialHead = initial.getHead();
         PAutomatonState<Pair<Control, BuchiState>, Alphabet> initialState =
@@ -216,19 +216,6 @@ public class BuchiPushdownSystemTools<Control, Alphabet> {
             Alphabet letter = transition.getLetter();
             LabelledAlphabet<Control, Alphabet> oldLabel = transitionLabels.get(transition);
             assert oldLabel != null : "Each transition must have a label";
-            if (letter == null) {
-                for (Pair<ConfigurationHead<Pair<Control, BuchiState>, Alphabet>,
-                        LabelledAlphabet<Control, Alphabet>> pair : watch.get(transition.getEnd())) {
-                    ConfigurationHead<Pair<Control, BuchiState>, Alphabet> endV =
-                            ConfigurationHead.of(transition.getStart().getState(), pair.getRight().letter);
-                    labelledLetter = new LabelledAlphabet<>(pair.getRight().letter,
-                            pair.getRight().isRepeated() || oldLabel.isRepeated());
-                    labelledLetter.setRule(pair.getRight().getRule());
-                    labelledLetter.setBackState(pair.getRight().getBackState());
-                    repeatedHeadsGraph.addEdge(pair.getLeft(), endV, labelledLetter);
-                }
-
-            }
             if (!rel.contains(transition)) {
                 Transition<PAutomatonState<Pair<Control, BuchiState>, Alphabet>, Alphabet> newTransition;
                 rel.add(transition);
@@ -266,10 +253,7 @@ public class BuchiPushdownSystemTools<Control, Alphabet> {
                                         PAutomatonState.<Pair<Control, BuchiState>, Alphabet>of(pPrime),
                                         gamma1, q);
                                 trans.add(newTransition);
-                                labelledLetter = updateLabel(newTransition, labelledLetter);
-                                repeatedHeadsGraph.addEdge(configurationHead,
-                                        rule.endConfiguration().getHead(),
-                                        labelledLetter);
+                                updateLabel(newTransition, labelledLetter);
                                 break;
                             case 2:
                                 gamma1 = stack.get(1);
@@ -288,10 +272,7 @@ public class BuchiPushdownSystemTools<Control, Alphabet> {
                                 labelledLetter.setRule(rule);
                                 newTransition = Transition.of(qPPrimeGamma1, gamma2, q);
                                 rel.add(newTransition);
-                                labelledLetter = updateLabel(newTransition, labelledLetter);
-                                repeatedHeadsGraph.addEdge(configurationHead,
-                                        rule.endConfiguration().getHead(),
-                                        labelledLetter);
+                                updateLabel(newTransition, labelledLetter);
                                 for (Transition<PAutomatonState<Pair<Control, BuchiState>, Alphabet>, Alphabet> t
                                         : rel.getBackEpsilonTransitions(qPPrimeGamma1)) {
                                     oldLabel = transitionLabels.get(t);
@@ -300,12 +281,7 @@ public class BuchiPushdownSystemTools<Control, Alphabet> {
                                     labelledLetter.setBackState(qPPrimeGamma1);
                                     newTransition = Transition.of(t.getStart(), gamma2, q);
                                     trans.add(newTransition);
-                                    labelledLetter = updateLabel(newTransition, labelledLetter);
-                                    ConfigurationHead<Pair<Control, BuchiState>, Alphabet> endV =
-                                            ConfigurationHead.of(t.getStart().getState(), gamma2);
-                                    repeatedHeadsGraph.addEdge(configurationHead, endV, labelledLetter);
                                 }
-                                watch.addWatch(qPPrimeGamma1, configurationHead, gamma2, rule);
                         }
                     }
                 } else {
@@ -316,7 +292,7 @@ public class BuchiPushdownSystemTools<Control, Alphabet> {
                                 tLetter.getLeft(),
                                 tLetter.isRepeated() || b);
                         labelledLetter.setBackState(q);
-                        newTransition = Transition.of(tp, tLetter.getLeft(), t.getEnd());
+                        newTransition = Transition.of(tp, t.getLetter(), t.getEnd());
                         trans.add(newTransition);
                         updateLabel(newTransition, labelledLetter);
                     }
@@ -329,7 +305,50 @@ public class BuchiPushdownSystemTools<Control, Alphabet> {
                 initialState,
                 Collections.singleton(finalState));
 
+        repeatedHeadsGraph = new TarjanSCC<>();
+
+        Collection<ConfigurationHead<Pair<Control, BuchiState>, Alphabet>> reachableHeads = getReachableHeads(postStar);
+
+        for (ConfigurationHead<Pair<Control, BuchiState>, Alphabet> head : reachableHeads) {
+            for (Rule<Pair<Control,BuchiState>,Alphabet> rule : bps.getRules(head)) {
+                ConfigurationHead<Pair<Control, BuchiState>, Alphabet> endHead = rule.endConfiguration().getHead();
+                if (!endHead.isProper()) continue;
+                LabelledAlphabet label = new LabelledAlphabet(head.getLetter(), bps.isFinal(head.getState()));
+                label.setRule(rule);
+                repeatedHeadsGraph.addEdge(head, endHead, label);
+                Stack<Alphabet> endStack = rule.endStack();
+                if (endStack.size() == 2) {
+                    Alphabet gamma1 = endStack.get(1);
+                    Alphabet gamma2 = endStack.get(0);
+                    PAutomatonState<Pair<Control, BuchiState>, Alphabet> qPPrimeGamma1
+                            = PAutomatonState.of(endHead.getState(), gamma1);
+                    for (Transition<PAutomatonState<Pair<Control, BuchiState>, Alphabet>, Alphabet> t
+                            : rel.getBackEpsilonTransitions(qPPrimeGamma1)) {
+                        LabelledAlphabet<Control, Alphabet> oldLabel = transitionLabels.get(t);
+                        labelledLetter = new LabelledAlphabet(gamma2, oldLabel.isRepeated());
+                        labelledLetter.setRule(rule);
+                        labelledLetter.setBackState(qPPrimeGamma1);
+                        ConfigurationHead<Pair<Control, BuchiState>, Alphabet> endV =
+                                ConfigurationHead.of(t.getStart().getState(), gamma2);
+                        repeatedHeadsGraph.addEdge(head, endV, labelledLetter);
+                    }
+                }
+            }
+        }
+
         computeCounterExample();
+
+    }
+
+    private Collection<ConfigurationHead<Pair<Control, BuchiState>, Alphabet>> getReachableHeads(PAutomaton<PAutomatonState<Pair<Control, BuchiState>, Alphabet>, Alphabet> postStar) {
+        Collection<ConfigurationHead<Pair<Control, BuchiState>, Alphabet>> heads = new ArrayList<>();
+        for (TransitionIndex<PAutomatonState<Pair<Control, BuchiState>, Alphabet>, Alphabet> index : postStar.getDeltaIndex().keySet()) {
+            PAutomatonState<Pair<Control, BuchiState>, Alphabet> pState = index.getState();
+            if (pState.getLetter() == null) {
+                heads.add(ConfigurationHead.of(pState.getState(), index.getLetter()));
+            }
+        }
+        return null;
 
     }
 

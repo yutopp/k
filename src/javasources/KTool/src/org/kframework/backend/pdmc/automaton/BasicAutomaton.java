@@ -15,6 +15,10 @@ import java.util.*;
  * @author Traian
  */
 public class BasicAutomaton<State, Alphabet> implements AutomatonInterface<State, Alphabet> {
+    public Map<TransitionIndex<State, Alphabet>, Set<Transition<State, Alphabet>>> getDeltaIndex() {
+        return deltaIndex;
+    }
+
     private final Map<TransitionIndex<State, Alphabet>,
                 Set<Transition<State, Alphabet>>> deltaIndex;
     private final State initialState;

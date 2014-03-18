@@ -35,6 +35,7 @@ public class BuchiPushdownSystem<Control, Alphabet>
     private PushdownSystemInterface<Control, Alphabet> pds;
     private PromelaBuchi ba;
     private Evaluator<ConfigurationHead<Control, Alphabet>> atomEvaluator;
+    java.util.Collection<Rule<Pair<Control, BuchiState>, Alphabet>> rules= null;
 
     public BuchiPushdownSystem(PushdownSystemInterface<Control, Alphabet> pds,
                                PromelaBuchi ba,
@@ -91,31 +92,25 @@ public class BuchiPushdownSystem<Control, Alphabet>
     }
 
 
-
-
-    @Override
-    public String toString() {
+    public java.util.Collection<Rule<Pair<Control, BuchiState>, Alphabet>> getRules() {
+        if (rules != null) {
+            return rules;
+        }
+        rules = new ArrayList<>();
         Configuration<Pair<Control, BuchiState>, Alphabet> cfg = initialConfiguration();
-        StringBuilder result = new StringBuilder();
-        result.append("Initial Configuration: ");
-        result.append(cfg.toString());
-        result.append("\n");
         Set<Pair<Control, BuchiState>> states = new HashSet<>();
         Set<Alphabet> letters = new HashSet<>();
         Stack<ConfigurationHead<Pair<Control, BuchiState>, Alphabet> > toBeProcessed = new Stack<>();
         toBeProcessed.push(cfg.getHead());
         states.add(cfg.getHead().getState());
         letters.add(cfg.getHead().getLetter());
-        Joiner joiner = Joiner.on(";\n");
         while (!toBeProcessed.empty()) {
             ConfigurationHead<Pair<Control, BuchiState>, Alphabet> head = toBeProcessed.pop();
 //            System.err.println("To be processed: " + head);
-            Set<Rule<Pair<Control, BuchiState>, Alphabet>> rules = getRules(head);
-//            System.err.println(rules);
-            if (rules.isEmpty()) continue;
-            joiner.appendTo(result, rules);
-            result.append("\n");
-            for (Rule<Pair<Control, BuchiState>, Alphabet> rule : rules) {
+            Set<Rule<Pair<Control, BuchiState>, Alphabet>> headRules = getRules(head);
+            rules.addAll(headRules);
+
+            for (Rule<Pair<Control, BuchiState>, Alphabet> rule : headRules) {
                 cfg = rule.endConfiguration();
                 Stack<Alphabet> newstack = new Stack<>();
                 newstack.addAll(cfg.getStack());
@@ -137,6 +132,23 @@ public class BuchiPushdownSystem<Control, Alphabet>
                 }
             }
         }
+        return rules;
+
+    }
+
+
+    @Override
+    public String toString() {
+        getRules();
+
+        Configuration<Pair<Control, BuchiState>, Alphabet> cfg = initialConfiguration();
+        StringBuilder result = new StringBuilder();
+        result.append("Initial Configuration: ");
+        result.append(cfg.toString());
+        result.append("\n");
+        Joiner joiner = Joiner.on(";\n");
+        joiner.appendTo(result, rules);
+        result.append("\n");
         return result.toString();
     }
 }
