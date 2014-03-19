@@ -127,6 +127,39 @@ public class BasicAutomaton<State, Alphabet> implements AutomatonInterface<State
         Map<State, Transition<State, Alphabet>> considered = new HashMap<>();
         toProcess.add(initialState);
         considered.put(initialState, null);
+        return getPath(finalState, toProcess, considered);
+    }
+
+    /**
+     * Given an initial state, a final state and an initial letter, find a path of transitions
+     * between them such that first transition is labeled with the initial letter.
+     * @param initialState the state to begin from
+     * @param initialLetter the letter to start the path on
+     * @param finalState  the final state to reach
+     * @return a list of transitions describing a path from initialState to finalState or null if there is no such list.
+     */
+    public Deque<Transition<State, Alphabet>> getPath(State initialState, Alphabet initialLetter, State finalState) {
+        // We seed the algorithm with the initialState and those reachable  from it following initialLetter
+        Deque<State> toProcess = new ArrayDeque<>();
+        Map<State, Transition<State, Alphabet>> considered = new HashMap<>();
+        considered.put(initialState, null);
+
+        for (Transition<State, Alphabet> transition : getTransitions(initialState, initialLetter)) {
+                State endState = transition.getEnd();
+            if (endState.equals(finalState)) {
+                // if the final state is reached through initialLetter return singleton path
+                Deque<Transition<State, Alphabet>> result = new ArrayDeque<>();
+                result.push(transition);
+                return result;
+            }
+            if (considered.containsKey(endState)) continue;
+            considered.put(endState, transition);
+            toProcess.add(endState);
+        }
+        return getPath(finalState, toProcess, considered);
+    }
+
+     private Deque<Transition<State, Alphabet>> getPath(State finalState, Deque<State> toProcess, Map<State, Transition<State, Alphabet>> considered) {
         State next;
         while (!toProcess.isEmpty()) {
             next = toProcess.remove();

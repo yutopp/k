@@ -4,8 +4,8 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.junit.Assert;
 import org.junit.Test;
 
+import org.kframework.backend.pdmc.pda.ConfigurationHead;
 import org.kframework.backend.pdmc.pda.PushdownSystem;
-import org.kframework.backend.pdmc.pda.buchi.PromelaBuchi;
 import org.kframework.backend.pdmc.pda.buchi.parser.PromelaBuchiParser;
 import org.kframework.backend.pdmc.pda.graph.TarjanSCC;
 import org.kframework.backend.pdmc.pda.pautomaton.PAutomaton;
@@ -15,7 +15,7 @@ import java.io.ByteArrayInputStream;
 
 
 /**
- * Created by Traian on 04.02.2014.
+ * @author TraianSF
  */
 public class BuchiPushdownSystemTest {
     @Test
@@ -56,12 +56,7 @@ public class BuchiPushdownSystemTest {
         System.err.println(post.toString());
 
         TarjanSCC counterExampleGraph = bpsTool.getCounterExample();
-        if (counterExampleGraph == null) {
-            System.err.println("No counterexample found. Property holds.");
-        } else {
-            System.err.println("\n\n\n----CounterExample Graph----");
-            System.err.println(counterExampleGraph.toString());
-        }
+        Assert.assertNull("Property must hold => no counterexample", counterExampleGraph);
     }
 
     @Test
@@ -112,12 +107,13 @@ public class BuchiPushdownSystemTest {
         System.err.println("\n\n\n----Strongly Connected Components----");
         System.err.println(repeatedHeads.getSCCSString());
 
-        TarjanSCC counterExampleGraph = bpsTool.getCounterExample();
-        if (counterExampleGraph == null) {
-            System.err.println("No counterexample found. Property holds.");
-        } else {
-            System.err.println("\n\n\n----CounterExample Graph----");
-            System.err.println(counterExampleGraph.toString());
+        TarjanSCC<ConfigurationHead<Pair<String, BuchiState>, String>, BuchiPushdownSystemTools.LabelledAlphabet<String, String>> counterExampleGraph = bpsTool.getCounterExample();
+        Assert.assertNotNull("Property is false => counterexample exists", counterExampleGraph);
+        System.err.println("\n\n\n----CounterExample Graph----");
+        System.err.println(counterExampleGraph.toString());
+        System.err.println("\n\n\n----Reachability paths for vertices in the CounterExample Graph----");
+        for (ConfigurationHead<Pair<String, BuchiState>, String> head : counterExampleGraph.getVertices()) {
+            System.err.println(bpsTool.getReachableConfiguration(head).toString());
         }
     }
 
@@ -158,8 +154,8 @@ public class BuchiPushdownSystemTest {
         String[] heads = new String[] {"p", "incx", "skip", "ret"};
         String evalString = "";
         for (int s = 0; s < states.length; s++)
-            for (int h = 0; h < heads.length; h++) {
-                evalString += "<" + states[s] + ", " + heads[h] +
+            for (String head : heads) {
+                evalString += "<" + states[s] + ", " + head +
                         "> |= p";
                 if (s != 1) evalString += states[s];
                 else evalString += "x0";
@@ -188,12 +184,7 @@ public class BuchiPushdownSystemTest {
         System.err.println(repeatedHeads.getSCCSString());
 
         TarjanSCC counterExampleGraph = bpsTool.getCounterExample();
-        if (counterExampleGraph == null) {
-            System.err.println("No counterexample found. Property holds.");
-        } else {
-            System.err.println("\n\n\n----CounterExample Graph----");
-            System.err.println(counterExampleGraph.toString());
-        }
+        Assert.assertNull("Property must hold => no counterexample", counterExampleGraph);
     }
 
     @Test
@@ -232,8 +223,8 @@ public class BuchiPushdownSystemTest {
         String[] heads = new String[] {"p", "incx", "skip", "ret"};
         String evalString = "";
         for (int s = 0; s < states.length; s++)
-            for (int h = 0; h < heads.length; h++) {
-                evalString += "<" + states[s] + ", " + heads[h] +
+            for (String head : heads) {
+                evalString += "<" + states[s] + ", " + head +
                         "> |= p";
                 if (s != 1) evalString += states[s];
                 else evalString += "x0";

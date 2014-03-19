@@ -168,4 +168,9 @@ public class TarjanSCC<Data, Label> {
         }
         return result.toString();
     }
+
+    public Set<Data> getVertices() {
+        return vertexSet.keySet();
+    }
+
 }
