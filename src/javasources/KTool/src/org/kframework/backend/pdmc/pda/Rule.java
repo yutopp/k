@@ -26,15 +26,7 @@ public class Rule<Control, Alphabet> {
     }
 
     public Stack<Alphabet> endStack() {
-        Alphabet letter = rhs.getHead().getLetter();
-        if (letter == null) return Configuration.<Alphabet>emptyStack();
-        @SuppressWarnings("unchecked")
-        Stack<Alphabet> stack = (Stack<Alphabet>) rhs.getStack().clone();
-        if (stack == null) {
-            stack = new Stack<Alphabet>();
-        }
-        stack.push(letter);
-        return stack;
+        return rhs.getFullStack();
     }
 
     public ConfigurationHead<Control, Alphabet> getHead() {

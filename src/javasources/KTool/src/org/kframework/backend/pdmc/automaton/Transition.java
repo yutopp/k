@@ -61,7 +61,7 @@ public class Transition<State, Alphabet> {
         return startState;
     }
 
-    public TransitionIndex getIndex() {
+    public TransitionIndex<State, Alphabet> getIndex() {
         return TransitionIndex.of(startState, letter);
     }
 

@@ -129,4 +129,20 @@ public class Configuration<Control, Alphabet> {
         builder.append(">");
         return builder.toString();
     }
+
+    /**
+     * Computes the entire stack associated to this configuration by pushing the letter in head to the current stack.
+     * @return the full stack
+     */
+    public Stack<Alphabet> getFullStack() {
+        Alphabet letter = head.getLetter();
+        if (letter == null) return Configuration.emptyStack();
+        @SuppressWarnings("unchecked")
+        Stack<Alphabet> stack = (Stack<Alphabet>) this.stack.clone();
+        if (stack == null) {
+            stack = new Stack<>();
+        }
+        stack.push(letter);
+        return stack;
+    }
 }

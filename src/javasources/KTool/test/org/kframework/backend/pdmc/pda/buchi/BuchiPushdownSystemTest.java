@@ -150,6 +150,9 @@ public class BuchiPushdownSystemTest {
                 "<x2, ret>   => <x2>;\n" +
                 "<x0, p>");
 
+        // <x0, p> =(2)=> <x01, incx ret> =(3)=> <x0, p incx ret> =(1)=> <x0, skip ret incx ret> =(4)=>
+        // <x0, ret incx ret> =(8)=> <x0, incx ret> =(5)=> <x1, ret>  =(9)=> <x1>
+
         String[] states = new String[] {"x0", "x01", "x1", "x2"};
         String[] heads = new String[] {"p", "incx", "skip", "ret"};
         String evalString = "";
@@ -207,7 +210,8 @@ public class BuchiPushdownSystemTest {
 
         PromelaBuchi automaton = PromelaBuchiParser.parse(new ByteArrayInputStream(promelaString.getBytes("UTF-8")));
 
-        PushdownSystem<String,String> pds = PushdownSystem.of(""+
+        PushdownSystem<String,String> pds = PushdownSystem.of("" +
+                "<xinit, p>  => <x0, p bot>;\n"+
                 "<x0, p>     => <x0, skip ret>;\n" +
                 "<x0, p>     => <x01, incx ret>;\n" +
                 "<x01, incx> => <x0, p incx>;\n" +
@@ -218,7 +222,11 @@ public class BuchiPushdownSystemTest {
                 "<x0, ret>   => <x0>;\n" +
                 "<x1, ret>   => <x1>;\n" +
                 "<x2, ret>   => <x2>;\n" +
-                "<x0, p>");
+                "<x0, bot>   => <x0, bot>;\n" +
+                "<x01, bot>   => <x01, bot>;\n" +
+                "<x1, bot>   => <x1, bot>;\n" +
+                "<x2, bot>   => <x2, bot>;\n" +
+                "<xinit, p>");
 
         String[] states = new String[] {"x0", "x01", "x1", "x2"};
         String[] heads = new String[] {"p", "incx", "skip", "ret"};
@@ -254,7 +262,12 @@ public class BuchiPushdownSystemTest {
         System.err.println(repeatedHeads.getSCCSString());
 
         TarjanSCC<ConfigurationHead<Pair<String, BuchiState>, String>, BuchiPushdownSystemTools.LabelledAlphabet<String, String>> counterExampleGraph = bpsTool.getCounterExampleGraph();
-        Assert.assertNull("Property must hold => no counterexample", counterExampleGraph);
+        Assert.assertNotNull("Property is false => counterexample exists", counterExampleGraph);
+        System.err.println("\n\n\n----CounterExample Graph----");
+        System.err.println(counterExampleGraph.toString());
+        System.err.println("\n\n\n----Reachability paths for vertices in the CounterExample Graph----");
+        for (ConfigurationHead<Pair<String, BuchiState>, String> head : counterExampleGraph.getVertices()) {
+            System.err.println(bpsTool.getReachableConfiguration(head).toString());
         }
     }
 }

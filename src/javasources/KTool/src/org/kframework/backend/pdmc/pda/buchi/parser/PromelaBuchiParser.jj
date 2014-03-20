@@ -113,6 +113,9 @@ void sequence(PromelaBuchi automaton): {
 		(trans = transitions())
 	{
 		BuchiState start = BuchiState.of(id);
+		if (trans.isEmpty()) { //assume skip was used
+		    trans.add(new PromelaTransition(new ConstantExpression(true), start));
+		}
         automaton.addTransitions(start, trans);
 	}
 (	<SEMICOLON> (sequence(automaton)) ) ?

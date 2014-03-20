@@ -12,6 +12,8 @@ import java.util.HashMap;
 public class PAutomatonState<Control, Alphabet> {
     private static HashMap<Object, PAutomatonState> basicCache;
     private static HashMap<Object, HashMap<Object, PAutomatonState>> extendedCache;
+    private static int freshCounter = 1;
+
 
     public Control getState() {
         return state;
@@ -23,10 +25,16 @@ public class PAutomatonState<Control, Alphabet> {
 
     private final Control state;
     private final Alphabet letter;
+    private final int fresh;
+
+    public PAutomatonState() {
+       state = null; letter = null; fresh = freshCounter++;
+    }
 
     private PAutomatonState(Control state, Alphabet letter) {
         this.state = state;
         this.letter = letter;
+        fresh = 0;
     }
 
     public static<Control, Alphabet> PAutomatonState<Control, Alphabet> of(Control state, Alphabet letter) {
@@ -64,6 +72,9 @@ public class PAutomatonState<Control, Alphabet> {
 
         PAutomatonState that = (PAutomatonState) o;
 
+        if (fresh != that.fresh) return false;
+        if (fresh != 0) return true;
+
         if (letter != null ? !letter.equals(that.letter) : that.letter != null) return false;
         if (!state.equals(that.state)) return false;
 
@@ -72,8 +83,9 @@ public class PAutomatonState<Control, Alphabet> {
 
     @Override
     public int hashCode() {
-        int result = state.hashCode();
+        int result = state != null ? state.hashCode() : 0;
         result = 31 * result + (letter != null ? letter.hashCode() : 0);
+        result = 31 * result + fresh;
         return result;
     }
 
@@ -89,6 +101,7 @@ public class PAutomatonState<Control, Alphabet> {
 
     @Override
     public String toString() {
+        if (fresh != 0) return "!" + fresh + "!";
         if (letter == null) return state.toString();
         return "<" + state + "," + letter + ">";
     }

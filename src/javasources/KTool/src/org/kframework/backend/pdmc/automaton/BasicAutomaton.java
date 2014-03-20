@@ -24,6 +24,14 @@ public class BasicAutomaton<State, Alphabet> implements AutomatonInterface<State
                 Set<Transition<State, Alphabet>>> deltaIndex;
 
     /**
+     * Indexing datastructure for the reverse of the automaton's transition relation.
+     * Given a {@see TransitionIndex} as a pair between a state and a letter, it yields all
+     * transitions labelled with the letter and ending in the state.
+     */
+    private final Map<TransitionIndex<State, Alphabet>,
+                Set<Transition<State, Alphabet>>> reverseDeltaIndex;
+
+     /**
      * Accessor for the {@code deltaIndex}
      * @return deltaIndex representing the delta mapping of the automaton.
      */
@@ -68,34 +76,25 @@ public class BasicAutomaton<State, Alphabet> implements AutomatonInterface<State
         this.finalStates = new HashSet<>(finalStates);
         this.letters = new HashSet<>();
         deltaIndex = new HashMap<>();
+        reverseDeltaIndex = new HashMap<>();
         for (Transition<State, Alphabet> transition : delta) {
-            @SuppressWarnings("unchecked")
-            TransitionIndex<State, Alphabet> index = transition.getIndex();
-            if(index.getLetter() != null) {
-                letters.add(index.getLetter());
+            Alphabet letter = transition.getLetter();
+            if(letter != null) {
+                letters.add(letter);
             }
-            Set<Transition<State, Alphabet>> transitions = deltaIndex.get(index);
-            if (transitions == null) {
-                transitions = new HashSet<>();
-                deltaIndex.put(index, transitions);
-            }
-            transitions.add(transition);
+            addToIndex(deltaIndex, transition, transition.getIndex());
+            addToIndex(reverseDeltaIndex, transition, TransitionIndex.of(transition.getEnd(), letter));
         }
 
     }
 
-    public BasicAutomaton(Map<TransitionIndex<State, Alphabet>, Set<Transition<State, Alphabet>>> deltaIndex,
-                          State initialState,
-                          Set<State> finalStates) {
-        this.letters = new HashSet<>();
-        for (TransitionIndex<State, Alphabet> index : deltaIndex.keySet()) {
-            if (index.getLetter()!= null) {
-                letters.add(index.getLetter());
-            }
+    private void addToIndex(Map<TransitionIndex<State, Alphabet>, Set<Transition<State, Alphabet>>> deltaIndex, Transition<State, Alphabet> transition, TransitionIndex<State, Alphabet> index) {
+        Set<Transition<State, Alphabet>> transitions = this.deltaIndex.get(index);
+        if (transitions == null) {
+            transitions = new HashSet<>();
+            this.deltaIndex.put(index, transitions);
         }
-        this.deltaIndex = deltaIndex;
-        this.initialState = initialState;
-        this.finalStates = finalStates;
+        transitions.add(transition);
     }
 
     public Collection<Set<Transition<State, Alphabet>>> getTransitions() {
