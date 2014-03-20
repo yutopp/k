@@ -30,8 +30,11 @@ public class BuchiPushdownSystemTools<Control, Alphabet> {
      * @param <Alphabet> specifies the alphabet of a pushdown system
      */
     static class LabelledAlphabet<Control, Alphabet> {
+
         Alphabet letter;
-        //whether this transition corresponds to a repeated head in the pds
+        /**
+         * whether this transition passes through an accepting state of the Buchi Automaton
+         */
         boolean repeated;
 
         public Rule<Pair<Control, BuchiState>, Alphabet> getRule() {
@@ -50,9 +53,13 @@ public class BuchiPushdownSystemTools<Control, Alphabet> {
             this.backState = backState;
         }
 
-        // the rule used to label this transition
+        /**
+         * the rule used to label this transition (use for witness generation)
+         */
         Rule<Pair<Control, BuchiState>, Alphabet> rule;
-        // if the transition is due to an epsilon transition identify the intermediate state.
+        /**
+         * if the transition is due to an epsilon transition identify the intermediate state.
+         */
         PAutomatonState<Pair<Control, BuchiState>, Alphabet> backState;
 
         LabelledAlphabet(Alphabet letter, boolean repeated) {
@@ -66,7 +73,7 @@ public class BuchiPushdownSystemTools<Control, Alphabet> {
            return new LabelledAlphabet<>(letter, repeated);
         }
 
-        public Alphabet getLeft() {
+        public Alphabet getLetter() {
             return letter;
         }
 
@@ -122,19 +129,52 @@ public class BuchiPushdownSystemTools<Control, Alphabet> {
 
     TarjanSCC<ConfigurationHead<Pair<Control, BuchiState>, Alphabet>, LabelledAlphabet<Control, Alphabet>> counterExample = null;
 
+    /**
+     * Computes (if not already computed) and returns the <b>post</b> automaton corresponding to this BPDS.
+     * <ul>
+     *    <li>
+     *        The states of this automaton include all states of the BPDS reachable from the initial configuration;
+     *    </li>
+     *    <li>
+     *        Any path q -w->* f from a BPDS state to a final state encodes the reachable configuration (q,w).
+     *    </li>
+     * </ul>
+     * @return the value of the {@code postStar} field after computing it.
+     */
     public PAutomaton<PAutomatonState<Pair<Control, BuchiState>, Alphabet>, Alphabet> getPostStar() {
         if (postStar == null)
             compute();
         return postStar;
     }
 
+    /**
+     * Computes (if not already computed) and returns the repeated heads graph of the BPDS.
+     * This graph is comprised of:
+     * <ul>
+     *     <li> Vertices represent <b>all</b> configuration heads reachable from the original configuration</li>
+     *     <li> Edges indicate reachability (using rules of the BPDS) between configuration heads  </li>
+     *     <li> Labels contain: <ul>
+     *          <li> information about passing through final states of the Buchi Automaton</li>
+     *          <li> </li>
+     *     </ul></li>
+     * </ul>
+     * This is represented as a strongly connected component of the * (reachable) repeated heads graph
+     * containing at least one final buchi state.
+     * @return the value of the {@code counterExample} field after computing it.
+     */
     public TarjanSCC<ConfigurationHead<Pair<Control, BuchiState>, Alphabet>, LabelledAlphabet<Control, Alphabet>> getRepeatedHeadsGraph() {
         if (repeatedHeadsGraph == null)
             compute();
         return repeatedHeadsGraph;
     }
 
-    public TarjanSCC<ConfigurationHead<Pair<Control, BuchiState>, Alphabet>, LabelledAlphabet<Control, Alphabet>> getCounterExample() {
+    /**
+     * Computes (if not already computed) and returns a witness of an accepting run of the BPDS.
+     * This is represented as a strongly connected component of the * (reachable) repeated heads graph
+     * containing at least one final buchi state.
+     * @return the value of the {@code counterExample} field after computing it.
+     */
+    public TarjanSCC<ConfigurationHead<Pair<Control, BuchiState>, Alphabet>, LabelledAlphabet<Control, Alphabet>> getCounterExampleGraph() {
         if (repeatedHeadsGraph == null)
             compute();
         return counterExample;
@@ -249,6 +289,7 @@ public class BuchiPushdownSystemTools<Control, Alphabet> {
                         LabelledAlphabet<Control, Alphabet> tLetter = transitionLabels.get(t);
                         labelledLetter = LabelledAlphabet.of(
                                 tLetter.getLeft(),
+                                tLetter.getLetter(),
                                 tLetter.isRepeated() || b);
                         labelledLetter.setBackState(q);
                         newTransition = Transition.of(tp, t.getLetter(), t.getEnd());
