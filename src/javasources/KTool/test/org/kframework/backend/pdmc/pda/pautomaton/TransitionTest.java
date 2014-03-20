@@ -14,8 +14,10 @@ public class TransitionTest {
         Transition<PAutomatonState<String, String>, String> transition = Transition.of("p a q");
         Assert.assertEquals("p", transition.getStart().getState());
         Assert.assertNull(transition.getStart().getLetter());
+        Assert.assertTrue(transition.getStart().isControlState());
         Assert.assertEquals("q", transition.getEnd().getState());
         Assert.assertNull(transition.getEnd().getLetter());
+        Assert.assertTrue(transition.getEnd().isControlState());
         Assert.assertEquals("a", transition.getLetter());
     }
 
@@ -24,8 +26,10 @@ public class TransitionTest {
         Transition<PAutomatonState<String, String>,String> transition = Transition.of("p q");
         Assert.assertEquals("p", transition.getStart().getState());
         Assert.assertNull(transition.getStart().getLetter());
+        Assert.assertTrue(transition.getStart().isControlState());
         Assert.assertEquals("q", transition.getEnd().getState());
         Assert.assertNull(transition.getEnd().getLetter());
+        Assert.assertTrue(transition.getEnd().isControlState());
         Assert.assertNull(transition.getLetter());
     }
 

@@ -59,7 +59,29 @@ public class BasicAutomaton<State, Alphabet> implements AutomatonInterface<State
         return transitions;
     }
 
-    @Override
+    /**
+     * Retrieves the set of automaton transitions labelled with a letter and ending in a state
+     * @param state the state transitions should end with
+     * @param letter the letter transitions should be labelled with
+     * @return the (possibly empty) set of transitions corresponding to given state and letter
+     */
+    public Set<Transition<State, Alphabet>> getBackTransitions(State state, Alphabet letter) {
+        Set<Transition<State, Alphabet>> transitions = reverseDeltaIndex.get(
+                TransitionIndex.of(state, letter) );
+        if (transitions == null) transitions = Collections.emptySet();
+        return transitions;
+    }
+
+    /**
+     * Retrieves the set of automaton epsilon transitions ending in a state
+     * @param state the state transitions should end with
+     * @return the (possibly empty) set of epsilon transitions corresponding to given state
+     */
+    public Set<Transition<State, Alphabet>> getBackEpsilonTransitions(State state) {
+        return getBackTransitions(state, null);
+    }
+
+     @Override
     public State initialState() {
         return initialState;
     }

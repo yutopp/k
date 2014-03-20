@@ -19,9 +19,12 @@ public class PAutomatonState<Control, Alphabet> {
         return state;
     }
 
-    public Alphabet getLetter() {
-        return letter;
-    }
+    public Alphabet getLetter() { return letter; }
+
+    /**
+     * @return whether this state corresponds to a Control state of the PDS.
+     */
+    public boolean isControlState() { return fresh == 0 && letter == null; }
 
     private final Control state;
     private final Alphabet letter;

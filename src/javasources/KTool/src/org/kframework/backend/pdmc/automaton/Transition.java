@@ -80,7 +80,7 @@ public class Transition<State, Alphabet> {
 
     @Override
     public String toString() {
-        return startState + " " + (letter != null ? letter + " " : "") + endState + (label != null ? "[" + label + "]" : "");
+        return startState + " " + (letter != null ? letter + " " : "") + endState + (label != null ? label : "");
     }
 
     @Override

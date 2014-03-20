@@ -12,6 +12,7 @@ public class StateTest {
         PAutomatonState<String, String> state = PAutomatonState.ofString("p");
         Assert.assertEquals("p", state.getState());
         Assert.assertNull(state.getLetter());
+        Assert.assertTrue(state.isControlState());
     }
 
     @Test

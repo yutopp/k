@@ -22,7 +22,7 @@ public class PostStar {
                 new IndexedTransitions<PAutomatonState<Control, Alphabet>, Alphabet>();
         for (Set<Transition<PAutomatonState<Control, Alphabet>, Alphabet>> transitions : initial.getTransitions()) {
             for (Transition<PAutomatonState<Control, Alphabet>, Alphabet> transition : transitions) {
-                if (transition.getStart().getLetter() == null) {
+                if (transition.getStart().isControlState()) {
                     trans.add(transition);
                 } else {
                     rel.add(transition);
@@ -39,7 +39,7 @@ public class PostStar {
                 PAutomatonState<Control, Alphabet> tp = transition.getStart();
                 PAutomatonState<Control, Alphabet> q = transition.getEnd();
                 if (gamma != null) {
-                    assert tp.getLetter() == null : "Expecting PDS state on the lhs of " + transition;
+                    assert tp.isControlState() : "Expecting PDS state on the lhs of " + transition;
                     Control p = tp.getState();
                     Set<Rule<Control, Alphabet>> rules = pds.getRules(ConfigurationHead.<Control, Alphabet>of(p, gamma));
                     for (Rule<Control, Alphabet> rule : rules) {
