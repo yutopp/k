@@ -288,7 +288,6 @@ public class BuchiPushdownSystemTools<Control, Alphabet> {
                             : rel.getFrontTransitions(q)) {
                         LabelledAlphabet<Control, Alphabet> tLetter = transitionLabels.get(t);
                         labelledLetter = LabelledAlphabet.of(
-                                tLetter.getLeft(),
                                 tLetter.getLetter(),
                                 tLetter.isRepeated() || b);
                         labelledLetter.setBackState(q);
