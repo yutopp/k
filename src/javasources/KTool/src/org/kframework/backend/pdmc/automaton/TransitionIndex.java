@@ -8,15 +8,17 @@ import java.util.Map;
 /**
  * @author Traian
  */
-public class TransitionIndex<State, Alphabet> {
+public class TransitionIndex<State, Alphabet> implements StateLetterPair<State,Alphabet> {
     private static Map<Object, Map<Object, TransitionIndex>> extendedCache;
     private static Map<Object, TransitionIndex> basicCache;
     private final State state;
 
+    @Override
     public Alphabet getLetter() {
         return letter;
     }
 
+    @Override
     public State getState() {
         return state;
     }

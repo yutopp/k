@@ -4,11 +4,11 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.junit.Assert;
 import org.junit.Test;
 
+import org.kframework.backend.pdmc.automaton.AutomatonInterface;
 import org.kframework.backend.pdmc.pda.ConfigurationHead;
 import org.kframework.backend.pdmc.pda.PushdownSystem;
 import org.kframework.backend.pdmc.pda.buchi.parser.PromelaBuchiParser;
 import org.kframework.backend.pdmc.pda.graph.TarjanSCC;
-import org.kframework.backend.pdmc.pda.pautomaton.PAutomaton;
 import org.kframework.backend.pdmc.pda.pautomaton.PAutomatonState;
 
 import java.io.ByteArrayInputStream;
@@ -51,7 +51,7 @@ public class BuchiPushdownSystemTest {
         BuchiPushdownSystemTools<String, String> bpsTool = new BuchiPushdownSystemTools<>(bps);
         System.err.println("\n------------------------");
 
-        PAutomaton<PAutomatonState<Pair<String, BuchiState>, String>, String> post = bpsTool.getPostStar();
+        AutomatonInterface<PAutomatonState<Pair<String, BuchiState>, String>, String> post = bpsTool.getPostStar();
         System.err.println("\n------------------------");
         System.err.println(post.toString());
 
@@ -96,7 +96,7 @@ public class BuchiPushdownSystemTest {
         BuchiPushdownSystemTools<String, String> bpsTool = new BuchiPushdownSystemTools<>(bps);
 
 
-        PAutomaton<PAutomatonState<Pair<String, BuchiState>, String>, String> post = bpsTool.getPostStar();
+        AutomatonInterface<PAutomatonState<Pair<String, BuchiState>, String>, String> post = bpsTool.getPostStar();
         System.err.println("\n\n\n----Post Automaton----");
         System.err.println(post.toString());
 
@@ -107,7 +107,7 @@ public class BuchiPushdownSystemTest {
         System.err.println("\n\n\n----Strongly Connected Components----");
         System.err.println(repeatedHeads.getSCCSString());
 
-        TarjanSCC<ConfigurationHead<Pair<String, BuchiState>, String>, BuchiPushdownSystemTools.LabelledAlphabet<String, String>> counterExampleGraph = bpsTool.getCounterExampleGraph();
+        TarjanSCC<ConfigurationHead<Pair<String, BuchiState>, String>, LabelledAlphabet<String, String>> counterExampleGraph = bpsTool.getCounterExampleGraph();
         Assert.assertNotNull("Property is false => counterexample exists", counterExampleGraph);
         System.err.println("\n\n\n----CounterExample Graph----");
         System.err.println(counterExampleGraph.toString());
@@ -175,7 +175,7 @@ public class BuchiPushdownSystemTest {
         BuchiPushdownSystemTools<String, String> bpsTool = new BuchiPushdownSystemTools<>(bps);
 
 
-        PAutomaton<PAutomatonState<Pair<String, BuchiState>, String>, String> post = bpsTool.getPostStar();
+        AutomatonInterface<PAutomatonState<Pair<String, BuchiState>, String>, String> post = bpsTool.getPostStar();
         System.err.println("\n\n\n----Post Automaton----");
         System.err.println(post.toString());
 
@@ -250,7 +250,7 @@ public class BuchiPushdownSystemTest {
         BuchiPushdownSystemTools<String, String> bpsTool = new BuchiPushdownSystemTools<>(bps);
 
 
-        PAutomaton<PAutomatonState<Pair<String, BuchiState>, String>, String> post = bpsTool.getPostStar();
+        AutomatonInterface<PAutomatonState<Pair<String, BuchiState>, String>, String> post = bpsTool.getPostStar();
         System.err.println("\n\n\n----Post Automaton----");
         System.err.println(post.toString());
 
@@ -261,7 +261,7 @@ public class BuchiPushdownSystemTest {
         System.err.println("\n\n\n----Strongly Connected Components----");
         System.err.println(repeatedHeads.getSCCSString());
 
-        TarjanSCC<ConfigurationHead<Pair<String, BuchiState>, String>, BuchiPushdownSystemTools.LabelledAlphabet<String, String>> counterExampleGraph = bpsTool.getCounterExampleGraph();
+        TarjanSCC<ConfigurationHead<Pair<String, BuchiState>, String>, LabelledAlphabet<String, String>> counterExampleGraph = bpsTool.getCounterExampleGraph();
         Assert.assertNotNull("Property is false => counterexample exists", counterExampleGraph);
         System.err.println("\n\n\n----CounterExample Graph----");
         System.err.println(counterExampleGraph.toString());

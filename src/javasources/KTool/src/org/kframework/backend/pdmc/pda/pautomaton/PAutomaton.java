@@ -1,6 +1,7 @@
 package org.kframework.backend.pdmc.pda.pautomaton;
 
 import org.kframework.backend.pdmc.automaton.BasicAutomaton;
+import org.kframework.backend.pdmc.automaton.BasicAutomatonImpl;
 import org.kframework.backend.pdmc.automaton.Transition;
 
 import java.util.*;
@@ -10,7 +11,7 @@ import java.util.*;
  *
  * @author TraianSF
  */
-public class PAutomaton<State, Alphabet> extends BasicAutomaton<State, Alphabet> {
+public class PAutomaton<State, Alphabet> extends BasicAutomatonImpl<State, Alphabet> {
 
     public PAutomaton(Collection<Transition<State, Alphabet>> delta, State initialState, Collection<State> finalStates) {
         super(delta, initialState, finalStates);

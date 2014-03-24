@@ -1,15 +1,13 @@
 package org.kframework.backend.pdmc.pda.buchi;
 
 import org.apache.commons.lang3.tuple.Pair;
+import org.kframework.backend.pdmc.automaton.AutomatonInterface;
+import org.kframework.backend.pdmc.automaton.StateLetterPair;
 import org.kframework.backend.pdmc.automaton.Transition;
-import org.kframework.backend.pdmc.automaton.TransitionIndex;
-import org.kframework.backend.pdmc.pda.Configuration;
 import org.kframework.backend.pdmc.pda.ConfigurationHead;
 import org.kframework.backend.pdmc.pda.Rule;
 import org.kframework.backend.pdmc.pda.graph.TarjanSCC;
-import org.kframework.backend.pdmc.pda.pautomaton.PAutomaton;
 import org.kframework.backend.pdmc.pda.pautomaton.PAutomatonState;
-import org.kframework.backend.pdmc.pda.pautomaton.util.IndexedTransitions;
 
 import java.util.*;
 
@@ -21,81 +19,13 @@ import java.util.*;
  */
 public class BuchiPushdownSystemTools<Control, Alphabet> {
 
-    /**
-     * Implements labeled transitions for the Post*  reachability automate.
-     * Labels are added on the letters as specified in Schwoon's thesis,
-     * Sec. 3.1.6 Witness generation.
-     *
-     * @param <Control>  specifies the control state of a pushdwown system
-     * @param <Alphabet> specifies the alphabet of a pushdown system
-     */
-    static class LabelledAlphabet<Control, Alphabet> {
-
-        /**
-         * whether this transition passes through an accepting state of the Buchi Automaton
-         */
-        boolean repeated;
-
-        public Rule<Pair<Control, BuchiState>, Alphabet> getRule() {
-            return rule;
-        }
-
-        public void setRule(Rule<Pair<Control, BuchiState>, Alphabet> rule) {
-            this.rule = rule;
-        }
-
-        public PAutomatonState<Pair<Control, BuchiState>, Alphabet> getBackState() {
-            return backState;
-        }
-
-        public void setBackState(PAutomatonState<Pair<Control, BuchiState>, Alphabet> backState) {
-            this.backState = backState;
-        }
-
-        /**
-         * the rule used to label this transition (use for witness generation)
-         */
-        Rule<Pair<Control, BuchiState>, Alphabet> rule;
-        /**
-         * if the transition is due to an epsilon transition identify the intermediate state.
-         */
-        PAutomatonState<Pair<Control, BuchiState>, Alphabet> backState;
-
-        LabelledAlphabet(boolean repeated) {
-            this.repeated = repeated;
-            rule = null;
-            backState = null;
-        }
-
-        public static<Control, Alphabet> LabelledAlphabet<Control, Alphabet> of(boolean repeated) {
-           return new LabelledAlphabet<>(repeated);
-        }
-
-        public boolean isRepeated() {
-            return repeated;
-        }
-
-        @Override
-        public String toString() {
-            return "[" +
-                    repeated +
-                    ", " + rule +
-                    ", " + backState +
-                    ']';
-        }
-
-        public void update(LabelledAlphabet<Control, Alphabet> newLabel) {
-            repeated |= newLabel.repeated;
-        }
-    }
-
     BuchiPushdownSystemInterface<Control, Alphabet> bps;
 
     public BuchiPushdownSystemTools(BuchiPushdownSystemInterface<Control, Alphabet> bps) {
         this.bps = bps;
     }
 
-    private PAutomaton<PAutomatonState<Pair<Control, BuchiState>, Alphabet>, Alphabet> postStar = null;
+    private PostStar<Control, Alphabet> postStar = null;
     TarjanSCC<ConfigurationHead<Pair<Control, BuchiState>, Alphabet>,
             LabelledAlphabet<Control, Alphabet>> repeatedHeadsGraph = null;
     Map<Transition<PAutomatonState<Pair<Control, BuchiState>, Alphabet>, Alphabet>, LabelledAlphabet<Control, Alphabet>>
@@ -115,7 +45,7 @@ public class BuchiPushdownSystemTools<Control, Alphabet> {
      * </ul>
      * @return the value of the {@code postStar} field after computing it.
      */
-    public PAutomaton<PAutomatonState<Pair<Control, BuchiState>, Alphabet>, Alphabet> getPostStar() {
+    public AutomatonInterface<PAutomatonState<Pair<Control, BuchiState>, Alphabet>, Alphabet> getPostStar() {
         if (postStar == null)
             compute();
         return postStar;
@@ -162,129 +92,8 @@ public class BuchiPushdownSystemTools<Control, Alphabet> {
      */
     private void compute() {
         transitionLabels = new HashMap<>();
-        Set<Transition<PAutomatonState<Pair<Control, BuchiState>, Alphabet>, Alphabet>> trans =
-                new HashSet<>();
-        IndexedTransitions<PAutomatonState<Pair<Control, BuchiState>, Alphabet>, Alphabet> rel =
-                new IndexedTransitions<>();
 
-        Configuration<Pair<Control, BuchiState>, Alphabet> initial = bps.initialConfiguration();
-        ConfigurationHead<Pair<Control, BuchiState>, Alphabet> initialHead = initial.getHead();
-        PAutomatonState<Pair<Control, BuchiState>, Alphabet> initialState =
-                PAutomatonState.of(initialHead.getState());
-        Stack<Alphabet> initialStack = initial.getFullStack();
-        assert !initialStack.empty() : "We must have something to process";
-        PAutomatonState<Pair<Control, BuchiState>, Alphabet> finalState = null;
-        for (Alphabet letter : initialStack) {
-            finalState = new PAutomatonState<>();
-            Transition<PAutomatonState<Pair<Control, BuchiState>, Alphabet>, Alphabet> transition1 =
-                    Transition.of(initialState, letter, finalState);
-            LabelledAlphabet<Control, Alphabet> newLabel = LabelledAlphabet.of(false);
-            updateLabel(transition1, newLabel);
-            if (initialState.isControlState()) {
-                trans.add(transition1);
-            } else {
-                rel.add(transition1);
-            }
-            initialState = finalState;
-        }
-        LabelledAlphabet<Control, Alphabet> labelledLetter;
-
-        while (!trans.isEmpty()) {
-            Iterator<Transition<PAutomatonState<Pair<Control, BuchiState>, Alphabet>, Alphabet>> iterator
-                    = trans.iterator();
-            Transition<PAutomatonState<Pair<Control, BuchiState>, Alphabet>, Alphabet> transition = iterator.next();
-            iterator.remove();
-            Alphabet gamma = transition.getLetter();
-            LabelledAlphabet<Control, Alphabet> oldLabel = transitionLabels.get(transition);
-            assert oldLabel != null : "Each transition must have a label";
-            if (!rel.contains(transition)) {
-                Transition<PAutomatonState<Pair<Control, BuchiState>, Alphabet>, Alphabet> newTransition;
-                rel.add(transition);
-                boolean b = oldLabel.isRepeated();
-                PAutomatonState<Pair<Control, BuchiState>, Alphabet> tp = transition.getStart();
-                PAutomatonState<Pair<Control, BuchiState>, Alphabet> q = transition.getEnd();
-                if (gamma != null) {
-                    assert tp.isControlState() : "Expecting PDS state on the lhs of " + transition;
-                    Pair<Control, BuchiState> p = tp.getState();
-                    final ConfigurationHead<Pair<Control, BuchiState>, Alphabet> configurationHead
-                            = ConfigurationHead.of(p, gamma);
-                    Set<Rule<Pair<Control, BuchiState>, Alphabet>> rules =
-                            bps.getRules(configurationHead);
-                    for (Rule<Pair<Control, BuchiState>, Alphabet> rule : rules) {
-                        Pair<Control, BuchiState> pPrime = rule.endState();
-                        Stack<Alphabet> stack = rule.endStack();
-                        assert stack.size() <= 2 : "At most 2 elements are allowed in the stack for now";
-                        Alphabet gamma1, gamma2;
-                        switch (stack.size()) {
-                            case 0:
-                                labelledLetter = LabelledAlphabet.of(b || bps.isFinal(pPrime));
-                                labelledLetter.setRule(rule);
-                                newTransition = Transition.of(PAutomatonState.<Pair<Control, BuchiState>, Alphabet>of(pPrime),
-                                        null, q);
-                                trans.add(newTransition);
-                                updateLabel(newTransition, labelledLetter);
-                                break;
-                            case 1:
-                                gamma1 = stack.peek();
-                                labelledLetter = LabelledAlphabet.of(b || bps.isFinal(pPrime));
-                                labelledLetter.setRule(rule);
-                                newTransition = Transition.of(
-                                        PAutomatonState.<Pair<Control, BuchiState>, Alphabet>of(pPrime),
-                                        gamma1, q);
-                                trans.add(newTransition);
-                                updateLabel(newTransition, labelledLetter);
-                                break;
-                            case 2:
-                                gamma1 = stack.get(1);
-                                gamma2 = stack.get(0);
-                                PAutomatonState<Pair<Control, BuchiState>, Alphabet> qPPrimeGamma1
-                                        = PAutomatonState.of(pPrime, gamma1);
-                                labelledLetter = LabelledAlphabet.of(b || bps.isFinal(pPrime));
-                                labelledLetter.setRule(rule);
-                                newTransition = Transition.of(
-                                        PAutomatonState.<Pair<Control, BuchiState>, Alphabet>of(pPrime),
-                                        gamma1, qPPrimeGamma1);
-                                trans.add(newTransition);
-                                updateLabel(newTransition, labelledLetter);
-                                labelledLetter = LabelledAlphabet.of(false);
-                                labelledLetter.setRule(rule);
-                                newTransition = Transition.of(qPPrimeGamma1, gamma2, q);
-                                rel.add(newTransition);
-                                updateLabel(newTransition, labelledLetter);
-                                for (Transition<PAutomatonState<Pair<Control, BuchiState>, Alphabet>, Alphabet> t
-                                        : rel.getBackEpsilonTransitions(qPPrimeGamma1)) {
-                                    oldLabel = transitionLabels.get(t);
-                                    labelledLetter = LabelledAlphabet.of(oldLabel.isRepeated());
-                                    labelledLetter.setRule(rule);
-                                    labelledLetter.setBackState(qPPrimeGamma1);
-                                    newTransition = Transition.of(t.getStart(), gamma2, q);
-                                    trans.add(newTransition);
-                                    updateLabel(newTransition, labelledLetter);
-                                }
-                        }
-                    }
-                } else { // gamma == null --- epsilon transitions p - eps -> q   t :  q - gamma -> q' => p - gamma -> q'
-                    for (Transition<PAutomatonState<Pair<Control, BuchiState>, Alphabet>, Alphabet> t
-                            : rel.getFrontTransitions(q)) {
-                        if (t.getLetter() == null) continue;
-//                        if (t.getEnd().getLetter() != null) continue;
-                        LabelledAlphabet<Control, Alphabet> tLetter = transitionLabels.get(t);
-                        labelledLetter = LabelledAlphabet.of(
-                                tLetter.isRepeated() || b);
-                        labelledLetter.setBackState(q);
-                        labelledLetter.setRule(tLetter.getRule());
-                        newTransition = Transition.of(tp, t.getLetter(), t.getEnd());
-                        trans.add(newTransition);
-                        updateLabel(newTransition, labelledLetter);
-                    }
-                }
-            }
-        }
-
-        postStar = new PAutomaton<>(
-                rel.getTransitions(),
-                initialState,
-                Collections.singleton(finalState));
+        postStar = new PostStar<>(bps, transitionLabels);
 
         repeatedHeadsGraph = new TarjanSCC<>();
 
@@ -306,7 +115,7 @@ public class BuchiPushdownSystemTools<Control, Alphabet> {
                     for (Transition<PAutomatonState<Pair<Control, BuchiState>, Alphabet>, Alphabet> t
                             : postStar.getBackEpsilonTransitions(qPPrimeGamma1)) {
                         LabelledAlphabet<Control, Alphabet> oldLabel = transitionLabels.get(t);
-                        labelledLetter = new LabelledAlphabet<>(oldLabel.isRepeated());
+                        LabelledAlphabet<Control, Alphabet> labelledLetter = new LabelledAlphabet<>(oldLabel.isRepeated());
                         labelledLetter.setRule(rule);
                         labelledLetter.setBackState(qPPrimeGamma1);
                         ConfigurationHead<Pair<Control, BuchiState>, Alphabet> endV =
@@ -321,9 +130,9 @@ public class BuchiPushdownSystemTools<Control, Alphabet> {
 
     }
 
-    private Collection<ConfigurationHead<Pair<Control, BuchiState>, Alphabet>> getReachableHeads(PAutomaton<PAutomatonState<Pair<Control, BuchiState>, Alphabet>, Alphabet> postStar) {
+    private Collection<ConfigurationHead<Pair<Control, BuchiState>, Alphabet>> getReachableHeads(AutomatonInterface<PAutomatonState<Pair<Control, BuchiState>, Alphabet>, Alphabet> postStar) {
         Collection<ConfigurationHead<Pair<Control, BuchiState>, Alphabet>> heads = new ArrayList<>();
-        for (TransitionIndex<PAutomatonState<Pair<Control, BuchiState>, Alphabet>, Alphabet> index : postStar.getDeltaIndex().keySet()) {
+        for (StateLetterPair<PAutomatonState<Pair<Control, BuchiState>, Alphabet>, Alphabet> index : postStar.getTransitionHeads()) {
             PAutomatonState<Pair<Control, BuchiState>, Alphabet> pState = index.getState();
             if (pState.isControlState()) {
                 heads.add(ConfigurationHead.of(pState.getState(), index.getLetter()));
@@ -331,18 +140,6 @@ public class BuchiPushdownSystemTools<Control, Alphabet> {
         }
         return heads;
 
-    }
-
-    private LabelledAlphabet<Control, Alphabet> updateLabel(Transition<PAutomatonState<Pair<Control, BuchiState>, Alphabet>, Alphabet> transition, LabelledAlphabet<Control, Alphabet> label) {
-        LabelledAlphabet<Control, Alphabet> labelledLetter = transitionLabels.get(transition);
-        if (labelledLetter == null) {
-            transitionLabels.put(transition, label);
-            labelledLetter = label;
-        } else {
-            labelledLetter.update(label);
-        }
-        transition.setLabel(labelledLetter);
-        return labelledLetter;
     }
 
     private void computeCounterExample() {
