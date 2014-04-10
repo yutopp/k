@@ -18,6 +18,7 @@ public class Attribute extends ASTNode {
     public static final String FUNCTION_KEY = "function";
     public static final String PREDICATE_KEY = "predicate";
     public static final String HOOK_KEY = "hook";
+    public static final String AUX_HOOK_KEY = "aux";
     public static final String MACRO_KEY = "macro";
     public static final String SIMPLIFICATION_KEY = "simplification";
 

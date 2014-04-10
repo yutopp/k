@@ -24,6 +24,9 @@ public class DeleteFunctionRules extends CopyOnWriteTransformer {
 
     @Override
     public ASTNode transform(Rule node) throws TransformerException {
+        if (node.containsAttribute(Attribute.SIMPLIFICATION_KEY)) {
+            return node;
+        }
         Term body = node.getBody();
         if (body instanceof Rewrite) {
             body = ((Rewrite) body).getLeft();
@@ -38,19 +41,31 @@ public class DeleteFunctionRules extends CopyOnWriteTransformer {
             List<Production> prods = context.productionsOf(label);
             if (prods.size() != 1) {
                 return node;
+//                GlobalSettings.kem.register(new KException(
+//                        KException.ExceptionType.ERROR,
+//                        KException.KExceptionGroup.CRITICAL,
+//                        "Hooked functions for label " + label + " should not be overloaded: " + prods.toString(),
+//                        getName(),
+//                        node.getFilename(),
+//                        node.getLocation()));
             } // Hooked functions should not be overloaded
             prod = prods.get(0);
         }
-        if (prod == null || !prod.containsAttribute(Attribute.HOOK_KEY)) {
+        if (prod == null) {
             return node;
         }
-        final String hook = prod.getAttribute(Attribute.HOOK_KEY);
-        if (!hooks.contains(hook)) {
-            return node;
+        if (prod.containsAttribute(Attribute.HOOK_KEY)) {
+            final String hook = prod.getAttribute(Attribute.HOOK_KEY);
+            if (hooks.contains(hook)) {
+                return null;
+            }
         }
-        if (node.containsAttribute(Attribute.SIMPLIFICATION_KEY)) {
-            return node;
+        if (prod.containsAttribute(Attribute.AUX_HOOK_KEY)) {
+            final String hook = prod.getAttribute(Attribute.AUX_HOOK_KEY);
+            if (hooks.contains(hook)) {
+                return null;
+            }
         }
-        return null;
+        return node;
     }
 }
