@@ -107,7 +107,7 @@ public class BuchiPushdownSystemTest {
         System.err.println("\n\n\n----Strongly Connected Components----");
         System.err.println(repeatedHeads.getSCCSString());
 
-        TarjanSCC<ConfigurationHead<Pair<String, BuchiState>, String>, LabelledAlphabet<String, String>> counterExampleGraph = bpsTool.getCounterExampleGraph();
+        TarjanSCC<ConfigurationHead<Pair<String, BuchiState>, String>, BuchiTrackingLabel<String, String>> counterExampleGraph = bpsTool.getCounterExampleGraph();
         Assert.assertNotNull("Property is false => counterexample exists", counterExampleGraph);
         System.err.println("\n\n\n----CounterExample Graph----");
         System.err.println(counterExampleGraph.toString());
@@ -261,7 +261,7 @@ public class BuchiPushdownSystemTest {
         System.err.println("\n\n\n----Strongly Connected Components----");
         System.err.println(repeatedHeads.getSCCSString());
 
-        TarjanSCC<ConfigurationHead<Pair<String, BuchiState>, String>, LabelledAlphabet<String, String>> counterExampleGraph = bpsTool.getCounterExampleGraph();
+        TarjanSCC<ConfigurationHead<Pair<String, BuchiState>, String>, BuchiTrackingLabel<String, String>> counterExampleGraph = bpsTool.getCounterExampleGraph();
         Assert.assertNotNull("Property is false => counterexample exists", counterExampleGraph);
         System.err.println("\n\n\n----CounterExample Graph----");
         System.err.println(counterExampleGraph.toString());

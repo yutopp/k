@@ -105,4 +105,13 @@ public abstract class BasicAutomaton<State, Alphabet> implements AutomatonInterf
         }
         return result;
     }
+
+
+//            PAutomaton automaton = PAutomaton.of("" +
+//                "p a <p,dummy1>;" +
+//                "p b <p,dummy2>;" +
+//                "<p,dummy1> b p;" +
+//                "<p,dummy2> a p;" +
+//                "p;" +
+//                "p");
 }

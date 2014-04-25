@@ -84,7 +84,7 @@ public class BuchiPushdownSystem<Control, Alphabet>
                                 pdsEndConfigHead.getLetter());
                 Configuration<Pair<Control, BuchiState>, Alphabet> endConfiguration =
                         new Configuration<>(endHead, pdsEndConfig.getStack());
-                rules.add(new Rule<>(configurationHead, endConfiguration));
+                rules.add(new Rule<>(configurationHead, endConfiguration, pdsRule.getLabel().toString() + buchiEndState.toString()));
             }
         }
         return rules;

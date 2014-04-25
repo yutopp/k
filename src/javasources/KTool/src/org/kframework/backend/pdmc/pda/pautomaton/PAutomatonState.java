@@ -104,7 +104,7 @@ public class PAutomatonState<Control, Alphabet> {
 
     @Override
     public String toString() {
-        if (fresh != 0) return "!" + fresh + "!";
+        if (fresh != 0) return "s" + fresh + "!";
         if (letter == null) return state.toString();
         return "<" + state + "," + letter + ">";
     }

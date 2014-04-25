@@ -5,6 +5,7 @@ import org.kframework.backend.pdmc.automaton.AutomatonInterface;
 import org.kframework.backend.pdmc.automaton.StateLetterPair;
 import org.kframework.backend.pdmc.automaton.Transition;
 import org.kframework.backend.pdmc.pda.ConfigurationHead;
+import org.kframework.backend.pdmc.pda.PostStar;
 import org.kframework.backend.pdmc.pda.Rule;
 import org.kframework.backend.pdmc.pda.graph.TarjanSCC;
 import org.kframework.backend.pdmc.pda.pautomaton.PAutomatonState;
@@ -25,13 +26,13 @@ public class BuchiPushdownSystemTools<Control, Alphabet> {
         this.bps = bps;
     }
 
-    private PostStar<Control, Alphabet> postStar = null;
+    private org.kframework.backend.pdmc.pda.PostStar<Pair<Control, BuchiState>, Alphabet> postStar = null;
     TarjanSCC<ConfigurationHead<Pair<Control, BuchiState>, Alphabet>,
-            LabelledAlphabet<Control, Alphabet>> repeatedHeadsGraph = null;
-    Map<Transition<PAutomatonState<Pair<Control, BuchiState>, Alphabet>, Alphabet>, LabelledAlphabet<Control, Alphabet>>
+            BuchiTrackingLabel<Control, Alphabet>> repeatedHeadsGraph = null;
+    Map<Transition<PAutomatonState<Pair<Control, BuchiState>, Alphabet>, Alphabet>, BuchiTrackingLabel<Control, Alphabet>>
             transitionLabels = null;
 
-    TarjanSCC<ConfigurationHead<Pair<Control, BuchiState>, Alphabet>, LabelledAlphabet<Control, Alphabet>> counterExample = null;
+    TarjanSCC<ConfigurationHead<Pair<Control, BuchiState>, Alphabet>, BuchiTrackingLabel<Control, Alphabet>> counterExample = null;
 
     /**
      * Computes (if not already computed) and returns the <b>post</b> automaton corresponding to this BPDS.
@@ -66,7 +67,7 @@ public class BuchiPushdownSystemTools<Control, Alphabet> {
      * containing at least one final buchi state.
      * @return the value of the {@code counterExample} field after computing it.
      */
-    public TarjanSCC<ConfigurationHead<Pair<Control, BuchiState>, Alphabet>, LabelledAlphabet<Control, Alphabet>> getRepeatedHeadsGraph() {
+    public TarjanSCC<ConfigurationHead<Pair<Control, BuchiState>, Alphabet>, BuchiTrackingLabel<Control, Alphabet>> getRepeatedHeadsGraph() {
         if (repeatedHeadsGraph == null)
             compute();
         return repeatedHeadsGraph;
@@ -78,7 +79,7 @@ public class BuchiPushdownSystemTools<Control, Alphabet> {
      * containing at least one final buchi state.
      * @return the value of the {@code counterExample} field after computing it.
      */
-    public TarjanSCC<ConfigurationHead<Pair<Control, BuchiState>, Alphabet>, LabelledAlphabet<Control, Alphabet>> getCounterExampleGraph() {
+    public TarjanSCC<ConfigurationHead<Pair<Control, BuchiState>, Alphabet>, BuchiTrackingLabel<Control, Alphabet>> getCounterExampleGraph() {
         if (repeatedHeadsGraph == null)
             compute();
         return counterExample;
@@ -93,7 +94,8 @@ public class BuchiPushdownSystemTools<Control, Alphabet> {
     private void compute() {
         transitionLabels = new HashMap<>();
 
-        postStar = new PostStar<>(bps, transitionLabels);
+        BuchiTrackingLabelFactory<Control, Alphabet> labelFactory = new BuchiTrackingLabelFactory<>();
+        postStar = new PostStar<>(bps, labelFactory);
 
         repeatedHeadsGraph = new TarjanSCC<>();
 
@@ -103,7 +105,7 @@ public class BuchiPushdownSystemTools<Control, Alphabet> {
             for (Rule<Pair<Control,BuchiState>,Alphabet> rule : bps.getRules(head)) {
                 ConfigurationHead<Pair<Control, BuchiState>, Alphabet> endHead = rule.endConfiguration().getHead();
                 if (!endHead.isProper()) continue;
-                LabelledAlphabet<Control, Alphabet> label = new LabelledAlphabet<>(bps.isFinal(head.getState()));
+                BuchiTrackingLabel<Control, Alphabet> label = new BuchiTrackingLabel<>(bps.isFinal(head.getState()));
                 label.setRule(rule);
                 repeatedHeadsGraph.addEdge(head, endHead, label);
                 Stack<Alphabet> endStack = rule.endStack();
@@ -114,8 +116,8 @@ public class BuchiPushdownSystemTools<Control, Alphabet> {
                             = PAutomatonState.of(endHead.getState(), gamma1);
                     for (Transition<PAutomatonState<Pair<Control, BuchiState>, Alphabet>, Alphabet> t
                             : postStar.getBackEpsilonTransitions(qPPrimeGamma1)) {
-                        LabelledAlphabet<Control, Alphabet> oldLabel = transitionLabels.get(t);
-                        LabelledAlphabet<Control, Alphabet> labelledLetter = new LabelledAlphabet<>(oldLabel.isRepeated());
+                        BuchiTrackingLabel<Control, Alphabet> oldLabel = transitionLabels.get(t);
+                        BuchiTrackingLabel<Control, Alphabet> labelledLetter = new BuchiTrackingLabel<>(oldLabel.isRepeated());
                         labelledLetter.setRule(rule);
                         labelledLetter.setBackState(qPPrimeGamma1);
                         ConfigurationHead<Pair<Control, BuchiState>, Alphabet> endV =
@@ -143,11 +145,11 @@ public class BuchiPushdownSystemTools<Control, Alphabet> {
     }
 
     private void computeCounterExample() {
-        Collection<Collection<TarjanSCC<ConfigurationHead<Pair<Control, BuchiState>, Alphabet>, LabelledAlphabet<Control, Alphabet>>.TarjanSCCVertex>> sccs = repeatedHeadsGraph.getStronglyConnectedComponents();
-        for (Collection<TarjanSCC<ConfigurationHead<Pair<Control, BuchiState>, Alphabet>, LabelledAlphabet<Control, Alphabet>>.TarjanSCCVertex> scc : sccs) {
-            TarjanSCC<ConfigurationHead<Pair<Control, BuchiState>, Alphabet>, LabelledAlphabet<Control, Alphabet>> sccSubGraph = repeatedHeadsGraph.getSubgraph(scc);
-            for (Map<ConfigurationHead<Pair<Control, BuchiState>, Alphabet>, LabelledAlphabet<Control, Alphabet>> values : sccSubGraph.getEdgeSet().values()) {
-                for (LabelledAlphabet<Control, Alphabet> label: values.values()) {
+        Collection<Collection<TarjanSCC<ConfigurationHead<Pair<Control, BuchiState>, Alphabet>, BuchiTrackingLabel<Control, Alphabet>>.TarjanSCCVertex>> sccs = repeatedHeadsGraph.getStronglyConnectedComponents();
+        for (Collection<TarjanSCC<ConfigurationHead<Pair<Control, BuchiState>, Alphabet>, BuchiTrackingLabel<Control, Alphabet>>.TarjanSCCVertex> scc : sccs) {
+            TarjanSCC<ConfigurationHead<Pair<Control, BuchiState>, Alphabet>, BuchiTrackingLabel<Control, Alphabet>> sccSubGraph = repeatedHeadsGraph.getSubgraph(scc);
+            for (Map<ConfigurationHead<Pair<Control, BuchiState>, Alphabet>, BuchiTrackingLabel<Control, Alphabet>> values : sccSubGraph.getEdgeSet().values()) {
+                for (BuchiTrackingLabel<Control, Alphabet> label: values.values()) {
                     if (label.isRepeated()) {
                         counterExample = sccSubGraph;
                         return;
@@ -173,7 +175,7 @@ public class BuchiPushdownSystemTools<Control, Alphabet> {
                 postStar.getFinalStates().iterator().next());
         //Step 2
         Transition<PAutomatonState<Pair<Control, BuchiState>, Alphabet>, Alphabet> transition = path.removeFirst();
-        LabelledAlphabet<Control, Alphabet> label = transitionLabels.get(transition);
+        BuchiTrackingLabel<Control, Alphabet> label = transitionLabels.get(transition);
         Rule<Pair<Control, BuchiState>, Alphabet> rule = label.getRule();
         PAutomatonState<Pair<Control, BuchiState>, Alphabet> backState;
         while (rule != null) {
