@@ -430,10 +430,13 @@ public class ConfigFileParser {
             if (childNode.getNodeType() == Node.ELEMENT_NODE
                     && childNode.getNodeName().equals("program")) {
                 Element elem = (Element) childNode;
-                ret.put(elem.getAttribute("name"), new ProgramProfile(parseKrunOpts(
-                        elem.getChildNodes()),
-                        Boolean.parseBoolean(elem.getAttribute("regex")),
-                        parseKrunExec(elem.getChildNodes())));
+                String[] names = splitNodeValue(elem.getAttributeNode("name"));
+                for (String name : names) {
+                    ret.put(name,
+                            new ProgramProfile(parseKrunOpts(elem.getChildNodes()),
+                                    Boolean.parseBoolean(elem.getAttribute("regex")),
+                                    parseKrunExec(elem.getChildNodes())));
+                }
             }
         }
         return ret;
