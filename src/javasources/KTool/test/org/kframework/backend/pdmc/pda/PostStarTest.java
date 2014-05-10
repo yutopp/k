@@ -24,21 +24,21 @@ public class PostStarTest {
         PostStar<String, String> postStar = new PostStar(pds, factory);
 
         // Schwoon's Thesis, Figure 3.5, page 49, labelling in Figure 3.7, page 60
-        PAutomaton<PAutomatonState<String, String>, String> expectedPostStar = PAutomaton.of("" +
-                "p1 g1 <p1,g1>[r1];" +
-                "<p2,g2> g0 <p1,g1>[r2];" +
-                "s1! g0 s2!;" +
-                "p0 <p2,g2>[r4];" +
-                "<p1,g1> g0 s1![r1];" +
-                "<p1,g1> g0 <p1,g1>[r1,<p2,g2>];" +
-                "p2 g2 <p2,g2>[r2];" +
-                "p0 g1 <p2,g2>[r3];" +
-                "p0 g0 <p1,g1>;" +
-                "p0 g0 s1!;" +
-                "p0;" +
-                "s2!");
+//        PAutomaton<PAutomatonState<String, String>, String> expectedPostStar = PAutomaton.of("" +
+//                "p1 g1 <p1,g1>[r1];" +
+//                "<p2,g2> g0 <p1,g1>[r2];" +
+//                "s1! g0 s2!;" +
+//                "p0 <p2,g2>[r4];" +
+//                "<p1,g1> g0 s1![r1];" +
+//                "<p1,g1> g0 <p1,g1>[r1,<p2,g2>];" +
+//                "p2 g2 <p2,g2>[r2];" +
+//                "p0 g1 <p2,g2>[r3];" +
+//                "p0 g0 <p1,g1>;" +
+//                "p0 g0 s1!;" +
+//                "p0;" +
+//                "s2!");
         System.err.println(postStar.toString());
-        System.err.print(expectedPostStar.toString());
+//        System.err.print(expectedPostStar.toString());
         System.err.println("\n---------------------------");
 //        Assert.assertEquals(expectedPostStar.length(), aPostStar.toString().length());
     }
