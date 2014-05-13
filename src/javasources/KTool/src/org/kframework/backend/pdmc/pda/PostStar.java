@@ -170,11 +170,11 @@ public class PostStar<Control, Alphabet> extends BasicAutomaton<PAutomatonState<
 
     }
 
-    private Collection<ConfigurationHead<Control, Alphabet>> getReachableHeads() {
+    public Collection<ConfigurationHead<Control, Alphabet>> getReachableHeads() {
         Collection<ConfigurationHead<Control, Alphabet>> heads = new ArrayList<>();
         for (StateLetterPair<PAutomatonState<Control, Alphabet>, Alphabet> index : automaton.getTransitionHeads()) {
             PAutomatonState<Control, Alphabet> pState = index.getState();
-            if (pState.isControlState()) {
+            if (pState.isControlState() && index.getLetter() != null) {
                 heads.add(ConfigurationHead.of(pState.getState(), index.getLetter()));
             }
         }
@@ -185,7 +185,7 @@ public class PostStar<Control, Alphabet> extends BasicAutomaton<PAutomatonState<
    /**
      * Implements Witness generation algorithm from Schwoon's thesis, Section 3.1.6
      * @param head A reachable configuration head
-     * @return The path (of rules) from the initial configuraiton to {@code head}
+     * @return The path (of rules) from the initial configuration to {@code head}
      */
     public Deque<Rule<Control, Alphabet>> getReachableConfiguration(
            ConfigurationHead<Control, Alphabet> head

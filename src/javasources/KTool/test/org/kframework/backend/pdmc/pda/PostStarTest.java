@@ -5,6 +5,8 @@ import org.junit.Test;
 import org.kframework.backend.pdmc.pda.pautomaton.PAutomaton;
 import org.kframework.backend.pdmc.pda.pautomaton.PAutomatonState;
 
+import java.util.Deque;
+
 /**
  * @author TraianSF
  */
@@ -22,6 +24,12 @@ public class PostStarTest {
                 "<p0, g0 g0>");
         TrackingLabelFactory<String, String> factory = new TrackingLabelFactory<>();
         PostStar<String, String> postStar = new PostStar(pds, factory);
+
+        for (ConfigurationHead<String, String> head : postStar.getReachableHeads()) {
+            Deque<Rule<String, String>> path = postStar.getReachableConfiguration(head);
+            System.out.println(head.toString() + ":");
+            System.out.println("\t" + path);
+        }
 
         // Schwoon's Thesis, Figure 3.5, page 49, labelling in Figure 3.7, page 60
 //        PAutomaton<PAutomatonState<String, String>, String> expectedPostStar = PAutomaton.of("" +
