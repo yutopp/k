@@ -84,6 +84,7 @@ public abstract class BasicBackend implements Backend {
         steps.add(new ResolveBinder(context));
         steps.add(new ResolveAnonymousVariables(context));
         steps.add(new AddK2SMTLib(context));
+        steps.add(new FlattenTerms(context));
         steps.add(new AddPredicates(context));
         steps.add(new ResolveSyntaxPredicates(context));
         steps.add(new ResolveBuiltins(context));
