@@ -222,11 +222,11 @@ public class FlattenTerms extends CopyOnWriteTransformer {
             }
 
             node = node.shallowCopy();
-            if (kompileOptions.backend.java() || K.backend.equals("java")) {
+            //if (kompileOptions.backend.java() || K.backend.equals("java")) {
                 /* the Java Rewrite Engine preserves sort information for variables */
-            } else {
-                node.setSort(KSorts.KITEM);
-            }
+           // } else {
+           //     node.setSort(KSorts.KITEM);
+           // }
             return node;
         }
     }
