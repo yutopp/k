@@ -58,7 +58,8 @@ public class PostStar<Control, Alphabet> extends BasicAutomaton<PAutomatonState<
         Stack<Alphabet> initialStack = initial.getFullStack();
         assert !initialStack.empty() : "We must have something to process";
         PAutomatonState<Control, Alphabet> finalState = null;
-        for (Alphabet letter : initialStack) {
+        for (int letterIndex = initialStack.size()-1; letterIndex >= 0; letterIndex--) {
+            Alphabet letter = initialStack.get(letterIndex);
             finalState = new PAutomatonState<>();
             Transition<PAutomatonState<Control, Alphabet>, Alphabet> transition1 =
                     Transition.of(initialState, letter, finalState);
@@ -96,10 +97,9 @@ public class PostStar<Control, Alphabet> extends BasicAutomaton<PAutomatonState<
                         assert stack.size() <= 2 : "At most 2 elements are allowed in the stack for now";
                         Alphabet gamma1, gamma2;
                         TrackingLabel<Control, Alphabet> headLetterLabel;
-                        headLetterLabel = new TrackingLabel();
-                        headLetterLabel.update(labelFactory.get(transition));
-                        headLetterLabel.update(bps, pPrime);
+                        headLetterLabel = labelFactory.newLabel();
                         headLetterLabel.setRule(rule);
+                        headLetterLabel.update(bps, rule.getHead().getState());
                         Transition<PAutomatonState<Control, Alphabet>, Alphabet> newHeadTransition;
                         switch (stack.size()) {
                             case 0:
@@ -126,17 +126,19 @@ public class PostStar<Control, Alphabet> extends BasicAutomaton<PAutomatonState<
                                         gamma1, qPPrimeGamma1);
                                 trans.add(newHeadTransition);
                                 labelFactory.updateLabel(newHeadTransition, headLetterLabel);
-                                TrackingLabel<Control, Alphabet> secondLetterabel = new TrackingLabel();
-                                secondLetterabel.setRule(rule);
+                                TrackingLabel<Control, Alphabet> secondLetterLabel = labelFactory.newLabel();
+                                secondLetterLabel.setRule(rule);
+                                secondLetterLabel.update(bps, rule.getHead().getState());
                                 Transition<PAutomatonState<Control, Alphabet>, Alphabet> secondLetterTransition = Transition.of(qPPrimeGamma1, gamma2, q);
                                 rel.add(secondLetterTransition);
-                                labelFactory.updateLabel(secondLetterTransition, secondLetterabel);
+                                labelFactory.updateLabel(secondLetterTransition, secondLetterLabel);
                                 for (Transition<PAutomatonState<Control, Alphabet>, Alphabet> t
                                         : rel.getBackEpsilonTransitions(qPPrimeGamma1)) {
                                     TrackingLabel<Control, Alphabet> tLabel = labelFactory.get(t);
-                                    TrackingLabel<Control, Alphabet> backEpsilonLabel = new TrackingLabel();
+                                    TrackingLabel<Control, Alphabet> backEpsilonLabel = labelFactory.newLabel();
                                     backEpsilonLabel.update(tLabel);
                                     backEpsilonLabel.setRule(rule);
+                                    backEpsilonLabel.update(bps, rule.getHead().getState());
                                     backEpsilonLabel.setBackState(qPPrimeGamma1);
                                     Transition<PAutomatonState<Control, Alphabet>, Alphabet> newBackEpsilonTransition = Transition.of(t.getStart(), gamma2, q);
                                     trans.add(newBackEpsilonTransition);
@@ -150,7 +152,7 @@ public class PostStar<Control, Alphabet> extends BasicAutomaton<PAutomatonState<
                         if (t.getLetter() == null) continue;
 //                        if (t.getEnd().getLetter() != null) continue;
                         TrackingLabel<Control, Alphabet> tLetter = labelFactory.get(t);
-                        TrackingLabel<Control, Alphabet> epsilonClosureLabel = new TrackingLabel();
+                        TrackingLabel<Control, Alphabet> epsilonClosureLabel = labelFactory.newLabel();
                         epsilonClosureLabel.update(tLetter);
                         epsilonClosureLabel.update(labelFactory.get(transition));
                         epsilonClosureLabel.setBackState(q);

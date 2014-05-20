@@ -21,6 +21,7 @@ import java.util.*;
 public class BuchiPushdownSystemTools<Control, Alphabet> {
 
     BuchiPushdownSystemInterface<Control, Alphabet> bps;
+    BuchiTrackingLabelFactory<Control, Alphabet> labelFactory;
 
     public BuchiPushdownSystemTools(BuchiPushdownSystemInterface<Control, Alphabet> bps) {
         this.bps = bps;
@@ -29,8 +30,6 @@ public class BuchiPushdownSystemTools<Control, Alphabet> {
     private org.kframework.backend.pdmc.pda.PostStar<Pair<Control, BuchiState>, Alphabet> postStar = null;
     TarjanSCC<ConfigurationHead<Pair<Control, BuchiState>, Alphabet>,
             BuchiTrackingLabel<Control, Alphabet>> repeatedHeadsGraph = null;
-    Map<Transition<PAutomatonState<Pair<Control, BuchiState>, Alphabet>, Alphabet>, BuchiTrackingLabel<Control, Alphabet>>
-            transitionLabels = null;
 
     TarjanSCC<ConfigurationHead<Pair<Control, BuchiState>, Alphabet>, BuchiTrackingLabel<Control, Alphabet>> counterExample = null;
 
@@ -92,9 +91,8 @@ public class BuchiPushdownSystemTools<Control, Alphabet> {
      * (see also Algorithm 4 in Figure 3.9, p. 81)
      */
     private void compute() {
-        transitionLabels = new HashMap<>();
 
-        BuchiTrackingLabelFactory<Control, Alphabet> labelFactory = new BuchiTrackingLabelFactory<>();
+        labelFactory = new BuchiTrackingLabelFactory<>();
         postStar = new PostStar<>(bps, labelFactory);
 
         repeatedHeadsGraph = new TarjanSCC<>();
@@ -116,7 +114,7 @@ public class BuchiPushdownSystemTools<Control, Alphabet> {
                             = PAutomatonState.of(endHead.getState(), gamma1);
                     for (Transition<PAutomatonState<Pair<Control, BuchiState>, Alphabet>, Alphabet> t
                             : postStar.getBackEpsilonTransitions(qPPrimeGamma1)) {
-                        BuchiTrackingLabel<Control, Alphabet> oldLabel = transitionLabels.get(t);
+                        BuchiTrackingLabel<Control, Alphabet> oldLabel = (BuchiTrackingLabel<Control, Alphabet>) labelFactory.get(t);
                         BuchiTrackingLabel<Control, Alphabet> labelledLetter = new BuchiTrackingLabel<>(oldLabel.isRepeated());
                         labelledLetter.setRule(rule);
                         labelledLetter.setBackState(qPPrimeGamma1);
@@ -162,7 +160,7 @@ public class BuchiPushdownSystemTools<Control, Alphabet> {
     /**
      * Implements Witness generation algorithm from Schwoon's thesis, Section 3.1.6
      * @param head A reachable configuration head
-     * @return The path (of rules) from the initial configuraiton to {@code head}
+     * @return The path (of rules) from the initial configuration to {@code head}
      */
     public Deque<Rule<Pair<Control, BuchiState>, Alphabet>> getReachableConfiguration(
            ConfigurationHead<Pair<Control, BuchiState>, Alphabet> head
@@ -175,45 +173,51 @@ public class BuchiPushdownSystemTools<Control, Alphabet> {
                 postStar.getFinalStates().iterator().next());
         //Step 2
         Transition<PAutomatonState<Pair<Control, BuchiState>, Alphabet>, Alphabet> transition = path.removeFirst();
-        BuchiTrackingLabel<Control, Alphabet> label = transitionLabels.get(transition);
+        BuchiTrackingLabel<Control, Alphabet> label = (BuchiTrackingLabel<Control, Alphabet>) labelFactory.get(transition);
         Rule<Pair<Control, BuchiState>, Alphabet> rule = label.getRule();
-        PAutomatonState<Pair<Control, BuchiState>, Alphabet> backState;
-        while (rule != null) {
-            if (rule.endStack().size() == 2) { // reduce step 3.2 to step 3.1 by shifting transition & rules
-                transition = path.removeFirst();
-                label = transitionLabels.get(transition);
-                rule = label.getRule();
-                assert rule != null && rule.endStack().size() == 2;
-            }
-            // Step 3.1
-            result.addFirst(rule);
-            head = rule.getHead();
-            backState = label.getBackState();
-            if (backState == null) {
-                transition = Transition.of(
-                        PAutomatonState.<Pair<Control, BuchiState>, Alphabet>of(head.getState()),
-                        head.getLetter(),
-                        transition.getEnd()
-                );
-                assert transitionLabels.containsKey(transition);
+        PAutomatonState<Pair<Control, BuchiState>, Alphabet> backState = label.getBackState();
+        while (rule != null || backState != null) {
+            if (rule == null) {
+                transition = Transition.of(transition.getStart(), null, backState);
+                assert labelFactory.get(transition) != null;
             } else {
-                transition = Transition.of(
-                        backState,
-                        head.getLetter(),
-                        transition.getEnd()
-                );
-                assert transitionLabels.containsKey(transition);
-                path.addFirst(transition);
-                transition = Transition.of(
-                        PAutomatonState.<Pair<Control, BuchiState>, Alphabet>of(head.getState()),
-                        null,
-                        backState
-                );
-                assert transitionLabels.containsKey(transition);
+                if (rule.endStack().size() == 2) { // reduce step 3.2 to step 3.1 by shifting transition & rules
+                    transition = path.removeFirst();
+                    label = (BuchiTrackingLabel<Control, Alphabet>) labelFactory.get(transition);
+                    rule = label.getRule();
+                    assert rule != null && rule.endStack().size() == 2;
+                }
+                // Step 3.1
+                result.addFirst(rule);
+                head = rule.getHead();
+                backState = label.getBackState();
+                if (backState == null) {
+                    transition = Transition.of(
+                            PAutomatonState.<Pair<Control, BuchiState>, Alphabet>of(head.getState()),
+                            head.getLetter(),
+                            transition.getEnd()
+                    );
+                    assert labelFactory.get(transition) != null;
+                } else {
+                    transition = Transition.of(
+                            backState,
+                            head.getLetter(),
+                            transition.getEnd()
+                    );
+                    assert labelFactory.get(transition) != null;
+                    path.addFirst(transition);
+                    transition = Transition.of(
+                            PAutomatonState.<Pair<Control, BuchiState>, Alphabet>of(head.getState()),
+                            null,
+                            backState
+                    );
+                    assert labelFactory.get(transition) != null;
+                }
             }
 
-            label = transitionLabels.get(transition);
+            label = (BuchiTrackingLabel<Control, Alphabet>) labelFactory.get(transition);
             rule = label.getRule();
+            backState = label.getBackState();
         }
         return result;
     }

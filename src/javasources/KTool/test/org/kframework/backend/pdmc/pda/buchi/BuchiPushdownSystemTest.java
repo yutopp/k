@@ -18,6 +18,49 @@ import java.io.ByteArrayInputStream;
  * @author TraianSF
  */
 public class BuchiPushdownSystemTest {
+
+    @Test
+    public void testAlwaysTrue() throws  Exception {
+        String promelaString = "" +
+                "never { /* 1 */\n" +
+                "T0_init:\n" +
+                "  if\n" +
+                "  :: ((true)) -> goto accept_all\n" +
+                "  fi;\n" +
+                "accept_all:\n" +
+                "  skip\n" +
+                "}" +
+                "";
+
+
+        PromelaBuchi automaton = PromelaBuchiParser.parse(new ByteArrayInputStream(promelaString.getBytes("UTF-8")));
+
+        PushdownSystem pds = PushdownSystem.of("" +
+                "r1: <p0, g0> => <p1, g1 g0>;\n" +
+                "r2: <p1, g1> => <p2, g2 g0>;\n" +
+                "r3: <p2, g2> => <p0, g1>;\n" +
+                "r4: <p0, g1> => <p0>;\n" +
+                "<p0, g0 g0>");
+
+        ConcreteEvaluator<String,String> evaluator = ConcreteEvaluator.of(""
+                + "<x0, p> |= px0;\n"
+                +  "<x1, p> |= px1;");
+
+        BuchiPushdownSystem<String, String> bps = new BuchiPushdownSystem<>(pds, automaton, evaluator);
+        System.err.print(bps.toString());
+
+        BuchiPushdownSystemTools<String, String> bpsTool = new BuchiPushdownSystemTools<>(bps);
+        System.err.println("\n------------------------");
+
+        AutomatonInterface<PAutomatonState<Pair<String, BuchiState>, String>, String> post = bpsTool.getPostStar();
+        System.err.println("\n------------------------");
+        System.err.println(post.toString());
+
+        TarjanSCC counterExampleGraph = bpsTool.getRepeatedHeadsGraph();
+        System.err.println("\n------------------------");
+        System.err.println(counterExampleGraph.toString());
+    }
+
     @Test
     public void testSimpleTrue() throws Exception {
         String promelaString = "" +
@@ -35,10 +78,10 @@ public class BuchiPushdownSystemTest {
         PromelaBuchi automaton = PromelaBuchiParser.parse(new ByteArrayInputStream(promelaString.getBytes("UTF-8")));
 
         PushdownSystem<String,String> pds = PushdownSystem.of(""+
-                "<x0, p> => <x0>;\n" +
-                "<x0, p> => <x1, p p>;\n" +
-                "<x1, p> => <x1, p p>;\n" +
-                "<x1, p> => <x0>;\n" +
+                "r1: <x0, p> => <x0>;\n" +
+                "r2: <x0, p> => <x1, p p>;\n" +
+                "r3: <x1, p> => <x1, p p>;\n" +
+                "r4: <x1, p> => <x0>;\n" +
                 "<x0, p>");
 
         ConcreteEvaluator<String,String> evaluator = ConcreteEvaluator.of(""
@@ -211,22 +254,22 @@ public class BuchiPushdownSystemTest {
         PromelaBuchi automaton = PromelaBuchiParser.parse(new ByteArrayInputStream(promelaString.getBytes("UTF-8")));
 
         PushdownSystem<String,String> pds = PushdownSystem.of("" +
-                "<xinit, p>  => <x0, p bot>;\n"+
-                "<x0, p>     => <x0, skip ret>;\n" +
-                "<x0, p>     => <x01, incx ret>;\n" +
-                "<x01, incx> => <x0, p incx>;\n" +
-                "<x0, skip>  => <x0>;\n" +
-                "<x0, incx>  => <x1>;\n" +
-                "<x1, incx>  => <x2>;\n" +
-                "<x2, incx>  => <x0>;\n" +
-                "<x0, ret>   => <x0>;\n" +
-                "<x1, ret>   => <x1>;\n" +
-                "<x2, ret>   => <x2>;\n" +
-                "<x0, bot>   => <x0, bot>;\n" +
-                "<x01, bot>   => <x01, bot>;\n" +
-                "<x1, bot>   => <x1, bot>;\n" +
-                "<x2, bot>   => <x2, bot>;\n" +
-                "<xinit, p>");
+//                "<xinit, p>  => <x0, p bot>;\n"+
+                "r1: <x0, p>     => <x0, skip ret>;\n" +
+                "r2: <x0, p>     => <x01, incx ret>;\n" +
+                "r3: <x01, incx> => <x0, p incx>;\n" +
+                "r4: <x0, skip>  => <x0>;\n" +
+                "r5: <x0, incx>  => <x1>;\n" +
+                "r6: <x1, incx>  => <x2>;\n" +
+                "r7: <x2, incx>  => <x0>;\n" +
+                "r8: <x0, ret>   => <x0>;\n" +
+                "r9: <x1, ret>   => <x1>;\n" +
+                "r10: <x2, ret>   => <x2>;\n" +
+                "r11: <x0, bot>   => <x0, bot>;\n" +
+                "r12: <x01, bot>   => <x01, bot>;\n" +
+                "r13: <x1, bot>   => <x1, bot>;\n" +
+                "r14: <x2, bot>   => <x2, bot>;\n" +
+                "<x0, p bot>");
 
         String[] states = new String[] {"x0", "x01", "x1", "x2"};
         String[] heads = new String[] {"p", "incx", "skip", "ret"};

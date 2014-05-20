@@ -16,4 +16,5 @@ public class BuchiTrackingLabelFactory<Control, Alphabet> extends TrackingLabelF
     public TrackingLabel<Pair<Control, BuchiState>, Alphabet> newLabel() {
         return new BuchiTrackingLabel<>(false);
     }
+
 }

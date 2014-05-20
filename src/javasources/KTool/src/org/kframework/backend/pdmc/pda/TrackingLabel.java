@@ -46,7 +46,7 @@ public class TrackingLabel<Control, Alphabet> {
 
     @Override
     public String toString() {
-        if (rule == null) return "";
+        if (rule == null) return "[]";
         Object label = rule.getLabel();
         return "[" +
                 (label != null ? label : rule) +

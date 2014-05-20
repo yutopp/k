@@ -36,7 +36,7 @@ public class Rule<Control, Alphabet> {
     }
 
     public Object getLabel() {
-        return label;
+        return label == null ? "" : label;
     }
 
     public static Rule<String, String> of(String stringRule) {
