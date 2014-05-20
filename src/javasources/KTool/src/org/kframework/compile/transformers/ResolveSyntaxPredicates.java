@@ -26,6 +26,16 @@ public class ResolveSyntaxPredicates extends CopyOnWriteTransformer {
         return node;
     }
     
+    /*
+     * (non-Javadoc)
+     * @see org.kframework.kil.AbstractVisitor#visit(org.kframework.kil.Sentence, java.lang.Object)
+     * fixed here,
+     * if a sort has getExpectedSort then we check if it is a KSort, otherwise, we check if var's getSort is a KSort
+     * Not sure if it is a good solution for doing the ResolveSyntaxPredicate after flattenTerms
+     * The problem is the following: If we do the flattenTerms before this steps, then
+     * All variable will become sort KItem, then it does not make sense to check MetaK.isKSort(var.getSort())
+     * if the sort has a more concrete sort.
+     */
     @Override
     public ASTNode visit(Sentence node, Void _)  {
         boolean change = false;
@@ -38,7 +48,7 @@ public class ResolveSyntaxPredicates extends CopyOnWriteTransformer {
         for (Variable var : vars) {
 //            if (!var.isUserTyped()) continue;
             if (var.isSyntactic()) continue;
-            if (MetaK.isKSort(var.getSort())) continue;
+            if ((var.getExpectedSort() == null && MetaK.isKSort(var.getSort())) || (var.getExpectedSort()!=null && MetaK.isKSort(var.getExpectedSort()))) continue;
             change = true;
             ands.getContents().add(getPredicateTerm(var));
         }
@@ -54,7 +64,7 @@ public class ResolveSyntaxPredicates extends CopyOnWriteTransformer {
     }
 
     private Term getPredicateTerm(Variable var) {
-        return KApp.of(KLabelConstant.of(AddPredicates.predicate(var.getSort()), context), var);
+        return KApp.of(KLabelConstant.of(AddPredicates.predicate(var.getExpectedSort()), context), var);
     }
 
 }
