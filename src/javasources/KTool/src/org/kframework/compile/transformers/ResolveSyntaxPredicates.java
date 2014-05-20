@@ -63,11 +63,7 @@ public class ResolveSyntaxPredicates extends CopyOnWriteTransformer {
      * always return the most concrete sort predicates
      */
     private Term getPredicateTerm(Variable var) {
-        if (var.getExpectedSort()==null){
-            return KApp.of(KLabelConstant.of(AddPredicates.predicate(var.getSort()), context), var);
-        } else {
-            return KApp.of(KLabelConstant.of(AddPredicates.predicate(var.getExpectedSort()), context), var);
-        }
+        return KApp.of(KLabelConstant.of(AddPredicates.predicate(var.getSort()), context), var);
     }
 
 }
