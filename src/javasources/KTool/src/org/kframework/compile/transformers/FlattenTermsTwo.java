@@ -63,7 +63,7 @@ public class FlattenTermsTwo extends CopyOnWriteTransformer {
     }
 
     class FlattenKSyntaxTwo extends CopyOnWriteTransformer {
-    	FlattenTermsTwo trans;
+        FlattenTermsTwo trans;
 
         public FlattenKSyntaxTwo(FlattenTermsTwo t, Context context) {
             super("Flatten K Syntax", context);
