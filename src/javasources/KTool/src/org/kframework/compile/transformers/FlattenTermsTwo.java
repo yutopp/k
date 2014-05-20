@@ -14,15 +14,17 @@ import java.util.*;
 
 /**
  * Transformer flattening concrete syntax terms to applications of KLabels
- * Variable will not change sort to kitem
+ * A copy of FlattenTerms class, only diff in dealing with variable
+ * in this class, variable will change sort to KItem in order for
+ * backends to use, this class will be executed before FlattenSyntax
  */
 @KilProperty.Ensures(KilProperty.NO_CONCRETE_SYNTAX)
-public class FlattenTerms extends CopyOnWriteTransformer {
-    FlattenKSyntax kTrans;
+public class FlattenTermsTwo extends CopyOnWriteTransformer {
+    FlattenKSyntaxTwo kTrans;
 
-    public FlattenTerms(Context context) {
+    public FlattenTermsTwo(Context context) {
         super("Syntax K to Abstract K", context);
-        kTrans = new FlattenKSyntax(this, context);
+        kTrans = new FlattenKSyntaxTwo(this, context);
     }
 
     @Override
@@ -60,10 +62,10 @@ public class FlattenTerms extends CopyOnWriteTransformer {
         return super.visit(tc, _);
     }
 
-    class FlattenKSyntax extends CopyOnWriteTransformer {
-        FlattenTerms trans;
+    class FlattenKSyntaxTwo extends CopyOnWriteTransformer {
+    	FlattenTermsTwo trans;
 
-        public FlattenKSyntax(FlattenTerms t, Context context) {
+        public FlattenKSyntaxTwo(FlattenTermsTwo t, Context context) {
             super("Flatten K Syntax", context);
             trans = t;
         }
@@ -223,6 +225,11 @@ public class FlattenTerms extends CopyOnWriteTransformer {
             }
 
             node = node.shallowCopy();
+            if (kompileOptions.backend.java() || K.backend.equals("java")) {
+                /* the Java Rewrite Engine preserves sort information for variables */
+            } else {
+                node.setSort(KSorts.KITEM);
+            }
             return node;
         }
     }
