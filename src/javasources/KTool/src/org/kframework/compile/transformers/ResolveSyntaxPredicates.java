@@ -28,8 +28,9 @@ public class ResolveSyntaxPredicates extends CopyOnWriteTransformer {
     
     /**
      * instead of checking the getSort field
-     * we check the getExpectedSort field in the statement of 
+     * we check the getExtendedSort field in the statement of 
      * MetaK.isKSort
+     * While getExtendedSort filed is null, we will check the getSort field
      */
     @Override
     public ASTNode visit(Sentence node, Void _)  {
@@ -43,7 +44,8 @@ public class ResolveSyntaxPredicates extends CopyOnWriteTransformer {
         for (Variable var : vars) {
 //            if (!var.isUserTyped()) continue;
             if (var.isSyntactic()) continue;
-            if (MetaK.isKSort(var.getSort())) continue;
+            if ((var.getExpectedSort()==null && MetaK.isKSort(var.getSort())) 
+            		|| (var.getExpectedSort()!=null && MetaK.isKSort(var.getExpectedSort()))) continue;
             change = true;
             ands.getContents().add(getPredicateTerm(var));
         }
@@ -58,8 +60,15 @@ public class ResolveSyntaxPredicates extends CopyOnWriteTransformer {
         return node;
     }
 
+    /**
+     * always return the most concrete sort predicates
+     */
     private Term getPredicateTerm(Variable var) {
-        return KApp.of(KLabelConstant.of(AddPredicates.predicate(var.getSort()), context), var);
+    	if (var.getExpectedSort()==null){
+    		return KApp.of(KLabelConstant.of(AddPredicates.predicate(var.getSort()), context), var);
+    	} else {
+    		return KApp.of(KLabelConstant.of(AddPredicates.predicate(var.getExpectedSort()), context), var);
+    	}
     }
 
 }
