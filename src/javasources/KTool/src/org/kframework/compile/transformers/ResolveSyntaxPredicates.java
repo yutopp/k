@@ -30,11 +30,9 @@ public class ResolveSyntaxPredicates extends CopyOnWriteTransformer {
      * (non-Javadoc)
      * @see org.kframework.kil.AbstractVisitor#visit(org.kframework.kil.Sentence, java.lang.Object)
      * fixed here,
-     * if a sort has getExpectedSort then we check if it is a KSort, otherwise, we check if var's getSort is a KSort
-     * Not sure if it is a good solution for doing the ResolveSyntaxPredicate after flattenTerms
-     * The problem is the following: If we do the flattenTerms before this steps, then
-     * All variable will become sort KItem, then it does not make sense to check MetaK.isKSort(var.getSort())
-     * if the sort has a more concrete sort.
+     * instead of checking the getSort field
+     * we check the getExpectedSort field in the statement of 
+     * MetaK.isKSort
      */
     @Override
     public ASTNode visit(Sentence node, Void _)  {
@@ -48,7 +46,7 @@ public class ResolveSyntaxPredicates extends CopyOnWriteTransformer {
         for (Variable var : vars) {
 //            if (!var.isUserTyped()) continue;
             if (var.isSyntactic()) continue;
-            if ((var.getExpectedSort() == null && MetaK.isKSort(var.getSort())) || (var.getExpectedSort()!=null && MetaK.isKSort(var.getExpectedSort()))) continue;
+            if (MetaK.isKSort(var.getExpectedSort())) continue;
             change = true;
             ands.getContents().add(getPredicateTerm(var));
         }
