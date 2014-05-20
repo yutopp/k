@@ -77,8 +77,8 @@ public abstract class BasicBackend implements Backend {
         // steps.add(new ResolveFresh());
         steps.add(new FreshCondToFreshVar(context));
         steps.add(new ResolveFreshVarMOS(context));
-        steps.add(new AddTopCellConfig(context));
         steps.add(new FlattenTerms(context));
+        steps.add(new AddTopCellConfig(context));
         if (options.experimental.addTopCell) {
             steps.add(new AddTopCellRules(context));
         }
