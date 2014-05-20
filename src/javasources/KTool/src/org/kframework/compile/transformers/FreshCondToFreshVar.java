@@ -44,21 +44,28 @@ public class FreshCondToFreshVar extends CopyOnWriteTransformer {
     }
     
     @Override
-    public ASTNode visit(TermCons node, Void _)  {
-        if (MetaK.Constants.freshCons.equals(node.getCons())) {
-            if (node.getContents().size() != 1) {
+    public ASTNode visit(KApp node, Void _)  {
+        if ((node.getLabel() instanceof KLabelConstant) 
+                && MetaK.Constants.freshLabel.equals(((KLabelConstant)(node.getLabel())).getLabel())) {
+            if (!(node.getChild() instanceof KList)) {
+                GlobalSettings.kem.register(new KException(KException.ExceptionType.WARNING,
+                        KException.KExceptionGroup.COMPILER,
+                        "KApp has a non-KList item in a KList position:" + node,
+                        getName(), node.getFilename(), node.getLocation()));
+            }
+            if (((KList)(node.getChild())).getContents().size() != 1) {
                 GlobalSettings.kem.register(new KException(KException.ExceptionType.WARNING,
                         KException.KExceptionGroup.COMPILER,
                         "Fresh has more than one argument:" + node,
                         getName(), node.getFilename(), node.getLocation()));
             }
-            if (!(node.getContents().get(0) instanceof Variable)) {
+            if (!(((KList)(node.getChild())).getContents().get(0) instanceof Variable)) {
                 GlobalSettings.kem.register(new KException(KException.ExceptionType.WARNING,
                         KException.KExceptionGroup.COMPILER,
                         "Fresh must take a variable as argument:" + node,
                         getName(), node.getFilename(), node.getLocation()));
             }
-            Variable var = (Variable) node.getContents().get(0);
+            Variable var = (Variable) ((KList)(node.getChild())).getContents().get(0);
             this.vars.add(var);
             return BoolBuiltin.TRUE;
         }
