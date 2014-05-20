@@ -29,10 +29,7 @@ public class Variable extends Term {
     public void setExpectedSort(String expectedSort) {
         this.expectedSort = expectedSort;
     }
-
-    /**
-     * add a line as this.expectedSort=this.getSort();
-     */
+    
     public Variable(Element element) {
         super(element);
         this.sort = element.getAttribute(Constants.SORT_sort_ATTR);
@@ -42,16 +39,11 @@ public class Variable extends Term {
             this.setFresh(true);
             this.name = this.name.substring(1);
         }
-        this.expectedSort=this.getSort();
     }
-
-    /**
-     * add a line of this.expectedSort=this.getSort();
-     */
+    
     public Variable(String name, String sort) {
         super(sort);
         this.name = name;
-        this.expectedSort=this.getSort();
     }
 
     public Variable(Variable variable) {
