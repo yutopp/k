@@ -43,6 +43,10 @@ public class FreshCondToFreshVar extends CopyOnWriteTransformer {
         return node;
     }
     
+    /**
+     * Change this class to receive a KApp instead a TermCons since We will move FlattenTerms before
+     * This step, then TermCons will not exist. 
+     */
     @Override
     public ASTNode visit(KApp node, Void _)  {
         if ((node.getLabel() instanceof KLabelConstant) 
