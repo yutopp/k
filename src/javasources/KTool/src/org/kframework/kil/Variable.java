@@ -30,7 +30,7 @@ public class Variable extends Term {
         this.expectedSort = expectedSort;
     }
 
-    /*
+    /**
      * add a line as this.expectedSort=this.getSort();
      */
     public Variable(Element element) {
@@ -45,7 +45,7 @@ public class Variable extends Term {
         this.expectedSort=this.getSort();
     }
 
-    /*
+    /**
      * add a line of this.expectedSort=this.getSort();
      */
     public Variable(String name, String sort) {

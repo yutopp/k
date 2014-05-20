@@ -26,10 +26,7 @@ public class ResolveSyntaxPredicates extends CopyOnWriteTransformer {
         return node;
     }
     
-    /*
-     * (non-Javadoc)
-     * @see org.kframework.kil.AbstractVisitor#visit(org.kframework.kil.Sentence, java.lang.Object)
-     * fixed here,
+    /**
      * instead of checking the getSort field
      * we check the getExpectedSort field in the statement of 
      * MetaK.isKSort
