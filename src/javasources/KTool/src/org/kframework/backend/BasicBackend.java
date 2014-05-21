@@ -63,6 +63,8 @@ public abstract class BasicBackend implements Backend {
         steps.add(new CheckVisitorStep<Definition>(new CheckRewrite(context), context));
         steps.add(new FlattenModules(context));
         steps.add(new StrictnessToContexts(context));
+        steps.add(new ResolveListOfK(context));
+        steps.add(new FlattenTerms(context));
         steps.add(new FreezeUserFreezers(context));
         steps.add(new ContextsToHeating(context));
         steps.add(new AddSupercoolDefinition(context));
@@ -71,8 +73,6 @@ public abstract class BasicBackend implements Backend {
         steps.add(new DesugarStreams(context));
         steps.add(new ResolveFunctions(context));
         steps.add(new AddKCell(context));
-        steps.add(new ResolveListOfK(context));
-        steps.add(new FlattenTerms(context));
         steps.add(new AddStreamCells(context));
         steps.add(new AddSymbolicK(context));
         steps.add(new AddSemanticEquality(context));
