@@ -97,7 +97,7 @@ public class ResolveBinder extends CopyOnWriteTransformer {
             /* do not generate the rules below for the java backend */
             if (!kompileOptions.backend.java()) {
                 Rule rule = new Rule(
-                        KApp.of(BINDER_PREDICATE, MetaK.getTerm(prod, context)),
+                        KApp.of(BINDER_PREDICATE, MetaK.getTerms(prod, context)),
                         BoolBuiltin.TRUE, context);
                 rule.addAttribute(Attribute.ANYWHERE);
                 items.add(rule);

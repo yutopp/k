@@ -19,6 +19,7 @@ import org.kframework.kil.GenericToken;
 import org.kframework.kil.Hole;
 import org.kframework.kil.IntBuiltin;
 import org.kframework.kil.KApp;
+import org.kframework.kil.KInjectedLabel;
 import org.kframework.kil.KLabelConstant;
 import org.kframework.kil.KList;
 import org.kframework.kil.KSequence;
@@ -332,14 +333,30 @@ public class MetaK {
         KList lok = new KList();
         KApp kt = new KApp(KLabelConstant.of(prod.getKLabel(), context),lok);
         if (prod.isListDecl()) {
-            lok.getContents().add(Variable.getFreshVar(((UserList) prod.getItems().get(0)).getSort()));
-            lok.getContents().add(Variable.getFreshVar(prod.getSort()));
-            return kt;
-        }
-        for (ProductionItem item : prod.getItems()) {
-            if (item instanceof Sort) {
-                lok.getContents().add(Variable.getFreshVar(((Sort) item).getName()));
+            if (!isComputationSort(((UserList) prod.getItems().get(0)).getSort())){
+                lok.getContents().add(KApp.of(new KInjectedLabel((Variable.getFreshVar(((UserList) prod.getItems().get(0)).getSort())))));
+            } else {
+                lok.getContents().add(Variable.getFreshVar(((UserList) prod.getItems().get(0)).getSort()));
             }
+            if (!isComputationSort(prod.getSort())){
+                lok.getContents().add(KApp.of(new KInjectedLabel(Variable.getFreshVar(prod.getSort()))));
+            } else {
+                lok.getContents().add(Variable.getFreshVar(prod.getSort()));
+            }
+        } else {
+            for (ProductionItem item : prod.getItems()) {
+                if (item instanceof Sort) {
+                    if(!isComputationSort(((Sort)item).getName())){
+                        lok.getContents().add(KApp.of(new KInjectedLabel(Variable.getFreshVar(((Sort) item).getName()))));
+                    } else {
+                        lok.getContents().add(Variable.getFreshVar(((Sort) item).getName()));
+                    }
+                }
+            }
+        }
+        //if the sort of the production is KSOrt but not KItem and K, then we return the KInjectedLabel
+        if (!isComputationSort(prod.getSort())){
+            return KApp.of(new KInjectedLabel(kt));
         }
         return kt;
     }
