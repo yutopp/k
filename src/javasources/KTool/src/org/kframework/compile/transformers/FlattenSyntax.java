@@ -87,4 +87,28 @@ public class FlattenSyntax extends CopyOnWriteTransformer {
             return node;
         return new Sort("K");
     }
+    
+    /**
+     * need to add this check to change all nodes to be KSort.KItem in maude backend
+     */
+    @Override
+    public ASTNode visit(Variable node, Void _)  {
+        if (node.getSort().equals(KSorts.KITEM) || node.getSort().equals(KSorts.K)
+                || MetaK.isKSort(node.getSort())
+                || node.getSort().equals(BoolBuiltin.SORT_NAME)
+                || node.getSort().equals(IntBuiltin.SORT_NAME)
+                || node.getSort().equals("#Float")
+                || node.getSort().equals(StringBuiltin.SORT_NAME)
+                || context.getDataStructureSorts().containsKey(node.getSort())) {
+            return node;
+        }
+
+        node = node.shallowCopy();
+        if (kompileOptions.backend.java() || K.backend.equals("java")) {
+            /* the Java Rewrite Engine preserves sort information for variables */
+        } else {
+            node.setSort(KSorts.KITEM);
+        }
+        return node;
+    }
 }
