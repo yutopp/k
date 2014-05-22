@@ -92,7 +92,7 @@ public class AddPredicates extends CopyOnWriteTransformer {
             }
 
             String sort = node.getSort();
-            Term term = MetaK.getTerm(node, context);
+            Term term = MetaK.getTerms(node, context);
 
             Term rhs;
             if (node.containsAttribute("function") && node.getArity() > 0)
