@@ -228,13 +228,6 @@ public class FlattenTermsTwo extends CopyOnWriteTransformer {
                 //return KApp.of(new KInjectedLabel(node));
                 return node;
             }
-
-            node = node.shallowCopy();
-            if (kompileOptions.backend.java() || K.backend.equals("java")) {
-                /* the Java Rewrite Engine preserves sort information for variables */
-            } else {
-                node.setSort(KSorts.KITEM);
-            }
             return node;
         }
     }
