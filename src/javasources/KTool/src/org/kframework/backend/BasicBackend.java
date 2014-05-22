@@ -78,12 +78,12 @@ public abstract class BasicBackend implements Backend {
         steps.add(new AddSemanticEquality(context));
         // steps.add(new ResolveFresh());
         steps.add(new FreshCondToFreshVar(context));
+        steps.add(new FlattenTermsTwo(context));
         steps.add(new ResolveFreshVarMOS(context));
         steps.add(new AddTopCellConfig(context));
         if (options.experimental.addTopCell) {
             steps.add(new AddTopCellRules(context));
         }
-        steps.add(new FlattenTermsTwo(context));
         steps.add(new ResolveBinder(context));
         steps.add(new ResolveAnonymousVariables(context));
         steps.add(new AddK2SMTLib(context));
