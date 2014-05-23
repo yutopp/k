@@ -26,12 +26,6 @@ public class ResolveFunctions extends CopyOnWriteTransformer {
         if (body instanceof Rewrite) {
             body = ((Rewrite) body).getLeft();
         }
-        if (body instanceof TermCons) {
-            Production prod = context.conses.get(((TermCons) body).getCons());
-            if (prod.containsAttribute("function") || prod.containsAttribute("predicate")) {
-                node = addFunction(node);
-            }
-        }
         if (body instanceof KApp) {
             Term l = ((KApp) body).getLabel();
             if (l instanceof KLabelConstant) {
