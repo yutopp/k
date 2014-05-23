@@ -344,9 +344,9 @@
   </test>
 
 <test
-      definition="tests/regression/issue#428/test.k"
-      programs="tests/regression/issue#428"
-      results="tests/regression/issue#428"
+      definition="issue#428/test.k"
+      programs="issue#428"
+      results="issue#428"
 	  extension="test"
       >
     <all-programs>
