@@ -148,12 +148,12 @@ public class JavaSymbolicBackend extends BasicBackend {
         steps.add(new ResolveOpenCells(context));
         steps.add(new ResolveRewrite(context));
 
+        steps.add(new FlattenTerms(context));
         /* data structure related stuff */
        // steps.add(new CompileToBuiltins(context));
         steps.add(new CompileDataStructures(context));
         steps.add(new Cell2DataStructure(context));
         steps.add(new DataStructureToLookupUpdate(context));
-        steps.add(new FlattenTerms(context));
         
         //steps.add(new ResolveSupercool(context));
         steps.add(new AddStrictStar(context));
