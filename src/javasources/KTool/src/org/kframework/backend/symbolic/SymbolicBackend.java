@@ -124,6 +124,8 @@ public class SymbolicBackend extends BasicBackend implements Backend {
         steps.add(new RemoveSyntacticCasts(context));
         steps.add(new CheckVisitorStep<Definition>(new CheckVariables(context), context));
         steps.add(new CheckVisitorStep<Definition>(new CheckRewrite(context), context));
+        steps.add(new ResolveListOfK(context));
+        steps.add(new FlattenTerms(context));
         steps.add(new FlattenModules(context));
         steps.add(new StrictnessToContexts(context));
         steps.add(new FreezeUserFreezers(context));
@@ -139,7 +141,6 @@ public class SymbolicBackend extends BasicBackend implements Backend {
         steps.add(new ReachabilityRuleToKRule(context)); // symbolic step 
         steps.add(new AddKCell(context));
         steps.add(new AddSymbolicK(context));
-
         steps.add(new AddSemanticEquality(context));
         steps.add(new FreshCondToFreshVar(context));
         steps.add(new ResolveFreshVarMOS(context));
@@ -154,7 +155,6 @@ public class SymbolicBackend extends BasicBackend implements Backend {
         steps.add(new AddPredicates(context));
         steps.add(new ResolveSyntaxPredicates(context));
         steps.add(new ResolveBuiltins(context));
-        steps.add(new ResolveListOfK(context));
         steps.add(new InitializeConfigurationStructure(context));
         steps.add(new AddKStringConversion(context));
         steps.add(new AddKLabelConstant(context));
