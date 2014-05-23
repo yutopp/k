@@ -65,7 +65,6 @@ public abstract class BasicBackend implements Backend {
         steps.add(new FlattenTerms(context));
         steps.add(new FlattenModules(context));
         steps.add(new StrictnessToContexts(context));
-        steps.add(new FlattenTermsTwo(context));
         steps.add(new FreezeUserFreezers(context));
         steps.add(new ContextsToHeating(context));
         steps.add(new AddSupercoolDefinition(context));
