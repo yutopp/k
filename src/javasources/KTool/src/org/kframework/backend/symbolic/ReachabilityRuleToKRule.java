@@ -4,6 +4,7 @@ package org.kframework.backend.symbolic;
 import org.kframework.kil.ASTNode;
 import org.kframework.kil.KApp;
 import org.kframework.kil.KLabelConstant;
+import org.kframework.kil.KList;
 import org.kframework.kil.Rewrite;
 import org.kframework.kil.Rule;
 import org.kframework.kil.Sentence;
@@ -38,20 +39,24 @@ public class ReachabilityRuleToKRule extends CopyOnWriteTransformer {
 
             if (left.getSort().equals(ML_SORT)
                     && right.getSort().equals(ML_SORT)) {
-                TermCons ltc = (TermCons) left;
-                TermCons rtc = (TermCons) right;
+                KApp ltc = (KApp) left;
+                KApp rtc = (KApp) right;
                 Term ruleCond = node.getRequires().shallowCopy();
-                if (ltc.getProduction().getKLabel().equals(ML_AND_KLABEL)
-                        && ltc.getProduction().getKLabel()
+                if (ltc.getLabel() instanceof KLabelConstant 
+                        && ltc.getChild() instanceof KList
+                        && ((KLabelConstant)ltc.getLabel()).getLabel().equals(ML_AND_KLABEL)
+                        && rtc.getLabel() instanceof KLabelConstant 
+                        && rtc.getChild() instanceof KList
+                        && ((KLabelConstant)rtc.getLabel()).getLabel()
                                 .equals(ML_AND_KLABEL)) {
                     
                     // process left
-                    Term lcfg = ltc.getContents().get(0).shallowCopy();
-                    Term lphi = ltc.getContents().get(1).shallowCopy();
+                    Term lcfg = ((KList)ltc.getChild()).getContents().get(0).shallowCopy();
+                    Term lphi = ((KList)ltc.getChild()).getContents().get(1).shallowCopy();
                     
                     // process right
-                    Term rcfg = rtc.getContents().get(0).shallowCopy();
-                    Term rphi = rtc.getContents().get(1).shallowCopy();
+                    Term rcfg = ((KList)rtc.getChild()).getContents().get(0).shallowCopy();
+                    Term rphi = ((KList)rtc.getChild()).getContents().get(1).shallowCopy();
                     
                     Sentence rule = new Sentence();
                     rule.setBody(new Rewrite(lcfg, rcfg, context));
