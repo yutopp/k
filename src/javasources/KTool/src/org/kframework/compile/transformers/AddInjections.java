@@ -6,7 +6,9 @@ import org.kframework.kil.Attribute;
 import org.kframework.kil.Definition;
 import org.kframework.kil.KApp;
 import org.kframework.kil.KItemProjection;
+import org.kframework.kil.KLabelConstant;
 import org.kframework.kil.KLabelInjection;
+import org.kframework.kil.KList;
 import org.kframework.kil.KSorts;
 import org.kframework.kil.PriorityBlock;
 import org.kframework.kil.Production;
@@ -149,16 +151,17 @@ public class AddInjections extends CopyOnWriteTransformer{
     }
 
     @Override
-    public ASTNode visit(TermCons node, Void _)  {
+    public ASTNode visit(KApp node, Void _)  {
         // TODO(AndreiS): find out why the assertion is failing
         // assert state == TransformationState.TRANSFORM_TERMS;
         if (state != TransformationState.TRANSFORM_TERMS) {
             return node;
         }
-
+        
+        assert node.getChild() instanceof KList : "KApp has a non-KList child.";
         boolean change = false;
-        List<Term> transformedContents = new ArrayList<>();
-        for (Term term : node.getContents()) {
+        KList transformedContents = new KList();
+        for (Term term : ((KList)node.getChild()).getContents()) {
             Term transformedTerm = (Term) this.visitNode(term);
             assert transformedTerm != null;
 
@@ -173,19 +176,19 @@ public class AddInjections extends CopyOnWriteTransformer{
             }
         }
 
-        TermCons transformedNode;
+        KApp transformedNode;
         if (change) {
             transformedNode = node.shallowCopy();
-            transformedNode.setContents(transformedContents);
+            transformedNode.setChild(transformedContents);
         } else {
             transformedNode = node;
         }
 
-        String sort = node.getProduction().getSort();
+        String sort = node.getSort();
         if (sort.equals(KSorts.K) || sort.equals(KSorts.KLABEL) || sort.equals(KSorts.KLIST)) {
             transformedNode.setSort(KSorts.KITEM);
             // TODO (AndreiS): remove special case
-            if (node.getProduction().getLabel().equals("#if_#then_#else_#fi") && !sort.equals(KSorts.KLIST)) {
+            if (node.getLabel() instanceof KLabelConstant && ((KLabelConstant)node.getLabel()).getLabel().equals("#if_#then_#else_#fi") && !sort.equals(KSorts.KLIST)) {
                 return transformedNode;
             }
             return new KItemProjection(sort, transformedNode);
