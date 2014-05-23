@@ -70,8 +70,8 @@ public abstract class BasicBackend implements Backend {
         steps.add(new AddSupercoolDefinition(context));
         steps.add(new AddHeatingConditions(context));
         steps.add(new AddSuperheatRules(context));
-        steps.add(new DesugarStreams(context));
         steps.add(new FlattenTermsTwo(context));
+        steps.add(new DesugarStreams(context));
         steps.add(new ResolveFunctions(context));
         steps.add(new AddKCell(context));
         steps.add(new AddStreamCells(context));
