@@ -226,7 +226,7 @@ public class StrictnessToContexts extends CopyOnWriteTransformer {
 
             for (int i = 0; i < newStrictAttrs.size(); i++) {
                 Attribute newStrictAttr = newStrictAttrs.get(i);
-                KApp theKApp = (KApp) MetaK.getTerms(prod, context);
+                KApp theKApp = (KApp) MetaK.getTerm(prod, context);
                 for (int j = 0; j < prod.getArity(); ++j) {
                     if (kompileOptions.backend.java()) {
                         /*
@@ -340,7 +340,7 @@ public class StrictnessToContexts extends CopyOnWriteTransformer {
         contents.add(getHoleTerm(null, prod));
         //third argument is a variable of sort KList
         contents.add(Variable.getFreshVar(KSorts.KLIST));
-        KApp kapp = new KApp(MetaK.getTerms(prod, context), new KList(contents));
+        KApp kapp = new KApp(MetaK.getTerm(prod, context), new KList(contents));
         //make a context from the KApp
         org.kframework.kil.Context ctx = new org.kframework.kil.Context();
         ctx.setBody(kapp);

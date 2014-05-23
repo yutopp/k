@@ -301,9 +301,9 @@ public class MetaK {
     }
     
     //temporal function here to deal with AddK2SMTLib only
-    //once all compilation steps use this function, we will
-    //turn this function into getTerm
-    public static Term getTerms(Production prod, org.kframework.kil.loader.Context context) {
+    //once all compilation steps use this function,
+    //this function substitutes getTerm with TermCons
+    public static Term getTerm(Production prod, org.kframework.kil.loader.Context context) {
         if (prod.isSubsort()) {
             final Variable freshVar = Variable.getFreshVar(prod.getItems().get(0).toString());
             if (prod.containsAttribute("klabel")) {
@@ -359,47 +359,6 @@ public class MetaK {
             return KApp.of(new KInjectedLabel(kt));
         }
         return kt;
-    }
-
-    public static Term getTerm(Production prod, org.kframework.kil.loader.Context context) {
-        if (prod.isSubsort()) {
-            final Variable freshVar = Variable.getFreshVar(prod.getItems().get(0).toString());
-            if (prod.containsAttribute("klabel")) {
-                return KApp.of(KLabelConstant.of(prod.getKLabel(), context), freshVar);
-            }
-            return freshVar;
-        }
-        if (prod.isConstant()) {
-            String terminal = ((Terminal) prod.getItems().get(0)).getTerminal();
-            if (prod.getSort().equals(KSorts.KLABEL)) {
-                return KLabelConstant.of(terminal, context);
-            } else if (prod.getSort().equals(BoolBuiltin.SORT_NAME)) {
-                return BoolBuiltin.kAppOf(terminal);
-            } else if (prod.getSort().equals(IntBuiltin.SORT_NAME)) {
-                return IntBuiltin.kAppOf(terminal);
-            } else if (prod.getSort().equals(StringBuiltin.SORT_NAME)) {
-                return StringBuiltin.kAppOf(terminal);
-            } else {
-                return GenericToken.kAppOf(prod.getSort(), terminal);
-            }
-        }
-        if (prod.isLexical()) {
-            return KApp.of(KLabelConstant.of("#token", context),
-                           StringBuiltin.kAppOf(prod.getSort()),
-                           Variable.getFreshVar("String"));
-        }
-        TermCons t = new TermCons(prod.getSort(), prod.getCons(), context);
-        if (prod.isListDecl()) {
-            t.getContents().add(Variable.getFreshVar(((UserList) prod.getItems().get(0)).getSort()));
-            t.getContents().add(Variable.getFreshVar(prod.getSort()));
-            return t;
-        }
-        for (ProductionItem item : prod.getItems()) {
-            if (item instanceof Sort) {
-                t.getContents().add(Variable.getFreshVar(((Sort) item).getName()));
-            }
-        }
-        return t;
     }
 
     public static boolean isAnonVar(Variable node) {

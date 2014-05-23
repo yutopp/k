@@ -119,7 +119,7 @@ public class AddK2SMTLib  extends CopyOnWriteTransformer {
                 continue;
 
             //change here by turning all TermCons into KApps
-            Term term = MetaK.getTerms(prod, context);
+            Term term = MetaK.getTerm(prod, context);
             Term lhs = KApp.of(K_TO_SMTLIB, term);
 
             Term rhs;
