@@ -153,7 +153,8 @@ public class JavaSymbolicBackend extends BasicBackend {
         steps.add(new CompileDataStructures(context));
         steps.add(new Cell2DataStructure(context));
         steps.add(new DataStructureToLookupUpdate(context));
-
+        steps.add(new FlattenTerms(context));
+        
         //steps.add(new ResolveSupercool(context));
         steps.add(new AddStrictStar(context));
         steps.add(new AddDefaultComputational(context));
@@ -162,7 +163,7 @@ public class JavaSymbolicBackend extends BasicBackend {
 
         /* remove rules that are from k dist */
         steps.add(new RemovePreincludedRules(context));
-        steps.add(new FlattenTerms(context));
+        
         steps.add(new LastStep(this, context));
 
         return steps;
