@@ -264,9 +264,9 @@
   </test>
 
   <test
-      definition="tests/regression/issue663/issue.k"
-      programs="tests/regression/issue663/programs"
-      results="tests/regression/issue663/out"
+      definition="issue663/issue.k"
+      programs="issue663/programs"
+      results="issue663/out"
       extension="issue">
       <program name="a.issue">
         <krun-option name="--ltlmc" value="TrueLtl" />
