@@ -81,7 +81,7 @@ public class ContextsToHeating extends CopyOnWriteTransformer {
     }
 
     public Term freeze(Term term) {
-        return new Freezer(substituteHole(term, new FreezerHole(0)));
+        return KApp.of(new FreezerLabel(substituteHole(term, new FreezerHole(0))));
     }
 
     private Term substituteVariable(Term term, Variable variable, Term replacement)  {
