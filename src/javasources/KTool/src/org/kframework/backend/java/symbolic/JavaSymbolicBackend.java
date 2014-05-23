@@ -162,7 +162,7 @@ public class JavaSymbolicBackend extends BasicBackend {
 
         /* remove rules that are from k dist */
         steps.add(new RemovePreincludedRules(context));
-
+        steps.add(new FlattenTerms(context));
         steps.add(new LastStep(this, context));
 
         return steps;
