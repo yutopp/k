@@ -131,7 +131,7 @@ public class DefinitionLoader {
             //This following line was commented out to make the latex backend 
             //parse files importing from other files
             def = (Definition) new RemoveUnusedModules(context, autoinclude).visitNode(def);
-
+            
             // HERE: add labels to sorts
 
             def.preprocess(context);
@@ -432,6 +432,7 @@ public class DefinitionLoader {
         // config = new VariableTypeInferenceFilter().visitNode(config);
         config = new AmbDuplicateFilter(context).visitNode(config);
         config = new TypeSystemFilter(context).visitNode(config);
+        config = new VariableTypeInferenceFilter(context).visitNode(config);
         // config = new PriorityFilter().visitNode(config);
         config = new BestFitFilter(new GetFitnessUnitTypeCheckVisitor(context), context).visitNode(config);
         config = new TypeInferenceSupremumFilter(context).visitNode(config);

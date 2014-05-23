@@ -343,6 +343,16 @@
     </all-programs>
   </test>
 
+<test
+      definition="issue#428/test.k"
+      programs="issue#428"
+      results="issue#428"
+	  extension="test"
+      >
+    <all-programs>
+	  <krun-option name="--parser" value="kast --parser rules" />
+    </all-programs>
+  </test>
 
   <test
       definition="issue677/test.k"
