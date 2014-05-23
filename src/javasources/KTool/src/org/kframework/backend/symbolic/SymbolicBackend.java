@@ -124,16 +124,15 @@ public class SymbolicBackend extends BasicBackend implements Backend {
         steps.add(new RemoveSyntacticCasts(context));
         steps.add(new CheckVisitorStep<Definition>(new CheckVariables(context), context));
         steps.add(new CheckVisitorStep<Definition>(new CheckRewrite(context), context));
-        steps.add(new FlattenTerms(context));
         steps.add(new FlattenModules(context));
         steps.add(new StrictnessToContexts(context));
         steps.add(new FreezeUserFreezers(context));
         steps.add(new ContextsToHeating(context));
         steps.add(new AddSupercoolDefinition(context));
+        steps.add(new FlattenTermsTwo(context));
         steps.add(new AddHeatingConditions(context));
         steps.add(new AddSuperheatRules(context));
         steps.add(new ResolveSymbolicInputStream(context)); // symbolic step
-        steps.add(new FlattenTermsTwo(context));
         steps.add(new DesugarStreams(context));
         steps.add(new ResolveFunctions(context));
         steps.add(new TagUserRules(context)); // symbolic step

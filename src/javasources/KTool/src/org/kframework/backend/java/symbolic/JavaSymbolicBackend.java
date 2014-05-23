@@ -117,7 +117,6 @@ public class JavaSymbolicBackend extends BasicBackend {
         //steps.add(new AddSupercoolDefinition(context));
         steps.add(new AddHeatingConditions(context));
         //steps.add(new AddSuperheatRules(context));
-        steps.add(new FlattenTermsTwo(context));
         steps.add(new DesugarStreams(context));
         steps.add(new ResolveFunctions(context));
         steps.add(new AddKCell(context));
@@ -138,8 +137,8 @@ public class JavaSymbolicBackend extends BasicBackend {
         //steps.add(new ResolveSyntaxPredicates(context));
         steps.add(new ResolveBuiltins(context));
         steps.add(new ResolveListOfK(context));
+        steps.add(new FlattenTermsTwo(context));
         steps.add(new AddInjections(context));
-
         steps.add(new FlattenSyntax(context));
         steps.add(new ResolveBlockingInput(context));
         steps.add(new InitializeConfigurationStructure(context));
