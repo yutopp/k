@@ -267,7 +267,9 @@
       definition="issue663/issue.k"
       programs="issue663/programs"
       results="issue663/out"
-      extension="issue">
+      extension="issue"
+      exclude="b"
+      >
       <program name="a.issue">
         <krun-option name="--ltlmc" value="TrueLtl" />
       </program>
@@ -275,7 +277,6 @@
         <krun-option name="--ltlmc" value="FalseLtl" />
       </program>
   </test>
-
   <test
       definition="issue674/issue.k"
       programs="issue674"
@@ -350,7 +351,7 @@
       definition="issue#428/test.k"
       programs="issue#428"
       results="issue#428"
-	  extension="test"
+      extension="test"
       >
     <all-programs>
 	  <krun-option name="--parser" value="kast --parser rules" />
@@ -416,4 +417,3 @@
            results="generalized-strictness" />
 
 </tests>
-
