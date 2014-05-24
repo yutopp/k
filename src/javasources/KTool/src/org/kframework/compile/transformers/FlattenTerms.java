@@ -103,7 +103,11 @@ public class FlattenTerms extends CopyOnWriteTransformer {
             for (Term t : tc.getContents()) {
                 lok.getContents().add((Term) this.visitNode(t));
             }
-            return new KApp(l, f, KLabelConstant.of(ppp.getKLabel(), context), lok);
+            KApp result=new KApp(l, f, KLabelConstant.of(ppp.getKLabel(), context), lok);
+            if(tc.getSort().equals(KSorts.K)){
+                result.setSort(KSorts.K);
+            }
+            return result;
         }
 
         @Override
