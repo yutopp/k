@@ -132,10 +132,7 @@ public class AddInjections extends CopyOnWriteTransformer{
             return transformedNode;
         }
 
-        if (!(transformedNode.containsAttribute("stdin") 
-                || transformedNode.containsAttribute("stdout")
-                || transformedNode.containsAttribute("stderr")))
-            assert transformedNode.getBody() instanceof Rewrite : "Deep rewrites are currently not allowed in function rules.";
+        assert transformedNode.getBody() instanceof Rewrite : "Deep rewrites are currently not allowed in function rules.";
         Term left = ((Rewrite) transformedNode.getBody()).getLeft();
         Term right = ((Rewrite) transformedNode.getBody()).getRight();
         if (!(left instanceof KItemProjection)) {
