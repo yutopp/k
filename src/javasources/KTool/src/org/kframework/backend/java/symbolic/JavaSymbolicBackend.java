@@ -109,9 +109,7 @@ public class JavaSymbolicBackend extends BasicBackend {
         steps.add(new CheckVisitorStep<Definition>(new CollectSubsortsVisitor(context), context));
         steps.add(new CheckVisitorStep<Definition>(new CollectBracketsVisitor(context), context));
         steps.add(new DefinitionSerializer(context));
-        steps.add(new ResolveListOfK(context));
-        steps.add(new AddInjections(context));
-        steps.add(new FlattenTerms(context));
+
         steps.add(new StrictnessToContexts(context));
         steps.add(new FreezeUserFreezers(context));
         steps.add(new ContextsToHeating(context));
@@ -120,6 +118,9 @@ public class JavaSymbolicBackend extends BasicBackend {
         //steps.add(new AddSuperheatRules(context));
         steps.add(new DesugarStreams(context));
         steps.add(new ResolveFunctions(context));
+        steps.add(new ResolveListOfK(context));
+        steps.add(new AddInjections(context));
+        steps.add(new FlattenTerms(context));
         steps.add(new AddKCell(context));
         steps.add(new AddStreamCells(context));
         //steps.add(new AddSymbolicK(context));
