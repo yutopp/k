@@ -119,15 +119,15 @@ public class JavaSymbolicBackend extends BasicBackend {
         steps.add(new DesugarStreams(context));
         steps.add(new ResolveFunctions(context));
         steps.add(new AddKCell(context));
-        steps.add(new ResolveListOfK(context));
-        steps.add(new AddInjections(context));
-        steps.add(new FlattenTerms(context));
         steps.add(new AddStreamCells(context));
         //steps.add(new AddSymbolicK(context));
         //steps.add(new AddSemanticEquality(context));
         // steps.add(new ResolveFresh());
         //steps.add(new FreshCondToFreshVar(context));
         //steps.add(new ResolveFreshVarMOS(context));
+        steps.add(new ResolveListOfK(context));
+        steps.add(new AddInjections(context));
+        steps.add(new FlattenTerms(context));
         steps.add(new AddTopCellConfig(context));
         steps.add(new AddTopCellRules(context));
 
