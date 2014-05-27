@@ -79,10 +79,10 @@ public class FlattenTerms extends CopyOnWriteTransformer {
                 node.setLabel(label);
             }
             if(node.getChild() instanceof KApp
-            		&& ((KApp)node.getChild()).getLabel().equals(KLabelConstant.KLIST_KLABEL)
-            		&& ((KApp)node.getChild()).getChild() instanceof KList){
-            	node.setChild(((KApp)node.getChild()).getChild());
-            	return node;
+                    && ((KApp)node.getChild()).getLabel().equals(KLabelConstant.KLIST_KLABEL)
+                    && ((KApp)node.getChild()).getChild() instanceof KList){
+                node.setChild(((KApp)node.getChild()).getChild());
+                return node;
             }
             if(!(node.getChild() instanceof KList)){
                 KList lok = new KList(label.getLocation(), label.getFilename());
@@ -109,20 +109,20 @@ public class FlattenTerms extends CopyOnWriteTransformer {
             Production ppp = context.conses.get(tc.getCons());
             KList lok = new KList(l, f);
             for (Term t : tc.getContents()) {
-            	Term temp = (Term) this.visitNode(t);
-            	if(temp instanceof KList){
-            		temp = KApp.of(KLabelConstant.KLIST_KLABEL, temp);
-            	}
-            	if(temp instanceof KLabelConstant){
-            		temp = KApp.of(KLabelConstant.KLABEL_KLABEL, temp);
-            	}
+                Term temp = (Term) this.visitNode(t);
+                if(temp instanceof KList){
+                    temp = KApp.of(KLabelConstant.KLIST_KLABEL, temp);
+                }
+                if(temp instanceof KLabelConstant){
+                    temp = KApp.of(KLabelConstant.KLABEL_KLABEL, temp);
+                }
                 lok.getContents().add(temp);
             }
             if(tc.getSort().equals(KSort.KList)){
-            	return KApp.of(KLabelConstant.KLIST_KLABEL, new KApp(l, f, KLabelConstant.of(ppp.getKLabel(), context), lok));
+                return KApp.of(KLabelConstant.KLIST_KLABEL, new KApp(l, f, KLabelConstant.of(ppp.getKLabel(), context), lok));
             }
             if(tc.getSort().equals(KSort.KLabel)){
-            	return KApp.of(KLabelConstant.KLABEL_KLABEL, new KApp(l, f, KLabelConstant.of(ppp.getKLabel(), context), lok));
+                return KApp.of(KLabelConstant.KLABEL_KLABEL, new KApp(l, f, KLabelConstant.of(ppp.getKLabel(), context), lok));
             }
             return new KApp(l, f, KLabelConstant.of(ppp.getKLabel(), context), lok);
         }
@@ -160,13 +160,13 @@ public class FlattenTerms extends CopyOnWriteTransformer {
                 return super.visit(node, _);
             if (node instanceof KList){
                 for(int i=0;i<((KList)node).getContents().size();++i){
-                	Term temp = (Term) trans.visitNode(((KList)node).getContents().get(i));
-                	if (temp instanceof KList){
-                		temp = KApp.of(KLabelConstant.KLIST_KLABEL, temp);
-                	}
-                	if (temp instanceof KLabelConstant){
-                		temp = KApp.of(KLabelConstant.KLABEL_KLABEL, temp);
-                	}
+                    Term temp = (Term) trans.visitNode(((KList)node).getContents().get(i));
+                    if (temp instanceof KList){
+                        temp = KApp.of(KLabelConstant.KLIST_KLABEL, temp);
+                    }
+                    if (temp instanceof KLabelConstant){
+                        temp = KApp.of(KLabelConstant.KLABEL_KLABEL, temp);
+                    }
                     ((KList)node).getContents().set(i, temp);
                 }
                 return KApp.of(KLabelConstant.KLIST_KLABEL, ((KList)node));
