@@ -52,7 +52,6 @@ public class ParseRulesFilter extends ParseForestTransformer {
     @Override
     public ASTNode visit(Module m, Void _) throws ParseFailedException {
         localModule = m.getName();
-        System.out.println(m.getFilename()+",module is:"+m.getName());
         return super.visit(m, _);
     }
 
@@ -110,7 +109,6 @@ public class ParseRulesFilter extends ParseForestTransformer {
                 config = new CorrectCastPriorityFilter(context).visitNode(config);
                 // config = new CheckBinaryPrecedenceFilter().visitNode(config);
                 config = new PriorityFilter(context).visitNode(config);
-                System.out.println(ss.toString());
                 config = new VariableTypeInferenceFilter(context).visitNode(config);
                 // config = new AmbDuplicateFilter(context).visitNode(config);
                 // config = new TypeSystemFilter(context).visitNode(config);
