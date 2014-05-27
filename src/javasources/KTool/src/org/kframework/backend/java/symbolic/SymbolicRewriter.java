@@ -61,6 +61,9 @@ public class SymbolicRewriter {
     private final PluggableKastStructureChecker phase1PluggableKastChecker;
     private final PluggableKastStructureChecker phase2PluggableKastChecker;
     private RuleIndex ruleIndex;
+    
+	private Rule getUnstuck;
+	private Rule getStuck;
 
     /*
      * Liyi Li : add simulation rules in the constructor, and allow user to input label [alphaRule] as
@@ -84,6 +87,12 @@ public class SymbolicRewriter {
             phase1PluggableKastChecker = null;
             phase2PluggableKastChecker = null;
         }
+        
+		for (Rule rule : definition.rules())
+			if (rule.containsAttribute("getunstuck"))
+				getUnstuck = rule;
+			else if (rule.containsAttribute("getstuck"))
+				getStuck = rule;
     }
 
     public ConstrainedTerm rewrite(ConstrainedTerm constrainedTerm, int bound) {
@@ -269,36 +278,22 @@ public class SymbolicRewriter {
                 ruleStopwatch.reset();
                 ruleStopwatch.start();
 
-                ConstrainedTerm constrainedPattern = preparePattern(rule, constrainedSubject.termContext());
+				if (rule == getStuck || rule == getUnstuck)
+					continue;
 
-                for (SymbolicConstraint constraint1 : getUnificationResults(constrainedSubject, constrainedPattern)) {
-                    /* compute all results */
-                    ConstrainedTerm newCnstrTerm = constructNewSubjectTerm(
-                            rule, constraint1);
-                    // TODO(YilongL): the following assertion is not always true; fix it
-//                    if (K.do_concrete_exec) {
-//                        assert newCnstrTerm.isGround();
-//                    }
-                    results.add(newCnstrTerm);
-                    appliedRules.add(rule);
-                    if (K.get_indexing_stats){
-                        IndexingStatistics.rulesTried.add(rulesTried);
-                        if (IndexingStatistics.rewritingStopWatch.isRunning()){
-                            IndexingStatistics.rewritingStopWatch.stop();
-                        }
-                        IndexingStatistics.timesForRewriting.add(
-                                IndexingStatistics.rewritingStopWatch.elapsed(TimeUnit.MICROSECONDS));
-                    }
-                    if (results.size() == successorBound) {
-                        if (K.get_indexing_stats) {
-                            IndexingStatistics.rewriteStepStopWatch.stop();
-                            long elapsed =
-                                    IndexingStatistics.rewriteStepStopWatch.elapsed(TimeUnit.MICROSECONDS);
-                            IndexingStatistics.timesForRewriteSteps.add(elapsed);
-                        }
-                        return;
-                    }
-                }
+				if (applyOneRule(constrainedSubject, successorBound,
+						rulesTried, rule)) {
+//					System.out.println(rule);
+					List<ConstrainedTerm> resBefore = new ArrayList<>();
+					for (ConstrainedTerm c : results) {
+						resBefore.add(c);
+					}
+					results.clear();
+					for (ConstrainedTerm t : resBefore) {
+						applyOneRule(t, 1, 0, getUnstuck);
+					}
+					return;
+				}
             }
             // If we've found matching results from one equivalence class then
             // we are done, as we can't match rules from two equivalence classes
@@ -314,9 +309,52 @@ public class SymbolicRewriter {
                 return;
             }
         }
+        
+		// if we got here it means no rule has been applied
+		// so we add the "<blocked/>" flag
+
+		applyOneRule(constrainedSubject, successorBound, rulesTried, getStuck);
         //System.out.println("Result: " + results.toString());
         //System.out.println();
     }
+
+	// if we got here it means no rule has been applied
+	// so we add the "<blocked/>" flag
+	private boolean applyOneRule(ConstrainedTerm constrainedSubject,
+			int successorBound, int rulesTried, Rule rule) {
+		ConstrainedTerm constrainedPattern = preparePattern(rule, constrainedSubject.termContext());
+
+		for (SymbolicConstraint constraint1 : getUnificationResults(constrainedSubject, constrainedPattern)) {
+		    /* compute all results */
+		    ConstrainedTerm newCnstrTerm = constructNewSubjectTerm(
+		            rule, constraint1);
+		    // TODO(YilongL): the following assertion is not always true; fix it
+//                    if (K.do_concrete_exec) {
+//                        assert newCnstrTerm.isGround();
+//                    }
+		    results.add(newCnstrTerm);
+		    appliedRules.add(rule);
+		    if (K.get_indexing_stats){
+		        IndexingStatistics.rulesTried.add(rulesTried);
+		        if (IndexingStatistics.rewritingStopWatch.isRunning()){
+		            IndexingStatistics.rewritingStopWatch.stop();
+		        }
+		        IndexingStatistics.timesForRewriting.add(
+		                IndexingStatistics.rewritingStopWatch.elapsed(TimeUnit.MICROSECONDS));
+		    }
+		    if (results.size() == successorBound) {
+		        if (K.get_indexing_stats) {
+		            IndexingStatistics.rewriteStepStopWatch.stop();
+		            long elapsed =
+		                    IndexingStatistics.rewriteStepStopWatch.elapsed(TimeUnit.MICROSECONDS);
+		            IndexingStatistics.timesForRewriteSteps.add(elapsed);
+				}
+				return true;
+			}
+		}
+		return false;
+	}
+
 
     private void computeRewriteStep(ConstrainedTerm constrainedTerm) {
         computeRewriteStep(constrainedTerm, -1);

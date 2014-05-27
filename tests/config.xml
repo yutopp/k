@@ -554,5 +554,10 @@
        <krun-option name="--directory" value="tutorial/1_k/4_imp++/lesson_7/imp-symbolic-kompile" />
     </all-programs>
   </test>
+  
+  <include file="regression/strategy/config.xml"
+           directory="tests/regression/strategy"
+           programs="tests/regression/strategy"
+           results="tests/regression/strategy" />
 
 </tests>
