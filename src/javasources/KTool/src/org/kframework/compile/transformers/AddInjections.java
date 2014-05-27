@@ -133,8 +133,8 @@ public class AddInjections extends CopyOnWriteTransformer{
         }
 
         if (!(transformedNode.containsAttribute("stdin") 
-                && transformedNode.containsAttribute("stdout")
-                && transformedNode.containsAttribute("stderr")))
+                || transformedNode.containsAttribute("stdout")
+                || transformedNode.containsAttribute("stderr")))
             assert transformedNode.getBody() instanceof Rewrite : "Deep rewrites are currently not allowed in function rules.";
         Term left = ((Rewrite) transformedNode.getBody()).getLeft();
         Term right = ((Rewrite) transformedNode.getBody()).getRight();
