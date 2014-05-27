@@ -125,11 +125,11 @@ public class JavaSymbolicBackend extends BasicBackend {
         // steps.add(new ResolveFresh());
         //steps.add(new FreshCondToFreshVar(context));
         //steps.add(new ResolveFreshVarMOS(context));
-        steps.add(new AddTopCellConfig(context));
-        steps.add(new AddTopCellRules(context));
         steps.add(new ResolveListOfK(context));
         steps.add(new AddInjections(context));
         steps.add(new FlattenTerms(context));
+        steps.add(new AddTopCellConfig(context));
+        steps.add(new AddTopCellRules(context));
 
         steps.add(new ResolveBinder(context));
         steps.add(new ResolveAnonymousVariables(context));
