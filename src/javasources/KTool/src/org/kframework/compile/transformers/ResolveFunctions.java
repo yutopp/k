@@ -28,8 +28,9 @@ public class ResolveFunctions extends CopyOnWriteTransformer {
         }
         if (body instanceof TermCons) {
             Production prod = context.conses.get(((TermCons) body).getCons());
-            if (prod.containsAttribute("function") || prod.containsAttribute("predicate")) {
-            node = addFunction(node);
+            if (prod.containsAttribute(Attribute.FUNCTION_KEY)
+                    || prod.containsAttribute(Attribute.PREDICATE_KEY)) {
+                node = addFunction(node);
             }
         }
         if (body instanceof KApp) {
@@ -53,7 +54,7 @@ public class ResolveFunctions extends CopyOnWriteTransformer {
                     "Top symbol tagged as function but evaluation strategies are not supported for functions.",
                     getName(), node.getFilename(), node.getLocation()));
         }
-        node.putAttribute("function", "");
+        node.putAttribute(Attribute.FUNCTION_KEY, "");
         return node;
     }
 
