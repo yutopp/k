@@ -125,9 +125,6 @@ public class JavaSymbolicBackend extends BasicBackend {
         // steps.add(new ResolveFresh());
         //steps.add(new FreshCondToFreshVar(context));
         //steps.add(new ResolveFreshVarMOS(context));
-        steps.add(new ResolveListOfK(context));
-        steps.add(new AddInjections(context));
-        steps.add(new FlattenTerms(context));
         steps.add(new AddTopCellConfig(context));
         steps.add(new AddTopCellRules(context));
 
@@ -137,6 +134,8 @@ public class JavaSymbolicBackend extends BasicBackend {
         steps.add(new AddPredicates(context));
         //steps.add(new ResolveSyntaxPredicates(context));
         steps.add(new ResolveBuiltins(context));
+        steps.add(new ResolveListOfK(context));
+        steps.add(new AddInjections(context));
         steps.add(new FlattenSyntax(context));
         steps.add(new ResolveBlockingInput(context));
         steps.add(new InitializeConfigurationStructure(context));
