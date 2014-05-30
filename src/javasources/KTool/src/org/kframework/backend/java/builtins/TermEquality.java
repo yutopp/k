@@ -39,7 +39,7 @@ public class TermEquality {
      * @param e
      *            the second term
      * @param context
-     *            the term context
+     *            the state
      * @return the first term if the {@code BoolToken} represents true;
      *         otherwise, the second term
      */

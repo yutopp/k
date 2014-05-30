@@ -71,7 +71,7 @@ public class PatternMatcher extends AbstractMatcher {
      * @param pattern
      *            the pattern
      * @param context
-     *            the term context
+     *            the state
      * @return {@code true} if the two terms can be matched; otherwise,
      *         {@code false}
      */
@@ -97,7 +97,7 @@ public class PatternMatcher extends AbstractMatcher {
      * @param rule
      *            the rule
      * @param context
-     *            the term context
+     *            the state
      * @return a list of possible instantiations of the left-hand side of the
      *         rule (each instantiation is represented as a substitution mapping
      *         variables in the pattern to sub-terms in the subject)

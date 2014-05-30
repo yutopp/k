@@ -107,7 +107,7 @@ public class UninterpretedConstraint extends JavaSymbolicObject {
      * Returns the interpreted counterpart of this constraint.
      * 
      * @param context
-     *            the term context
+     *            the state
      * @return the corresponding symbolic constraint
      */
     public SymbolicConstraint getSymbolicConstraint(State context) {

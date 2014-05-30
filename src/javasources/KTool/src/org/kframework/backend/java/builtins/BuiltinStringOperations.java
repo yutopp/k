@@ -165,7 +165,7 @@ public class BuiltinStringOperations {
      * @param replacement
      *            the string to replace it with
      * @param context
-     *            the term context
+     *            the state
      * @return the text with any replacements processed
      */
     public static StringToken replaceAll(StringToken text,
@@ -188,7 +188,7 @@ public class BuiltinStringOperations {
      * @param max
      *            the maximum number of occurrences to be replaced
      * @param context
-     *            the term context
+     *            the state
      * @return the text with any replacements processed
      */
     public static StringToken replace(StringToken text,
@@ -209,7 +209,7 @@ public class BuiltinStringOperations {
      * @param replacement
      *            the string to replace it with
      * @param context
-     *            the term context
+     *            the state
      * @return the text with any replacements processed
      */
     public static StringToken replaceFirst(StringToken text,
@@ -227,7 +227,7 @@ public class BuiltinStringOperations {
      * @param substr
      *            the substring to search for
      * @param context
-     *            the term context
+     *            the state
      * @return the number of occurrences
      */
     public static IntToken countOccurences(StringToken text,

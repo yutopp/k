@@ -125,7 +125,7 @@ public abstract class Term extends JavaSymbolicObject implements Transformable, 
      *            the symbolic constraint of the {@link ConstrainedTerm} which
      *            contains this {@code Term}
      * @param context
-     *            the term context
+     *            the state
      * @return the result {@code Term} instance
      */
     public Term evaluate(SymbolicConstraint constraint, State context) {

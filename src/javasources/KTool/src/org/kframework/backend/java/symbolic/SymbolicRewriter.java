@@ -329,7 +329,7 @@ public class SymbolicRewriter {
      * @param rule
      *            the specified rule
      * @param state
-     *            the term context
+     *            the state
      * @return the pattern term
      */
     private ConstrainedTerm preparePattern(Rule rule, State state) {

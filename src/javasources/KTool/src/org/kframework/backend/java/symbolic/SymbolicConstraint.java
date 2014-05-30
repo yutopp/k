@@ -1056,7 +1056,7 @@ public class SymbolicConstraint extends JavaSymbolicObject {
      * @param substMap
      *            the specified substitution map
      * @param context
-     *            the term context
+     *            the state
      * @param mayInvalidateNormality
      *            whether this operation may cause
      *            {@link SymbolicConstraint#isNormal} to be {@code false}

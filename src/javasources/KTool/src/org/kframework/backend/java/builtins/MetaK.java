@@ -36,7 +36,7 @@ public class MetaK {
      * @param term2
      *            the second term
      * @param context
-     *            the term context
+     *            the state
      * @return {@link BoolToken#TRUE} if the two terms can be unified;
      *         otherwise, {@link BoolToken#FALSE}
      */
@@ -61,7 +61,7 @@ public class MetaK {
      * @param pattern
      *            the pattern term
      * @param context
-     *            the term context
+     *            the state
      * @return {@link BoolToken#TRUE} if the two terms can be matched;
      *         otherwise, {@link BoolToken#FALSE}
      */
@@ -80,7 +80,7 @@ public class MetaK {
      * @param builtinSet
      *            the given set of meta variables
      * @param context
-     *            the term context
+     *            the state
      * @return the resulting term if the renaming succeeds; or the original term
      *         if the given {@code BuiltinSet} has a frame or contains not only
      *         {@code MetaVariable}s
@@ -108,7 +108,7 @@ public class MetaK {
      * @param term
      *            the given term
      * @param context
-     *            the term context
+     *            the state
      * @return the resulting term after renaming
      */
     public static Term renameVariables(Term term, State context) {
@@ -123,7 +123,7 @@ public class MetaK {
      * @param term
      *            the given term
      * @param context
-     *            the term context
+     *            the state
      * @return a {@code BuiltinSet} of {@code MetaVariable}s
      */
     public static BuiltinSet variables(Term term, State context) {
@@ -141,7 +141,7 @@ public class MetaK {
      * @param term
      *            the given term
      * @param context
-     *            the term context
+     *            the state
      * @return a {@code BuiltinSet} of {@code Variable}s
      */
     public static BuiltinSet trueVariables(Term term, State context) {
@@ -165,7 +165,7 @@ public class MetaK {
      * @param kItem
      *            the specified {@code KItem}
      * @param context
-     *            the term context
+     *            the state
      * @return the K label
      */
     public static KItem getKLabel(KItem kItem, State context) {

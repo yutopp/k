@@ -243,7 +243,7 @@ public final class KItem extends Term {
      *            the existing symbolic constraint that needs to be taken into
      *            consideration when evaluating this function
      * @param context
-     *            a term context
+     *            a state
      * @return the evaluated result on success, or this {@code KItem} otherwise
      */
     public Term evaluateFunction(SymbolicConstraint constraint, State context) {
