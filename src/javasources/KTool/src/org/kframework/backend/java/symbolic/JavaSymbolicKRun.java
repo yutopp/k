@@ -95,7 +95,7 @@ public class JavaSymbolicKRun implements KRun {
         }
 
         Term term = Term.of(cfg, definition);
-        State state = State.of(definition, new PortableFileSystem());
+        State state = new State(definition, new PortableFileSystem());
         term = term.evaluate(state);
 
         if (K.pattern_matching) {
@@ -123,7 +123,7 @@ public class JavaSymbolicKRun implements KRun {
 
     @Override
     public KRunProofResult<Set<org.kframework.kil.Term>> prove(Module module, org.kframework.kil.Term cfg) throws KRunExecutionException {
-        State state = State.of(definition, new PortableFileSystem());
+        State state = new State(definition, new PortableFileSystem());
         Map<org.kframework.kil.Term, org.kframework.kil.Term> substitution = null;
         if (cfg != null) {
             cfg = run(cfg).getResult().getRawResult();
@@ -226,7 +226,7 @@ public class JavaSymbolicKRun implements KRun {
         pattern = (org.kframework.kil.Rule)builtinTransformer.visit(pattern, null);
         cfg = (org.kframework.kil.Term) builtinTransformer.visitNode(cfg);
 
-        State state = State.of(definition, fs);
+        State state = new State(definition, fs);
         List<Rule> claims = Collections.emptyList();
         if (bound == null) {
             bound = -1;
@@ -324,7 +324,7 @@ public class JavaSymbolicKRun implements KRun {
                         stateMap));
         
         SymbolicRewriter symbolicRewriter = new SymbolicRewriter(definition);
-        final State state = State.of(definition, new PortableFileSystem());
+        final State state = new State(definition, new PortableFileSystem());
         ConstrainedTerm initCfg = new ConstrainedTerm(Term.of(cfg, definition), state);
 
         List<TestGenResult> generatorResults = new ArrayList<TestGenResult>();

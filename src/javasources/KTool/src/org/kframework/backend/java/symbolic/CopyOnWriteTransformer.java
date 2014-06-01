@@ -39,7 +39,7 @@ public class CopyOnWriteTransformer implements Transformer {
     }
 
     public CopyOnWriteTransformer(Definition definition) {
-        this(State.of(definition));
+        this(new State(definition));
     }
 
     public CopyOnWriteTransformer() {

@@ -156,7 +156,7 @@ public class KILtoBackendJavaKILTransformer extends CopyOnWriteTransformer {
         if (kList instanceof Variable) {
             kList = new KList((Variable) kList);
         }
-        return new KItem(kLabel, kList, State.of(definition));
+        return new KItem(kLabel, kList, new State(definition));
     }
     
     @Override
@@ -166,7 +166,7 @@ public class KILtoBackendJavaKILTransformer extends CopyOnWriteTransformer {
 
     @Override
     public ASTNode visit(org.kframework.kil.KLabelConstant node, Void _)  {
-        return KLabelConstant.of(node.getLabel(), State.of(definition));
+        return KLabelConstant.of(node.getLabel(), new State(definition));
     }
 
     @Override
@@ -367,9 +367,9 @@ public class KILtoBackendJavaKILTransformer extends CopyOnWriteTransformer {
                             elementsRight));
                     for (Term baseTerm : baseTerms) {
                         result = new KItem(
-                                KLabelConstant.of(DataStructureSort.DEFAULT_LIST_LABEL, State.of(definition)),
+                                KLabelConstant.of(DataStructureSort.DEFAULT_LIST_LABEL, new State(definition)),
                                 new KList(ImmutableList.of(result, baseTerm)),
-                                State.of(definition));
+                                new State(definition));
                     }
                     return result;
                 }
@@ -410,9 +410,9 @@ public class KILtoBackendJavaKILTransformer extends CopyOnWriteTransformer {
             Term result = baseTerms.get(0);
             for (int i = 1; i < baseTerms.size(); ++i) {
                 result = new KItem(
-                        KLabelConstant.of(DataStructureSort.DEFAULT_SET_LABEL, State.of(definition)),
+                        KLabelConstant.of(DataStructureSort.DEFAULT_SET_LABEL, new State(definition)),
                         new KList(ImmutableList.of(result, baseTerms.get(i))),
-                        State.of(definition));
+                        new State(definition));
             }
             return result;
         }
@@ -453,9 +453,9 @@ public class KILtoBackendJavaKILTransformer extends CopyOnWriteTransformer {
             Term result = baseTerms.get(0);
             for (int i = 1; i < baseTerms.size(); ++i) {
                 result = new KItem(
-                        KLabelConstant.of(DataStructureSort.DEFAULT_MAP_LABEL, State.of(definition)),
+                        KLabelConstant.of(DataStructureSort.DEFAULT_MAP_LABEL, new State(definition)),
                         new KList(ImmutableList.of(result, baseTerms.get(i))),
-                        State.of(definition));
+                        new State(definition));
             }
             return result;
         }
@@ -664,7 +664,7 @@ public class KILtoBackendJavaKILTransformer extends CopyOnWriteTransformer {
                 definition);
 
         if (freshRules) {
-            return rule.getFreshRule(State.of(definition));
+            return rule.getFreshRule(new State(definition));
         }
         return rule;
     }
@@ -691,14 +691,14 @@ public class KILtoBackendJavaKILTransformer extends CopyOnWriteTransformer {
         }
 
         for (String kLabelName : singletonModule.getModuleKLabels()) {
-            definition.addKLabel(KLabelConstant.of(kLabelName, State.of(definition)));
+            definition.addKLabel(KLabelConstant.of(kLabelName, new State(definition)));
         }
 
         /* collect the productions which have the attributes strict and seqstrict */
         Set<Production> productions = singletonModule.getSyntaxByTag("strict", context);
         productions.addAll(singletonModule.getSyntaxByTag("seqstrict", context));
         for (Production production : productions) {
-            definition.addFrozenKLabel(KLabelConstant.of(production.getKLabel(), State.of(definition)));
+            definition.addFrozenKLabel(KLabelConstant.of(production.getKLabel(), new State(definition)));
         }
 
         this.definition = null;
@@ -759,7 +759,7 @@ public class KILtoBackendJavaKILTransformer extends CopyOnWriteTransformer {
      *          the partially evaluated rule
      */
     private static Rule evaluateRule(Rule rule, Definition definition) {
-        State state = State.of(definition);
+        State state = new State(definition);
         // TODO(AndreiS): some evaluation is required in the LHS as well
         //Term leftHandSide = rule.leftHandSide().evaluate(termContext);
 

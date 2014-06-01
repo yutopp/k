@@ -115,7 +115,7 @@ public class StepRewriter {
 
         termResults = new ArrayList<Term>();
 
-        State context = State.of(definition);
+        State context = new State(definition);
         ConstrainedTerm constrainedTerm = new ConstrainedTerm(term, context);
 
         SymbolicConstraint leftHandSideConstraint = new SymbolicConstraint(context);

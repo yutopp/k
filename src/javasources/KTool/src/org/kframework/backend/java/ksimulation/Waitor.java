@@ -61,12 +61,12 @@ public class Waitor extends Thread{
         
         
         Term term = Term.of(implTerm, impl.getDefinition());
-        org.kframework.backend.java.kil.State state = org.kframework.backend.java.kil.State.of(impl.getDefinition(), new PortableFileSystem());
+        org.kframework.backend.java.kil.State state = new org.kframework.backend.java.kil.State(impl.getDefinition(), new PortableFileSystem());
         ConstrainedTerm implConstraint = new ConstrainedTerm(term, state);
         pair[0] = implConstraint;
         
         term = Term.of(specTerm, spec.getDefinition());
-        state = org.kframework.backend.java.kil.State.of(spec.getDefinition(), new PortableFileSystem());
+        state = new org.kframework.backend.java.kil.State(spec.getDefinition(), new PortableFileSystem());
         ConstrainedTerm specConstraint = new ConstrainedTerm(term, state);
         pair[1] = specConstraint;
         

@@ -884,7 +884,7 @@ public class SymbolicRewriter {
             /* rename rule variables */
             Map<Variable, Variable> freshSubstitution = Variable.getFreshSubstitution(rule.variableSet());
 
-            State context = State.of(definition, fs);
+            State context = new State(definition, fs);
             SymbolicConstraint sideConstraint = new SymbolicConstraint(context);
             sideConstraint.addAll(rule.requires());
             ConstrainedTerm initialTerm = new ConstrainedTerm(
