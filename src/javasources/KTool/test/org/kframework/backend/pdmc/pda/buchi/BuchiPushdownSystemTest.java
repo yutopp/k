@@ -103,7 +103,7 @@ public class BuchiPushdownSystemTest {
     }
 
     @Test
-         public void testSimpleFalse() throws Exception {
+    public void testSimpleFalse() throws Exception {
         String promelaString = "" +
                 "never { /* ! [](px1 -> <> px0) */\n" +
                 "T0_init:\n" +

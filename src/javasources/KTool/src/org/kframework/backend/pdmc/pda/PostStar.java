@@ -129,18 +129,21 @@ public class PostStar<Control, Alphabet> extends BasicAutomaton<PAutomatonState<
                                 TrackingLabel<Control, Alphabet> secondLetterLabel = labelFactory.newLabel();
                                 secondLetterLabel.setRule(rule);
                                 secondLetterLabel.update(bps, rule.getHead().getState());
-                                Transition<PAutomatonState<Control, Alphabet>, Alphabet> secondLetterTransition = Transition.of(qPPrimeGamma1, gamma2, q);
+                                Transition<PAutomatonState<Control, Alphabet>, Alphabet> secondLetterTransition =
+                                        Transition.of(qPPrimeGamma1, gamma2, q);
                                 rel.add(secondLetterTransition);
                                 labelFactory.updateLabel(secondLetterTransition, secondLetterLabel);
                                 for (Transition<PAutomatonState<Control, Alphabet>, Alphabet> t
-                                        : rel.getBackEpsilonTransitions(qPPrimeGamma1)) {
+                                        : rel.getBackEpsilonTransitions(qPPrimeGamma1)) {   // line 17 in Algorithm 2
+                                    // This block is line 18 of Algorithm 2 (plus tracking information in labels)
                                     TrackingLabel<Control, Alphabet> tLabel = labelFactory.get(t);
                                     TrackingLabel<Control, Alphabet> backEpsilonLabel = labelFactory.newLabel();
                                     backEpsilonLabel.update(tLabel);
                                     backEpsilonLabel.setRule(rule);
                                     backEpsilonLabel.update(bps, rule.getHead().getState());
                                     backEpsilonLabel.setBackState(qPPrimeGamma1);
-                                    Transition<PAutomatonState<Control, Alphabet>, Alphabet> newBackEpsilonTransition = Transition.of(t.getStart(), gamma2, q);
+                                    Transition<PAutomatonState<Control, Alphabet>, Alphabet> newBackEpsilonTransition =
+                                            Transition.of(t.getStart(), gamma2, q);
                                     trans.add(newBackEpsilonTransition);
                                     labelFactory.updateLabel(newBackEpsilonTransition, backEpsilonLabel);
                                 }
@@ -157,7 +160,8 @@ public class PostStar<Control, Alphabet> extends BasicAutomaton<PAutomatonState<
                         epsilonClosureLabel.update(labelFactory.get(transition));
                         epsilonClosureLabel.setBackState(q);
                         epsilonClosureLabel.setRule(tLetter.getRule());
-                        Transition<PAutomatonState<Control, Alphabet>, Alphabet> epsilonClosureTransition = Transition.of(tp, t.getLetter(), t.getEnd());
+                        Transition<PAutomatonState<Control, Alphabet>, Alphabet> epsilonClosureTransition =
+                                Transition.of(tp, t.getLetter(), t.getEnd());
                         trans.add(epsilonClosureTransition);
                         labelFactory.updateLabel(epsilonClosureTransition, epsilonClosureLabel);
                     }

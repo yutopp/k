@@ -172,54 +172,65 @@ public class BuchiPushdownSystemTools<Control, Alphabet> {
                 head.getLetter(),
                 postStar.getFinalStates().iterator().next());
         //Step 2
-        Transition<PAutomatonState<Pair<Control, BuchiState>, Alphabet>, Alphabet> transition = path.removeFirst();
+        Transition<PAutomatonState<Pair<Control, BuchiState>, Alphabet>, Alphabet> transition = getUncompressedTransition(path);
         BuchiTrackingLabel<Control, Alphabet> label = (BuchiTrackingLabel<Control, Alphabet>) labelFactory.get(transition);
         Rule<Pair<Control, BuchiState>, Alphabet> rule = label.getRule();
-        PAutomatonState<Pair<Control, BuchiState>, Alphabet> backState = label.getBackState();
-        while (rule != null || backState != null) {
-            if (rule == null) {
-                transition = Transition.of(transition.getStart(), null, backState);
-                assert labelFactory.get(transition) != null;
-            } else {
-                if (rule.endStack().size() == 2) { // reduce step 3.2 to step 3.1 by shifting transition & rules
-                    transition = path.removeFirst();
-                    label = (BuchiTrackingLabel<Control, Alphabet>) labelFactory.get(transition);
-                    rule = label.getRule();
-                    assert rule != null && rule.endStack().size() == 2;
-                }
-                // Step 3.1
-                result.addFirst(rule);
+        assert label.getBackState() == null;
+        while (rule != null) {
+            if (rule.endStack().size() == 2) { // reduce step 3.2 to step 3.1 by shifting transition & rules
+                // First transitions: p -a-> q<p,a> -b-> q            [...  -w->* fin  ]
+                // labeling rule: <p',c>  => <p, a b>
+                // then add  p' -c-> q              [... -w->* fin
+                assert transition.getLetter()!=null;
+                assert transition.getEnd().getLetter()!= null; // this is an intermediate stare
+                transition = getUncompressedTransition(path);
                 head = rule.getHead();
-                backState = label.getBackState();
-                if (backState == null) {
-                    transition = Transition.of(
-                            PAutomatonState.<Pair<Control, BuchiState>, Alphabet>of(head.getState()),
-                            head.getLetter(),
-                            transition.getEnd()
-                    );
-                    assert labelFactory.get(transition) != null;
-                } else {
-                    transition = Transition.of(
-                            backState,
-                            head.getLetter(),
-                            transition.getEnd()
-                    );
-                    assert labelFactory.get(transition) != null;
-                    path.addFirst(transition);
-                    transition = Transition.of(
-                            PAutomatonState.<Pair<Control, BuchiState>, Alphabet>of(head.getState()),
-                            null,
-                            backState
-                    );
-                    assert labelFactory.get(transition) != null;
-                }
+                transition = Transition.of(
+                        PAutomatonState.<Pair<Control, BuchiState>, Alphabet>of(head.getState()),
+                        head.getLetter(),
+                        transition.getEnd()
+                );
+                assert transition.getLetter()!=null;
+                path.addFirst(transition);
+            } else {
+                // First transition: p -w-> q
+                // labeling rule: <p',c> => <p,w>
+                // then add p' -c-> q
+                head = rule.getHead();
+                transition = Transition.of(
+                        PAutomatonState.<Pair<Control, BuchiState>, Alphabet>of(head.getState()),
+                        head.getLetter(),
+                        transition.getEnd()
+                );
+                path.addFirst(transition);
             }
 
+            // Add rule to list of rules
+            result.addFirst(rule);
+            transition = getUncompressedTransition(path);
+            assert labelFactory.get(transition) != null;
             label = (BuchiTrackingLabel<Control, Alphabet>) labelFactory.get(transition);
             rule = label.getRule();
-            backState = label.getBackState();
+            assert label.getBackState() == null;
         }
         return result;
+    }
+
+    private Transition<PAutomatonState<Pair<Control, BuchiState>, Alphabet>, Alphabet> getUncompressedTransition(Deque<Transition<PAutomatonState<Pair<Control, BuchiState>, Alphabet>, Alphabet>> path) {
+        Transition<PAutomatonState<Pair<Control, BuchiState>, Alphabet>, Alphabet> transition = path.removeFirst();
+        BuchiTrackingLabel<Control, Alphabet> label;
+        PAutomatonState<Pair<Control, BuchiState>, Alphabet> backState;
+        label = (BuchiTrackingLabel<Control, Alphabet>) labelFactory.get(transition);
+        backState = label.getBackState();
+        if (backState != null) {
+            Transition<PAutomatonState<Pair<Control, BuchiState>, Alphabet>, Alphabet> transition2 =
+                    Transition.of(backState, transition.getLetter(), transition.getEnd());
+            assert labelFactory.get(transition2) != null;
+            path.addFirst(transition2);
+            transition = Transition.of(transition.getStart(), null, backState);
+            assert labelFactory.get(transition) != null;
+        }
+        return transition;
     }
 
 }
