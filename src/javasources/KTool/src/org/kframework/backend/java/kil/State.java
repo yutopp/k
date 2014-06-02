@@ -13,7 +13,7 @@ import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.Table;
 
 /**
- * An object containing context specific to a particular configuration.
+ * This class represents a state in the transition system.
  */
 public class State extends JavaSymbolicObject {
 
