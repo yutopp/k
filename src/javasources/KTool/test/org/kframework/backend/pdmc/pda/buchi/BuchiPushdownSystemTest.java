@@ -16,6 +16,11 @@ import java.io.ByteArrayInputStream;
 
 /**
  * @author TraianSF
+ * TODO: Cycle rules
+ * TODO: K integration: PDS
+ *     - Testare cu Post*
+ * TODO: Verificare Reguli K satisfac conditii PD
+ * TODO: K integration: LTL & Buchi/SPIN --- (suport din KRun pentru evaluare atomi/propozitii)
  */
 public class BuchiPushdownSystemTest {
 
