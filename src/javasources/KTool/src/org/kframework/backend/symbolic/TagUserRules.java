@@ -1,3 +1,4 @@
+// Copyright (c) 2013-2014 K Team. All Rights Reserved.
 package org.kframework.backend.symbolic;
 
 import org.kframework.kil.ASTNode;
@@ -7,12 +8,9 @@ import org.kframework.kil.Rule;
 import org.kframework.kil.loader.Constants;
 import org.kframework.kil.loader.Context;
 import org.kframework.kil.visitors.CopyOnWriteTransformer;
-import org.kframework.kil.visitors.exceptions.TransformerException;
 import org.kframework.utils.file.KPaths;
-import org.kframework.utils.general.GlobalSettings;
 
 import java.io.File;
-import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
@@ -28,50 +26,40 @@ import com.google.common.collect.ImmutableSet;
  */
 public class TagUserRules extends CopyOnWriteTransformer {
 
-    public static final Set<String> notSymbolicTags;
-    static {
-        if (GlobalSettings.javaBackend) {
-            notSymbolicTags = Collections.emptySet();
-        } else {
-            notSymbolicTags = ImmutableSet.of(
-                    Constants.MACRO,
-                    Constants.FUNCTION,
-                    Constants.STRUCTURAL,
-                    Constants.ANYWHERE,
-                    SymbolicBackend.NOTSYMBOLIC);
-            if (!GlobalSettings.nonSymbolicTags.isEmpty()) {
-                notSymbolicTags.addAll(GlobalSettings.nonSymbolicTags);
-            }
-        }
-    }
+    public final Set<String> notSymbolicTags;
 
     public TagUserRules(Context context) {
         super("Tag rules which are not builtin with 'symbolic' tag", context);
+        notSymbolicTags = ImmutableSet.of(
+                Constants.MACRO,
+                Constants.FUNCTION,
+                Constants.STRUCTURAL,
+                Constants.ANYWHERE,
+                SymbolicBackend.NOTSYMBOLIC);
+        if (!kompileOptions.experimental.nonSymbolicRules.isEmpty()) {
+            notSymbolicTags.addAll(kompileOptions.experimental.nonSymbolicRules);
+        }
     }
 
     @Override
-    public ASTNode transform(Rule node) throws TransformerException {
+    public ASTNode visit(Rule node, Void _)  {
 
         for (String nst : notSymbolicTags)
             if (node.containsAttribute(nst)) {
-                return super.transform(node);
+                return super.visit(node, _);
             }
 
         if ((!node.getFilename().startsWith(
                 KPaths.getKBase(false) + File.separator + "include")
                 && !node.getFilename().startsWith(
                         org.kframework.kil.loader.Constants.GENERATED_FILENAME))
-                || (GlobalSettings.javaBackend && node.getFilename().equals(
-                        KPaths.getKBase(false) + File.separator + "include" +
-                                File.separator + "io" +
-                                File.separator + "io.k"))
                 ) {
 
             // this handles the case when the user wants to
             // specify exactly what rules should be transformed
             // symAllowed is true when the rule is tagged in this purpose
             boolean symAllowed = false;
-            for (String st : GlobalSettings.symbolicTags) {
+            for (String st : kompileOptions.experimental.symbolicRules) {
                 if (node.containsAttribute(st)) {
                     symAllowed = true;
                 }
@@ -79,8 +67,8 @@ public class TagUserRules extends CopyOnWriteTransformer {
             // the first condition might not be needed, but we keep it
             // to ensure that, by default, if no rules (identified by tags)
             // are specified, then all rules are transformed by symbolic steps.
-            if (!GlobalSettings.symbolicTags.isEmpty() && !symAllowed) {
-                return super.transform(node);
+            if (!kompileOptions.experimental.symbolicRules.isEmpty() && !symAllowed) {
+                return super.visit(node, _);
             }
 
             List<Attribute> attrs = node.getAttributes().getContents();
@@ -94,6 +82,6 @@ public class TagUserRules extends CopyOnWriteTransformer {
             return node;
         }
 
-        return super.transform(node);
+        return super.visit(node, _);
     }
 }

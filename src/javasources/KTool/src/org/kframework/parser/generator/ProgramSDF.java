@@ -1,7 +1,11 @@
+// Copyright (c) 2014 K Team. All Rights Reserved.
 package org.kframework.parser.generator;
 
+import java.io.File;
 import java.util.HashSet;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.kframework.compile.transformers.AddSymbolicK;
 import org.kframework.kil.Definition;
@@ -14,14 +18,13 @@ import org.kframework.kil.Sort;
 import org.kframework.kil.Terminal;
 import org.kframework.kil.UserList;
 import org.kframework.kil.loader.Context;
+import org.kframework.kompile.KompileOptions.Backend;
+import org.kframework.parser.concrete2.KSyntax2GrammarStatesFilter;
+import org.kframework.utils.BinaryLoader;
 import org.kframework.utils.StringUtil;
-import org.kframework.utils.general.GlobalSettings;
 
 /**
  * Collect the syntax module, call the syntax collector and print SDF for programs.
- * 
- * @author RaduFmse
- * 
  */
 public class ProgramSDF {
 
@@ -29,16 +32,22 @@ public class ProgramSDF {
 
         // collect all the syntax modules
         CollectSynModulesVisitor csmv = new CollectSynModulesVisitor(context);
-        def.accept(csmv);
+        csmv.visitNode(def);
 
         // collect the syntax from those modules
         ProgramSDFVisitor psdfv = new ProgramSDFVisitor(context);
         CollectTerminalsVisitor ctv = new CollectTerminalsVisitor(context);
+        KSyntax2GrammarStatesFilter ks2gsf = new KSyntax2GrammarStatesFilter(context, ctv.terminals);
         for (String modName : csmv.synModNames) {
             Module m = def.getModulesMap().get(modName);
-            m.accept(psdfv);
-            m.accept(ctv);
+            psdfv.visitNode(m);
+            ctv.visitNode(m);
+            ks2gsf.visitNode(m);
         }
+
+        // save the new parser info
+        new File(context.kompiled, "pgm").mkdirs();
+        BinaryLoader.save(context.kompiled.getPath()+ "/pgm/newParser.bin", ks2gsf.getGrammar());
 
         StringBuilder sdf = new StringBuilder();
         sdf.append("module Program\n\n");
@@ -101,10 +110,10 @@ public class ProgramSDF {
         }
 
         sdf.append("\n");
-        sdf.append("    DzDzINT        -> DzDzInt\n");
-        sdf.append("    DzDzID        -> DzDzId\n");
-        sdf.append("    DzDzSTRING    -> DzDzString\n");
-        sdf.append("    DzDzFLOAT    -> DzDzFloat\n");
+        //sdf.append("    DzDzINT        -> DzDzInt\n");
+        //sdf.append("    DzDzID        -> DzDzId\n");
+        //sdf.append("    DzDzSTRING    -> DzDzString\n");
+        //sdf.append("    DzDzFLOAT    -> DzDzFloat\n");
         sdf.append("\n");
 
         sdf.append("\n%% start symbols subsorts\n");
@@ -114,7 +123,7 @@ public class ProgramSDF {
                 sdf.append("    " + StringUtil.escapeSortName(s) + "        -> K\n");
         }
 
-        if (GlobalSettings.symbolic) {
+        if (context.kompileOptions.backend == Backend.SYMBOLIC) {
             sdf.append("\ncontext-free syntax\n");
             sdf.append("    DzId    -> UnitDz\n");
             sdf.append("    DzBool    -> UnitDz\n");
@@ -139,7 +148,7 @@ public class ProgramSDF {
 
         for (String t : ctv.terminals) {
             if (t.matches("[a-zA-Z\\_][a-zA-Z0-9\\_]*")) {
-                sdf.append("    \"" + StringUtil.escape(t) + "\" -> DzDzID {reject}\n");
+                sdf.append("    \"" + StringUtil.escape(t) + "\" -> IdDz {reject}\n");
             }
         }
 
@@ -158,10 +167,23 @@ public class ProgramSDF {
             if (l.getFollow() != null && !l.getFollow().equals("")) {
                 psdfv.restrictions.add(new Restrictions(new Sort(p.getSort()), null, l.getFollow()));
             }
+
+            // reject all terminals that match the regular expression of the lexical production
+            if (p.containsAttribute("regex")) {
+                Pattern pat = Pattern.compile(p.getAttribute("regex"));
+                for (String t : ctv.terminals) {
+                    Matcher m = pat.matcher(t);
+                    if (m.matches())
+                        sdf.append("    \"" + StringUtil.escape(t) + "\" -> " + StringUtil.escapeSortName(p.getSort()) + "Dz {reject}\n");
+                }
+            } else {
+                // if there is no regex attribute, then do it the old fashioned way, but way more inefficient
+                // add rejects for all possible combinations
+                for (String t : ctv.terminals) {
+                    sdf.append("    \"" + StringUtil.escape(t) + "\" -> " + StringUtil.escapeSortName(p.getSort()) + "Dz {reject}\n");
+                }
+            }
         }
-        for (String s : lexerSorts)
-            for (String t : ctv.terminals)
-                sdf.append("    \"" + StringUtil.escape(t) + "\" -> " + StringUtil.escapeSortName(s) + "Dz {reject}\n");
 
         // adding cons over lexical rules
         sdf.append("context-free syntax\n");

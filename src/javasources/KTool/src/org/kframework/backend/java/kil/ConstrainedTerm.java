@@ -1,3 +1,4 @@
+// Copyright (c) 2013-2014 K Team. All Rights Reserved.
 package org.kframework.backend.java.kil;
 
 import java.util.ArrayList;
@@ -470,7 +471,17 @@ public class ConstrainedTerm extends Term {
     }
 
     @Override
+    public boolean isExactSort() {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
     public boolean isSymbolic() {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public String sort() {
         throw new UnsupportedOperationException();
     }
 

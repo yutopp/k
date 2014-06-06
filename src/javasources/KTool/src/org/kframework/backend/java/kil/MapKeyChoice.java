@@ -1,3 +1,4 @@
+// Copyright (c) 2014 K Team. All Rights Reserved.
 package org.kframework.backend.java.kil;
 
 import org.kframework.backend.java.symbolic.Matcher;
@@ -14,7 +15,7 @@ import org.kframework.kil.ASTNode;
  *
  * @author AndreiS
  */
-public class MapKeyChoice extends Term {
+public class MapKeyChoice extends Term implements DataStructureChoice {
 
     /**
      * Map from which the key is chosen.
@@ -52,8 +53,18 @@ public class MapKeyChoice extends Term {
     }
 
     @Override
+    public boolean isExactSort() {
+        return false;
+    }
+
+    @Override
     public boolean isSymbolic() {
         return true;
+    }
+
+    @Override
+    public String sort() {
+        return kind.toString();
     }
 
     @Override

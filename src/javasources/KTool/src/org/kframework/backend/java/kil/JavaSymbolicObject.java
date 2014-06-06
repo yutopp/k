@@ -1,7 +1,14 @@
+// Copyright (c) 2013-2014 K Team. All Rights Reserved.
+
 package org.kframework.backend.java.kil;
 
-import org.kframework.backend.java.symbolic.*;
+import org.kframework.backend.java.symbolic.BinderSubstitutionTransformer;
+import org.kframework.backend.java.symbolic.SubstitutionTransformer;
+import org.kframework.backend.java.symbolic.Transformable;
+import org.kframework.backend.java.symbolic.VariableCollector;
+import org.kframework.backend.java.symbolic.Visitable;
 import org.kframework.kil.ASTNode;
+import org.kframework.kil.visitors.Visitor;
 
 import java.io.Serializable;
 import java.util.Collections;
@@ -16,6 +23,11 @@ import java.util.Set;
  */
 public abstract class JavaSymbolicObject extends ASTNode
         implements Transformable, Visitable, Serializable {
+
+    /**
+     * Field used for cashing the hash code
+     */
+    protected int hashCode = 0;
 
     /**
      * AndreiS: serializing this field causes a NullPointerException when hashing a de-serialized
@@ -97,14 +109,9 @@ public abstract class JavaSymbolicObject extends ASTNode
         throw new UnsupportedOperationException();
     }
 
-    @Override
-    public ASTNode accept(org.kframework.kil.visitors.Transformer transformer)
-            throws org.kframework.kil.visitors.exceptions.TransformerException {
-        throw new UnsupportedOperationException();
-    }
 
     @Override
-    public void accept(org.kframework.kil.visitors.Visitor visitor) {
+    protected <P, R, E extends Throwable> R accept(Visitor<P, R, E> visitor, P p) throws E {
         throw new UnsupportedOperationException();
     }
 

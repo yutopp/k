@@ -1,3 +1,4 @@
+// Copyright (c) 2013-2014 K Team. All Rights Reserved.
 package org.kframework.backend.java.kil;
 
 import com.google.common.collect.ImmutableList;
@@ -30,6 +31,7 @@ public class KList extends KCollection {
 
     private static final String SEPARATOR_NAME = ",, ";
     private static final String IDENTITY_NAME = "." + Kind.KLIST;
+    public static final KList EMPTY = new KList();
     
     private String sort;
 
@@ -57,7 +59,7 @@ public class KList extends KCollection {
     }
     */
 
-    public KList() {
+    private KList() {
         super(null, Kind.KLIST);
     }
 
@@ -71,13 +73,8 @@ public class KList extends KCollection {
         if (sort != null) {
             return sort;
         }
-        
-        if (size() == 1 && !hasFrame()) {
-            Term term = contents.get(0);
-            sort = term instanceof Sorted ? ((Sorted) term).sort() : term.kind().toString();
-        } else {
-            sort = KSorts.KLIST;
-        }
+
+        sort = size() == 1 && !hasFrame() ? contents.get(0).sort() : KSorts.KSEQUENCE;
         return sort;
     }    
 

@@ -1,3 +1,4 @@
+// Copyright (c) 2012-2014 K Team. All Rights Reserved.
 package org.kframework.parser.generator;
 
 import org.kframework.compile.utils.MetaK;
@@ -24,7 +25,7 @@ public class CollectSynModulesVisitor extends BasicVisitor {
 
     public Set<String> synModNames = new HashSet<String>();
 
-    public void visit(Definition def) {
+    public Void visit(Definition def, Void _) {
         List<String> synQue = new LinkedList<String>();
         if (def.getModulesMap().containsKey(def.getMainSyntaxModule())) {
             synQue.add(def.getMainSyntaxModule());
@@ -32,7 +33,7 @@ public class CollectSynModulesVisitor extends BasicVisitor {
             String msg = "Module " + def.getMainSyntaxModule() + " is not imported by the main module " +
                     def.getMainModule() + ".  The parser generator will use " + def.getMainModule() +
                     " as the main syntax module.";
-            GlobalSettings.kem.register(new KException(ExceptionType.WARNING, KExceptionGroup.PARSER, msg,
+            GlobalSettings.kem.register(new KException(ExceptionType.WARNING, KExceptionGroup.INNER_PARSER, msg,
                     def.getMainFile(), "File system."));
             synQue.add(def.getMainModule());
         }
@@ -40,7 +41,7 @@ public class CollectSynModulesVisitor extends BasicVisitor {
         Module bshm = def.getModulesMap().get("AUTO-INCLUDED-MODULE-SYNTAX");
         if (bshm == null) {
             String msg = "Could not find module AUTO-INCLUDED-MODULE-SYNTAX (automatically included in the main syntax module)!";
-            GlobalSettings.kem.register(new KException(ExceptionType.HIDDENWARNING, KExceptionGroup.PARSER, msg, def.getMainFile(), "File system."));
+            GlobalSettings.kem.register(new KException(ExceptionType.HIDDENWARNING, KExceptionGroup.INNER_PARSER, msg, def.getMainFile(), "File system."));
         } else
             synQue.add("AUTO-INCLUDED-MODULE-SYNTAX");
 
@@ -61,10 +62,11 @@ public class CollectSynModulesVisitor extends BasicVisitor {
                                 synQue.add(mm.getName());
                             else if (!MetaK.isKModule(mname2)) {
                                 String msg = "Could not find module: " + mname2 + " imported from: " + m.getName();
-                                GlobalSettings.kem.register(new KException(ExceptionType.ERROR, KExceptionGroup.PARSER, msg, getName(), imp.getFilename(), imp.getLocation()));
+                                GlobalSettings.kem.register(new KException(ExceptionType.ERROR, KExceptionGroup.INNER_PARSER, msg, getName(), imp.getFilename(), imp.getLocation()));
                             }
                     }
             }
         }
+        return null;
     }
 }

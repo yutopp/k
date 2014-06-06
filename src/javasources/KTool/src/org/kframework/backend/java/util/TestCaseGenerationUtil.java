@@ -1,3 +1,4 @@
+// Copyright (c) 2013-2014 K Team. All Rights Reserved.
 package org.kframework.backend.java.util;
 
 import java.util.ArrayList;
@@ -172,7 +173,7 @@ public class TestCaseGenerationUtil {
         // TODO(YilongL): This is cheating; fix it!
         switch (sort) {
         case "Block":
-            return new KItem(KLabelConstant.of("'{}", termContext), new KList(), termContext);
+            return new KItem(KLabelConstant.of("'{}", termContext), KList.EMPTY, termContext);
             
         case "BExp":
             return BoolToken.TRUE;

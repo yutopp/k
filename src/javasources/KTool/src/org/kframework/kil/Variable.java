@@ -1,14 +1,9 @@
+// Copyright (c) 2012-2014 K Team. All Rights Reserved.
 package org.kframework.kil;
 
 import org.kframework.kil.loader.Constants;
-import org.kframework.kil.matchers.Matcher;
-import org.kframework.kil.visitors.Transformer;
 import org.kframework.kil.visitors.Visitor;
-import org.kframework.kil.visitors.exceptions.TransformerException;
-import org.kframework.utils.StringUtil;
 import org.w3c.dom.Element;
-
-import aterm.ATermAppl;
 
 /**
  * Variables, used both in rules/contexts and for variables like {@code $PGM} in configurations.
@@ -20,7 +15,8 @@ public class Variable extends Term {
     private String name;
     /** True if the variable was written with an explicit type annotation */
     private boolean userTyped = false;
-    private boolean fresh = false;
+    private final boolean freshVariable;
+    private final boolean freshConstant;
     private boolean syntactic = false;
     /** Used by the type inferencer  */
     private String expectedSort = null;
@@ -40,34 +36,35 @@ public class Variable extends Term {
         this.name = element.getAttribute(Constants.NAME_name_ATTR);
         this.userTyped = element.getAttribute(Constants.TYPE_userTyped_ATTR).equals("true");
         if (this.name.startsWith("?")) {
-            this.setFresh(true);
+            this.freshVariable = true;
+            this.freshConstant = false;
             this.name = this.name.substring(1);
+        } else if (this.name.startsWith("!")) {
+            this.freshConstant = true;
+            this.freshVariable = false;
+            this.name = this.name.substring(1);
+        } else {
+            this.freshVariable = false;
+            this.freshConstant = false;
         }
     }
 
-    public Variable(ATermAppl atm) {
-        super(atm);
-        this.sort = StringUtil.getSortNameFromCons(atm.getName());
-
-        name = ((ATermAppl) atm.getArgument(0)).getName();
-
-        if (atm.getName().endsWith("2Var"))
-            this.userTyped = true;
-        if (this.name.startsWith("?")) {
-            this.setFresh(true);
-            this.name = this.name.substring(1);
-        }
+    public Variable(String name, String sort, boolean freshVariable, boolean freshConstant) {
+        super(sort);
+        this.name = name;
+        this.freshVariable = freshVariable;
+        this.freshConstant = freshConstant;
     }
 
     public Variable(String name, String sort) {
-        super(sort);
-        this.name = name;
+        this(name, sort, false, false);
     }
 
     public Variable(Variable variable) {
         super(variable);
         name = variable.name;
-        fresh = variable.fresh;
+        freshVariable = variable.freshVariable;
+        freshConstant = variable.freshConstant;
         userTyped = variable.userTyped;
         syntactic = variable.syntactic;
         expectedSort = variable.expectedSort;
@@ -90,18 +87,8 @@ public class Variable extends Term {
     }
 
     @Override
-    public void accept(Visitor visitor) {
-        visitor.visit(this);
-    }
-
-    @Override
-    public ASTNode accept(Transformer transformer) throws TransformerException {
-        return transformer.transform(this);
-    }
-
-    @Override
-    public void accept(Matcher matcher, Term toMatch) {
-        matcher.match(this, toMatch);
+    protected <P, R, E extends Throwable> R accept(Visitor<P, R, E> visitor, P p) throws E {
+        return visitor.complete(this, visitor.visit(this, p));
     }
 
     @Override
@@ -114,7 +101,9 @@ public class Variable extends Term {
             return false;
         Variable var = (Variable) obj;
 
-        return this.sort.equals(var.getSort()) && this.name.equals(var.getName());
+        return this.sort.equals(var.getSort()) && this.name.equals(var.getName())
+                && this.freshVariable == var.freshVariable
+                && this.freshConstant == var.freshConstant;
     }
 
     @Override
@@ -135,12 +124,12 @@ public class Variable extends Term {
         return new Variable(this);
     }
 
-    public void setFresh(boolean fresh) {
-        this.fresh = fresh;
+    public boolean isFreshVariable() {
+        return freshVariable;
     }
 
-    public boolean isFresh() {
-        return fresh;
+    public boolean isFreshConstant() {
+        return freshConstant;
     }
 
     public boolean isGenerated(){

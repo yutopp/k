@@ -1,7 +1,10 @@
+// Copyright (c) 2012-2014 K Team. All Rights Reserved.
 package org.kframework.parser.generator;
 
 import java.util.HashSet;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.kframework.compile.transformers.AddPredicates;
 import org.kframework.compile.transformers.AddSymbolicK;
@@ -31,8 +34,8 @@ public class Definition2SDF {
 
         DefinitionSDFVisitor psdfv = new DefinitionSDFVisitor(true, context);
         CollectTerminalsVisitor terminals = new CollectTerminalsVisitor(context);
-        def.accept(psdfv);
-        def.accept(terminals);
+        psdfv.visitNode(def);
+        terminals.visitNode(def);
 
         for (Production p1 : psdfv.listProds)
             for (Production p2 : psdfv.listProds)
@@ -183,10 +186,10 @@ public class Definition2SDF {
         }
 
         sdf.append("\n");
-        sdf.append("    DzDzINT        -> DzDzInt\n");
+        //sdf.append("    DzDzINT        -> DzDzInt\n");
         //sdf.append("    DzDzID        -> DzDzId\n");
-        sdf.append("    DzDzSTRING    -> DzDzString\n");
-        sdf.append("    DzDzFLOAT    -> DzDzFloat\n");
+        //sdf.append("    DzDzSTRING    -> DzDzString\n");
+        //sdf.append("    DzDzFLOAT    -> DzDzFloat\n");
 
         sdf.append("\n");
 
@@ -223,7 +226,7 @@ public class Definition2SDF {
 
         sdf.append("lexical restrictions\n");
         sdf.append("%% some restrictions to ensure greedy matching for user defined constants\n");
-        sdf.append("    DzDzInt -/- [0-9]\n");
+        //sdf.append("    DzDzInt -/- [0-9]\n");
         sdf.append("    \"is\" -/- [\\#A-Z]\n");
         sdf.append("\n");
 
@@ -237,10 +240,23 @@ public class Definition2SDF {
             if (l.getFollow() != null && !l.getFollow().equals("")) {
                 psdfv.restrictions.add(new Restrictions(new Sort(p.getSort()), null, l.getFollow()));
             }
+
+            // reject all terminals that match the regular expression of the lexical production
+            if (p.containsAttribute("regex")) {
+                Pattern pat = Pattern.compile(p.getAttribute("regex"));
+                for (String t : terminals.terminals) {
+                    Matcher m = pat.matcher(t);
+                    if (m.matches())
+                        sdf.append("    \"" + StringUtil.escape(t) + "\" -> " + StringUtil.escapeSortName(p.getSort()) + "Dz {reject}\n");
+                }
+            } else {
+                // if there is no regex attribute, then do it the old fashioned way, but way more inefficient
+                // add rejects for all possible combinations
+                for (String t : terminals.terminals) {
+                    sdf.append("    \"" + StringUtil.escape(t) + "\" -> " + StringUtil.escapeSortName(p.getSort()) + "Dz {reject}\n");
+                }
+            }
         }
-        for (String s : lexerSorts)
-            for (String t : terminals.terminals)
-                sdf.append("    \"" + StringUtil.escape(t) + "\" -> " + StringUtil.escapeSortName(s) + "Dz {reject}\n");
 
         // adding cons over lexical rules
         sdf.append("context-free syntax\n");

@@ -1,3 +1,4 @@
+// Copyright (c) 2013-2014 K Team. All Rights Reserved.
 package org.kframework.ktest.Test;
 
 import org.apache.commons.io.FilenameUtils;
@@ -6,6 +7,7 @@ import org.kframework.krun.ColorSetting;
 import org.kframework.ktest.*;
 import org.kframework.ktest.CmdArgs.CmdArg;
 import org.kframework.utils.ColorUtil;
+import org.kframework.utils.OS;
 
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.TransformerException;
@@ -47,8 +49,8 @@ public class TestSuite {
     private final boolean generateOut;
 
     private final ReportGen reportGen;
-
-    private final Comparator<String> strComparator;
+    
+    private final StringMatcher strComparator;
 
     // real times are times spend on a step, other times are total time spend by processess
     // generated for a step
@@ -65,7 +67,7 @@ public class TestSuite {
     private int krunSteps; // total number of krun tasks
 
     private TestSuite(List<TestCase> tests, Set<KTestStep> skips, int threads, boolean verbose,
-                     Comparator<String> strComparator, ColorSetting colorSetting,
+                     StringMatcher strComparator, ColorSetting colorSetting,
                      int timeout, boolean updateOut, boolean generateOut, boolean report) {
         this.tests = tests;
         this.skips = skips;
@@ -81,7 +83,7 @@ public class TestSuite {
 
     public TestSuite(List<TestCase> tests, CmdArg cmdArg) {
         this(tests, cmdArg.getSkips(), cmdArg.getThreads(), cmdArg.isVerbose(),
-                cmdArg.getStringComparator(), cmdArg.getColorSetting(), cmdArg.getTimeout(),
+                cmdArg.getDefaultStringMatcher(), cmdArg.getColorSetting(), cmdArg.getTimeout(),
                 cmdArg.getUpdateOut(), cmdArg.getGenerateOut(),
                 cmdArg.getGenerateReport());
     }
@@ -94,11 +96,21 @@ public class TestSuite {
     public boolean run() throws InterruptedException, TransformerException,
             ParserConfigurationException, IOException {
         boolean ret = true;
-        List<TestCase> successfulTests = tests;
+
+        List<TestCase> successfulTests;
+
+        if (OS.current().isPosix) {
+            successfulTests = runPosixOnlySteps(tests);
+        } else {
+            successfulTests = tests;
+        }
+
+        ret &= successfulTests.size() == tests.size();
 
         if (!skips.contains(KTestStep.KOMPILE)) {
-            successfulTests = runKompileSteps(filterSkips(tests, KTestStep.KOMPILE));
-            ret = successfulTests.size() == tests.size();
+            List<TestCase> testsIn = successfulTests;
+            successfulTests = runKompileSteps(filterSkips(testsIn, KTestStep.KOMPILE));
+            ret &= successfulTests.size() == testsIn.size();
         }
         if (!skips.contains(KTestStep.PDF))
             ret &= runPDFSteps(filterSkips(successfulTests, KTestStep.PDF));
@@ -159,6 +171,47 @@ public class TestSuite {
     }
 
     /**
+     * Run posixOnly scripts in list of test cases.
+     *
+     * @return list of test cases that run successfully
+     * @throws InterruptedException
+     */
+    private List<TestCase> runPosixOnlySteps(List<TestCase> tests) throws InterruptedException {
+        assert OS.current().isPosix;
+        int len = tests.size();
+        List<TestCase> successfulTests = new ArrayList<>(len);
+        List<Proc<TestCase>> ps = new ArrayList<>(len);
+
+        System.out.format("Running initial scripts...%n");
+        startTpe();
+        for (TestCase tc : tests) {
+            if (tc.hasPosixOnly()) {
+                Proc<TestCase> p = new Proc<>(tc, tc.getPosixOnlyCmd(), tc.toPosixOnlyLogString(),
+                        strComparator, timeout, verbose, colorSetting, updateOut, generateOut);
+                ps.add(p);
+                p.setWorkingDir(tc.getWorkingDir());
+                tpe.execute(p);
+            } else {
+                successfulTests.add(tc);
+            }
+        }
+        stopTpe();
+
+        // collect successful test cases, report failures
+        for (Proc<TestCase> p : ps) {
+            TestCase tc = p.getObj();
+            if (p.isSuccess())
+                successfulTests.add(tc);
+            makeReport(p, makeRelative(tc.getDefinition()),
+                    FilenameUtils.getName(tc.getPosixInitScript()));
+        }
+
+        printResult(successfulTests.size() == len);
+
+        return successfulTests;
+    }
+
+    /**
      * Run kompile steps in list of test cases.
      *
      * This method returns something different from others, this is because in kompile tests we
@@ -178,6 +231,7 @@ public class TestSuite {
         for (TestCase tc : tests) {
             Proc<TestCase> p = new Proc<>(tc, tc.getKompileCmd(), tc.toKompileLogString(),
                     strComparator, timeout, verbose, colorSetting, updateOut, generateOut);
+            p.setWorkingDir(tc.getWorkingDir());
             ps.add(p);
             tpe.execute(p);
             kompileSteps++;
@@ -215,6 +269,7 @@ public class TestSuite {
         for (TestCase tc : tests) {
             Proc<TestCase> p = new Proc<>(tc, tc.getPdfCmd(), tc.toPdfLogString(),
                     strComparator, timeout, verbose, colorSetting, updateOut, generateOut);
+            p.setWorkingDir(tc.getWorkingDir());
             ps.add(p);
             tpe.execute(p);
             pdfSteps++;
@@ -254,8 +309,11 @@ public class TestSuite {
             else
                 kompileSuccesses.add(tc);
         }
-        System.out.println("Kompiling definitions that are not yet kompiled.");
-        kompileSuccesses.addAll(runKompileSteps(notKompiled));
+
+        if (!notKompiled.isEmpty()) {
+            System.out.println("Kompiling definitions that are not yet kompiled.");
+            kompileSuccesses.addAll(runKompileSteps(notKompiled));
+        }
 
         // at this point we have a subset of tests that are successfully kompiled,
         // so run programs of those tests
@@ -368,9 +426,14 @@ public class TestSuite {
 
         if (verbose)
             printVerboseRunningMsg(program);
+        StringMatcher matcher = strComparator;
+        if (program.regex) {
+            matcher = new RegexStringMatcher();
+        }
         Proc<KRunProgram> p = new Proc<>(program, args, inputContents, outputContentsAnn,
-                errorContentsAnn, program.toLogString(), strComparator, timeout, verbose,
+                errorContentsAnn, program.toLogString(), matcher, timeout, verbose,
                 colorSetting, updateOut, generateOut, program.outputFile, program.newOutputFile);
+        p.setWorkingDir(new File(program.defPath));
         tpe.execute(p);
         krunSteps++;
         return p;
@@ -411,7 +474,7 @@ public class TestSuite {
         return absolutePath.replaceFirst(pathRegex, "");
     }
 
-    private void makeReport(Proc p, String definition, String testName) {
+    private void makeReport(Proc<?> p, String definition, String testName) {
         if (reportGen == null)
             return;
         if (p.isSuccess())

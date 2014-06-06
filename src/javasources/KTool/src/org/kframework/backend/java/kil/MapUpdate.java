@@ -1,3 +1,4 @@
+// Copyright (c) 2013-2014 K Team. All Rights Reserved.
 package org.kframework.backend.java.kil;
 
 import java.util.HashMap;
@@ -21,7 +22,7 @@ import com.google.common.collect.Sets;
  *
  * @author AndreiS
  */
-public class MapUpdate extends Term {
+public class MapUpdate extends Term implements DataStructureUpdate {
 
     /** {@link Term} representation of the map */
     private final Term map;
@@ -83,9 +84,19 @@ public class MapUpdate extends Term {
     }
 
     @Override
+    public boolean isExactSort() {
+        return true;
+    }
+
+    @Override
     public boolean isSymbolic() {
         // TODO(YilongL): throw an exception instead?
         return false;
+    }
+
+    @Override
+    public String sort() {
+        return map.sort();
     }
 
     @Override

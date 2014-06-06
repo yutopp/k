@@ -1,3 +1,4 @@
+// Copyright (c) 2012-2014 K Team. All Rights Reserved.
 require "bool.k"
 require "int.k"
 require "array.k"
@@ -8,6 +9,10 @@ require "io/tcp.k"
 require "k-equal.k"
 require "random.k"
 require "counter.k"
+require "map.k"
+require "list.k"
+require "set.k"
+require "fresh.k"
 //require "model-checker.k"
 
 module BUILTIN-SYNTAX-HOOKS
@@ -24,6 +29,7 @@ endmodule
 module BUILTIN-HOOKS
   imports BOOL-HOOKS 
   imports INT-HOOKS
+  imports ID-HOOKS
 //  imports ARRAY
   imports FLOAT-HOOKS 
   imports STRING-HOOKS
@@ -32,6 +38,7 @@ module BUILTIN-HOOKS
   imports RANDOM-HOOKS
   imports COUNTER-HOOKS
   imports ID-HOOKS
+  imports FRESH-HOOKS
   //imports LTL-HOOKS
   //imports MODEL-CHECKER-HOOKS
 endmodule

@@ -1,3 +1,4 @@
+// Copyright (c) 2013-2014 K Team. All Rights Reserved.
 package org.kframework.backend.java.builtins;
 
 import org.kframework.backend.java.kil.Term;
@@ -18,7 +19,7 @@ import java.util.Map;
  * 
  * @author AndreiS
  */
-public class UninterpretedToken extends Token {
+public final class UninterpretedToken extends Token {
 
     /* Token cache */
     private static final Map<String, Map <String, UninterpretedToken>> cache = new HashMap<String, Map <String, UninterpretedToken>>();

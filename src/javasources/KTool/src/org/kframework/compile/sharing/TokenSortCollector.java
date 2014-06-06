@@ -1,12 +1,16 @@
+// Copyright (c) 2013-2014 K Team. All Rights Reserved.
 package org.kframework.compile.sharing;
 
 import org.kframework.kil.Configuration;
 import org.kframework.kil.Definition;
 import org.kframework.kil.Production;
 import org.kframework.kil.Rule;
+import org.kframework.kil.Terminal;
 import org.kframework.kil.loader.Constants;
 import org.kframework.kil.loader.Context;
 import org.kframework.kil.visitors.BasicVisitor;
+import org.kframework.kompile.KompileOptions;
+import org.kframework.kompile.KompileOptions.Backend;
 import org.kframework.krun.K;
 import org.kframework.utils.errorsystem.KException;
 import org.kframework.utils.errorsystem.KException.ExceptionType;
@@ -43,23 +47,27 @@ public class TokenSortCollector extends BasicVisitor {
      */
     public static Set<String> collectTokenSorts(Definition definition, Context context) {
         TokenSortCollector collector = new TokenSortCollector(context);
-        definition.accept(collector);
+        collector.visitNode(definition);
         return collector.tokenSorts;
     }
+    
+    private KompileOptions kompileOptions;
 
     private TokenSortCollector(Context context) {
         super(context);
+        this.kompileOptions = context.kompileOptions;
     }
 
     @Override
-    public void visit(Production production) {
-        if (GlobalSettings.javaBackend || K.backend.equals("java")) {
+    public Void visit(Production production, Void _) {
+        if (kompileOptions.backend.java() || K.backend.equals("java")) {
             checkIllegalProduction(production);
         } else {
             if (production.isLexical() && !production.containsAttribute(Constants.VARIABLE)) {
                 tokenSorts.add(production.getSort());
             }
         }
+        return null;
     }
     
     /**
@@ -86,12 +94,14 @@ public class TokenSortCollector extends BasicVisitor {
             
             tokenSorts.add(sort);
         }
-        
-        if (!production.isLexical() && !production.containsAttribute(Constants.FUNCTION)) {
-            /*
-             * The second check above is used to filter out cases such as the following:
-             *   syntax Id ::= "String2Id" "(" String ")"  [function, klabel(String2Id)] 
-             */
+
+        /*
+         * The second and third check above is used to filter out cases such as the following:
+         *   syntax Id ::= "Main"
+         *   syntax Id ::= "String2Id" "(" String ")"  [function, klabel(String2Id)]
+         */
+        if (!production.isLexical() && !production.isTerminal()
+                && !production.containsAttribute(Constants.FUNCTION))  {
             if (tokenSorts.contains(sort)) {
                 String msg = "Cannot subsort a non-lexical production to a token sort:\nsyntax "
                         + sort + " ::= " + production;
@@ -105,12 +115,18 @@ public class TokenSortCollector extends BasicVisitor {
     }
 
     @Override
-    public void visit(Rule node) { }
+    public Void visit(Rule node, Void _) { 
+        return null;
+    }
 
     @Override
-    public void visit(org.kframework.kil.Context node) { }
+    public Void visit(org.kframework.kil.Context node, Void _) { 
+        return null;
+    }
 
     @Override
-    public void visit(Configuration node) { }
+    public Void visit(Configuration node, Void _) { 
+        return null;
+    }
 
 }

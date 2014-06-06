@@ -1,3 +1,4 @@
+// Copyright (c) 2013-2014 K Team. All Rights Reserved.
 package org.kframework.backend.java.kil;
 
 import com.google.common.base.Joiner;
@@ -20,7 +21,7 @@ import java.util.List;
  * @author AndreiS
  */
 @SuppressWarnings("serial")
-public abstract class KCollection extends Collection implements Iterable<Term>, Sorted {
+public abstract class KCollection extends Collection implements Iterable<Term> {
 
     /**
      * A list of {@code Term}s contained in this {@code KCollection}.
@@ -98,6 +99,16 @@ public abstract class KCollection extends Collection implements Iterable<Term>, 
     @Override
     public int size() {
         return contents.size();
+    }
+
+    @Override
+    public final boolean isExactSort() {
+        if (contents.size() == 1) {
+            return !hasFrame() && contents.get(0).isExactSort();
+        } else {
+            /* 2 elements make a proper K collection */
+            return true;
+        }
     }
 
     @Override

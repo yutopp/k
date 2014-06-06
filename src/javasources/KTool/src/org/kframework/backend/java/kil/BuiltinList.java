@@ -1,3 +1,5 @@
+// Copyright (c) 2013-2014 K Team. All Rights Reserved.
+
 package org.kframework.backend.java.kil;
 
 import java.util.ArrayList;
@@ -22,7 +24,7 @@ import com.google.common.base.Joiner;
 /**
  * @author: TraianSF
  */
-public class BuiltinList extends Collection implements Sorted {
+public class BuiltinList extends Collection {
 
     private final ImprovedArrayDeque<Term> elementsLeft;
     protected final ImprovedArrayDeque<Term> elementsRight;
@@ -83,9 +85,11 @@ public class BuiltinList extends Collection implements Sorted {
         return elementsLeft.size() + elementsRight.size();
     }
 
-    /**
-     * Returns a {@code String} representation of the sort of this object.
-     */
+    @Override
+    public boolean isExactSort() {
+        return true;
+    }
+
     @Override
     public String sort() {
         return KSorts.LIST;
@@ -254,7 +258,6 @@ public class BuiltinList extends Collection implements Sorted {
                 for (int i = removeRight; i < size; i++) {
                    right.add(iterator.next());
                 }
-                right.addAll(elementsRight);
                 if (removeRight > size) {
                     removeRight -= size;
                 } else removeRight = 0;

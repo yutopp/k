@@ -1,10 +1,13 @@
+// Copyright (c) 2013-2014 K Team. All Rights Reserved.
 package org.kframework.backend.java.symbolic;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Map;
 
+import org.kframework.backend.java.builtins.FreshOperations;
 import org.kframework.backend.java.builtins.IntToken;
+import org.kframework.backend.java.builtins.StringToken;
 import org.kframework.backend.java.kil.ConstrainedTerm;
 import org.kframework.backend.java.kil.Definition;
 import org.kframework.backend.java.kil.Rule;
@@ -75,7 +78,9 @@ public class StepRewriter {
             constrainedTerm.termContext());
         leftHandSideConstraint.addAll(rule.requires());
         for (Variable variable : rule.freshVariables()) {
-            leftHandSideConstraint.add(variable, IntToken.fresh());
+            leftHandSideConstraint.add(
+                    variable,
+                    FreshOperations.fresh(variable.sort(), constrainedTerm.termContext()));
         }
 
         ConstrainedTerm leftHandSide = new ConstrainedTerm(
@@ -120,7 +125,7 @@ public class StepRewriter {
         SymbolicConstraint leftHandSideConstraint = new SymbolicConstraint(context);
         leftHandSideConstraint.addAll(rule.requires());
         for (Variable variable : rule.freshVariables()) {
-            leftHandSideConstraint.add(variable, IntToken.fresh());
+            leftHandSideConstraint.add(variable, FreshOperations.fresh(variable.sort(), context));
         }
 
         ConstrainedTerm leftHandSide = new ConstrainedTerm(

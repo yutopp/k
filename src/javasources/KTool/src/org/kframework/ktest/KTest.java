@@ -1,3 +1,4 @@
+// Copyright (c) 2013-2014 K Team. All Rights Reserved.
 package org.kframework.ktest;
 
 import org.apache.commons.cli.HelpFormatter;
@@ -12,6 +13,7 @@ import org.kframework.ktest.Config.InvalidConfigError;
 import org.kframework.ktest.Config.LocationData;
 import org.kframework.ktest.Test.TestCase;
 import org.kframework.ktest.Test.TestSuite;
+import org.kframework.main.GlobalOptions;
 import org.kframework.utils.OptionComparator;
 import org.kframework.utils.errorsystem.KException;
 import org.kframework.utils.file.FileUtil;
@@ -43,6 +45,9 @@ public class KTest {
             printVersion();
         else {
             CmdArg cmdArgs = CmdArg.validateArgs(argParser.cmdOpts);
+            GlobalOptions globalOptions = new GlobalOptions();
+            globalOptions.verbose = cmdArgs.isVerbose();
+            globalOptions.initialize();
             TestSuite testSuite = makeTestSuite(cmdArgs.getTargetFile(), cmdArgs);
             if (cmdArgs.getDry())
                 testSuite.dryRun();
@@ -92,13 +97,18 @@ public class KTest {
         System.out.println(FileUtil.getFileContent(KPaths.getKBase(false) + KPaths.VERSION_FILE));
     }
 
-    public static void main(String[] args) {
+    /**
+     * 
+     * @param args
+     * @return true if the application terminated normally; false otherwise
+     */
+    public static boolean main(String[] args) {
         try {
-            System.exit(new KTest(args).run());
+            return new KTest(args).run() == 0;
         } catch (ParseException | InvalidArgumentException | SAXException |
                 ParserConfigurationException | IOException | InterruptedException |
                 TransformerException e) {
-            //e.printStackTrace();
+            e.printStackTrace();
             GlobalSettings.kem.register(
                     new KException(KException.ExceptionType.ERROR,
                             KException.KExceptionGroup.CRITICAL,
@@ -110,6 +120,6 @@ public class KTest {
                             KException.KExceptionGroup.CRITICAL,
                             e.getMessage(), location.getSystemId(), location.getPosStr()));
         }
-        System.exit(1);
+        return false;
     }
 }

@@ -1,3 +1,4 @@
+// Copyright (c) 2013-2014 K Team. All Rights Reserved.
 package org.kframework.backend.java.builtins;
 
 import org.kframework.backend.java.kil.Term;
@@ -25,7 +26,7 @@ import java.util.Map;
  *
  * @author DwightG
  */
-public class StringToken extends Token {
+public final class StringToken extends Token {
 
     public static final String SORT_NAME = "String";
 
@@ -108,7 +109,7 @@ public class StringToken extends Token {
      */
     @Override
     public String value() {
-        return StringUtil.escapeK(value);
+        return StringUtil.enquoteString(value);
     }
 
     @Override

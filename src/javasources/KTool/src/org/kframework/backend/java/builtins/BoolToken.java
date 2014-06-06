@@ -1,3 +1,4 @@
+// Copyright (c) 2013-2014 K Team. All Rights Reserved.
 package org.kframework.backend.java.builtins;
 
 import org.kframework.backend.java.kil.Term;
@@ -14,7 +15,7 @@ import org.kframework.kil.ASTNode;
  *
  * @author AndreiS
  */
-public class BoolToken extends Token {
+public final class BoolToken extends Token {
 
     public static final String SORT_NAME = "Bool";
 

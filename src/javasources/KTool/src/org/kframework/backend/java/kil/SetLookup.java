@@ -1,3 +1,4 @@
+// Copyright (c) 2013-2014 K Team. All Rights Reserved.
 package org.kframework.backend.java.kil;
 
 import org.kframework.backend.java.builtins.BoolToken;
@@ -30,6 +31,10 @@ public class SetLookup extends Term implements DataStructureLookup {
 
         if (((BuiltinSet) base).contains(key)) {
             return BoolToken.TRUE;
+        } else if (base.isGround() && key.isGround()) {
+            return BoolToken.FALSE;
+        } else if (((BuiltinSet) base).isEmpty()) {
+            return BoolToken.FALSE;
         }
         return  this;
     }
@@ -43,10 +48,20 @@ public class SetLookup extends Term implements DataStructureLookup {
     }
 
     @Override
+    public boolean isExactSort() {
+        return true;
+    }
+
+    @Override
     public boolean isSymbolic() {
         return true;
 //        assert false : "isSymbolic is not supported by SetLookup (yet)";
 //        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public String sort() {
+        return BoolToken.SORT_NAME;
     }
 
     @Override

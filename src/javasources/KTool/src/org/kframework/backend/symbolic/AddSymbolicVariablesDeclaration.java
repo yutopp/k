@@ -1,9 +1,10 @@
+// Copyright (c) 2013-2014 K Team. All Rights Reserved.
 package org.kframework.backend.symbolic;
 
 import org.kframework.kil.*;
 import org.kframework.kil.loader.Context;
 import org.kframework.kil.visitors.BasicVisitor;
-import org.kframework.utils.general.GlobalSettings;
+import org.kframework.kompile.KompileOptions;
 
 import java.util.*;
 
@@ -28,9 +29,9 @@ public class AddSymbolicVariablesDeclaration extends BasicVisitor {
     }
 
     @Override
-    public void visit(Module module) {
+    public Void visit(Module module, Void _) {
 
-        if (module.getName().equals(syntaxModule) && GlobalSettings.symbolic) {
+        if (module.getName().equals(syntaxModule) && context.kompileOptions.backend == KompileOptions.Backend.SYMBOLIC) {
 
             // adding lexical construct
             Lexical lexical = new Lexical(terminal, follow);
@@ -46,7 +47,7 @@ public class AddSymbolicVariablesDeclaration extends BasicVisitor {
             module.setItems(itemsS);
         }
 
-        super.visit(module);    //To change body of overridden methods use File | Settings | File Templates.
+        return super.visit(module, _);    //To change body of overridden methods use File | Settings | File Templates.
     }
 
     private Syntax getSyntaxDeclaration(String sortName, ProductionItem pi, Attributes attributes) {

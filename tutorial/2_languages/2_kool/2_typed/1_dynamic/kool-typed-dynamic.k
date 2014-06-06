@@ -1,3 +1,4 @@
+// Copyright (c) 2012-2014 K Team. All Rights Reserved.
 /*!
 \title{KOOL --- Typed --- Dynamic}
 \author{Grigore Ro\c{s}u and Traian Florin \c{S}erb\u{a}nu\c{t}\u{a}
@@ -512,17 +513,16 @@ encountered. */
 Like in untyped KOOL. */
 
   rule <thread>...
-         <k> spawn S => T ...</k>
+         <k> spawn S => !T:Int ...</k>
          <env> Env </env>
          <crntObj> Obj </crntObj>
        ...</thread>
        (. => <thread>...
                <k> S </k>
                <env> Env </env>
-               <id> T </id>
+               <id> !T </id>
                <crntObj> Obj </crntObj>
              ...</thread>)
-    when fresh(T:Int)
 
 
 //@ \subsection{Semantics of the new KOOL constructs}

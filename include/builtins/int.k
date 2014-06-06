@@ -1,6 +1,8 @@
+// Copyright (c) 2012-2014 K Team. All Rights Reserved.
 require "k-equal.k"
 module INT-SYNTAX-HOOKS
   imports #INT-INTERFACE
+  syntax #Int ::= Token{[\-\+]? [0-9]+} [regex("[\\+-]?\\d+")]
   syntax Int ::= #Int
 endmodule
 
@@ -70,4 +72,8 @@ module INT-HOOKS
 
   rule 0 +Int I:Int => I [anywhere]
   rule 0 *Int I:Int => 0 [anywhere]
+
+  syntax Int ::= freshInt(Int)    [freshGenerator, function]
+  rule freshInt(I) => I
 endmodule
+

@@ -1,3 +1,4 @@
+// Copyright (c) 2014 K Team. All Rights Reserved.
 /*@
 \title{KOOL --- Typed --- Static}
 \author{Grigore Ro\c{s}u and Traian Florin \c{S}erb\u{a}nu\c{t}\u{a}
@@ -104,7 +105,7 @@ static semantics of KOOL using the modified programs.  To avoid seeing
 the wrapper in the generated documentation, we associate it an
 ``invisibility'' latex attribute below.  */
 
-  syntax Id ::= Token{"theObject"} | Token{"theMain"}
+  syntax Id ::= "Object" | "Main"
 
 //@ \subsection{Types}
 
@@ -200,7 +201,7 @@ the wrapper in the generated documentation, we associate it an
   rule T:Type E1:Exp, E2:Exp, Es:Exps; => T E1; T E2, Es;               [macro]
   rule T:Type X:Id = E; => T X; X = E;                                  [macro]
 
-  rule class C:Id S => class C extends theObject S
+  rule class C:Id S => class C extends Object S
 
 endmodule
 
@@ -266,7 +267,7 @@ in the class extends relation. */
                   <br/>
                   <classes color="Fuchsia">
                     <class multiplicity="*">
-                      <className color="Fuchsia"> theObject </className>
+                      <className color="Fuchsia"> Object </className>
                       <extends color="Fuchsia"> .K </extends>
                       <extendsAll color="Fuchsia"> .Set </extendsAll>
                       <ctenv multiplicity="?" color="blue"> .Map </ctenv>
@@ -405,7 +406,7 @@ checks whether the argument type is correct (it actually works with
 lists of types as well). */
 
   rule <k> T:Type X:Id; => checkType(T) ~> stmt ...</k>
-       <tenv> Rho => Rho[T / X] </tenv>
+       <tenv> Rho => Rho[X <- T] </tenv>
 
 
 /*@ \subsubsection{Class member declaration}
@@ -428,14 +429,14 @@ PDF document because of its latex attribute (see the ASCII .k file,
 at the end of this module). */
 
   rule <k> T:Type X:Id; => checkType(T) ~> stmt ...</k>
-       <ctenvT> Rho (. => X |-> T) </ctenvT>
+       <ctenvT> Rho (.Map => X |-> T) </ctenvT>
     when notBool(X in keys(Rho))
 
   rule <k> T:Type X:Id; => stuck(T X;) ...</k>
        <ctenvT>... X |-> _ ...</ctenvT>
        <inClass> C:Id </inClass>
        <br/>
-       <out>... . => ListItem("Member \"" +String Id2String(X)
+       <out>... .List => ListItem("Member \"" +String Id2String(X)
                               +String "\" declared twice in class \""
                               +String Id2String(C) +String "\"!\n") </out>
     [structural]
@@ -551,7 +552,7 @@ instance of this rule). */
        (. => <task>
                 <k> checkType(class(C')) ~> S </k>
                 <inClass> C </inClass>
-                <ctenvT> . </ctenvT>
+                <ctenvT> .Map </ctenvT>
              </task>)  [structural]
 
 //@ \paragraph{Check for unique class names}
@@ -562,7 +563,7 @@ instance of this rule). */
   rule <T> (<classes>... <className> C </className>
                          <className> C </className>
             ...</classes> _ => .)
-           <out>... . => ListItem("Class \"" +String Id2String(C)
+           <out>... .List => ListItem("Class \"" +String Id2String(C)
                                   +String "\" declared twice!\n") </out>
        </T>  [structural]
 
@@ -575,10 +576,10 @@ superclass relation, the second transitively closes it, and the third
 checks for cycles. */
 
   rule <extends> C </extends>
-       <extendsAll> . => SetItem(C) </extendsAll>  [structural]
+       <extendsAll> .Set => SetItem(C) </extendsAll>  [structural]
 
   rule <class>...
-         <extendsAll> SetItem(C) Cs:Set (. => SetItem(C')) </extendsAll>
+         <extendsAll> SetItem(C) Cs:Set (.Set => SetItem(C')) </extendsAll>
        ...</class>
        <class>... <className>C</className> <extends>C'</extends> ...</class>
     when notBool(C' in SetItem(C) Cs)  [structural]
@@ -587,7 +588,7 @@ checks for cycles. */
   rule <T> (<classes>... <className> C </className>
                          <extendsAll>... SetItem(C) ...</extendsAll>
             ...</classes> _ => .)
-           <out>... . => ListItem("Class \"" +String Id2String(C)
+           <out>... .List => ListItem("Class \"" +String Id2String(C)
                                   +String "\" is in a cycle!\n") </out>
        </T>  [structural]
 
@@ -681,10 +682,10 @@ wait.  Finally, the sixth rule below reports an error when the
        <ctenv> Rho </ctenv>
     when notBool(X in keys(Rho))  [structural]
 
-  rule <k> class(theObject) . X:Id => stuck(class(theObject) . X) ...</k>
+  rule <k> class(Object) . X:Id => stuck(class(Object) . X) ...</k>
        <inClass> C:Id </inClass>
        <br/>
-       <out>... . => ListItem("Member \"" +String Id2String(X)
+       <out>... .List => ListItem("Member \"" +String Id2String(X)
                               +String "\" not declared! (see class \""
                               +String Id2String(C) +String "\")\n") </out>
     [structural]
@@ -715,7 +716,7 @@ of the language need to insert runtime checks for downcasting to be safe. */
          <className> C2 </className>
          <extendsAll> S2 </extendsAll>
        ...</class>
-       <out>... . => ListItem("Classes \"" +String Id2String(C1)
+       <out>... .List => ListItem("Classes \"" +String Id2String(C1)
                               +String "\" and \"" +String Id2String(C2)
                               +String "\" are incompatible!\n") </out>
     when notBool(C1 in S2) andBool notBool(C2 in S1)
@@ -740,10 +741,10 @@ the \textsf{tasks} cell has been removed. */
 // discard main task when done, issuing a "new main();" command to
 // make sure that the class main and the method main() are declared.
 
-  rule <task> <k> stmt => new theMain(.Exps); </k>
-              (. => <tenv> . </tenv>
+  rule <task> <k> stmt => new Main(.Exps); </k>
+              (. => <tenv> .Map </tenv>
                     <return> void </return>
-                    <inClass> theMain </inClass>)
+                    <inClass> Main </inClass>)
        </task>
     [structural]
 
@@ -769,7 +770,7 @@ the \textsf{tasks} cell has been removed. */
 // cleanup tasks and output a success message when done
 
   rule (<tasks> .Bag </tasks> => .)
-       <out>... . => ListItem("Type checked!\n") </out>
+       <out>... .List => ListItem("Type checked!\n") </out>
     [structural]
 
 
@@ -817,7 +818,7 @@ check that the types used in the program actually exists */
   rule checkType(void) => .  [structural]
   rule <k> checkType(class(C:Id)) => . ...</k> <className> C </className>
     [structural]
-  rule checkType(class(theObject)) => .  [structural]
+  rule checkType(class(Object)) => .  [structural]
   rule checkType(Ts:Types -> T:Type) => checkType(T,Ts)  [structural]
   rule checkType(T:Type[]) => checkType(T)  [structural]
 
@@ -845,7 +846,7 @@ is co-variant in the codomain and contra-variant in the domain). */
        <ctenv> Rho </ctenv>
     when notBool(F in keys(Rho))  [structural]
 
-  rule checkMethod(_:Id,_,theObject) => .
+  rule checkMethod(_:Id,_,Object) => .
 
 
 //@\subsubsection{Generic operations which could be part of the \K framework}
@@ -854,10 +855,5 @@ is co-variant in the codomain and contra-variant in the domain). */
 
   syntax KItem ::= "discard"
   rule _:KResult ~> discard => .  [structural]
-
-// The following two rules would shadow the builtin implementation of Id2String
-// in the Java backend since user-defined rule
-  rule Id2String(theMain) => "Main"
-  rule Id2String(theObject) => "Object"
-
 endmodule
+

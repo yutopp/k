@@ -1,3 +1,4 @@
+// Copyright (c) 2012-2014 K Team. All Rights Reserved.
 package org.kframework.compile.transformers;
 
 import org.kframework.compile.utils.MetaK;
@@ -5,7 +6,6 @@ import org.kframework.compile.utils.SyntaxByTag;
 import org.kframework.kil.*;
 import org.kframework.kil.loader.Context;
 import org.kframework.kil.visitors.CopyOnWriteTransformer;
-import org.kframework.kil.visitors.exceptions.TransformerException;
 import org.kframework.parser.basic.Basic;
 import org.kframework.parser.basic.ParseException;
 import org.kframework.utils.errorsystem.KException;
@@ -29,14 +29,14 @@ public class StrictnessToContexts extends CopyOnWriteTransformer {
     public static final String STRICT = "strict";
     public static final String SEQSTRICT = "seqstrict";
     public static final String CONTEXT = "context";
-    private List<ModuleItem> items = new ArrayList<ModuleItem>();
+    private List<ModuleItem> items = new ArrayList<>();
 
     public StrictnessToContexts(Context context) {
         super("Strict Ops To Context", context);
     }
 
     @Override
-    public ASTNode transform(Module node) throws TransformerException {
+    public ASTNode visit(Module node, Void _)  {
         //collect the productions which have the attributes strict and seqstrict
         Set<Production> prods = SyntaxByTag.get(node, "strict", true, context);
         prods.addAll(SyntaxByTag.get(node, "seqstrict", true, context));
@@ -44,7 +44,7 @@ public class StrictnessToContexts extends CopyOnWriteTransformer {
             return node;
         }
 
-        items = new ArrayList<ModuleItem>(node.getItems());
+        items = new ArrayList<>(node.getItems());
         node = node.shallowCopy();
         node.setItems(items);
 
@@ -53,7 +53,7 @@ public class StrictnessToContexts extends CopyOnWriteTransformer {
                    || !prod.containsAttribute("strict", true) && prod.containsAttribute("seqstrict", true);
             Boolean isSeq = prod.containsAttribute("seqstrict", true);
 
-            if (!MetaK.isComputationSort(prod.getSort()) || prod.getSort().equals(KSorts.KLABEL)) {
+            if (!(MetaK.isComputationSort(prod.getSort()) || prod.getSort().equals(KSorts.KLABEL))) {
                 GlobalSettings.kem.register(new KException(ExceptionType.ERROR,
                         KExceptionGroup.COMPILER,
                         "only productions of sort K, sort KLabel or of syntactic sorts can have "
@@ -83,7 +83,7 @@ public class StrictnessToContexts extends CopyOnWriteTransformer {
                 }
             }
 
-            if (prod.isConstant()) {
+            if (prod.isConstant() && !prod.getSort().equals(KSorts.KLABEL)) {
                 GlobalSettings.kem.register(new KException(ExceptionType.ERROR,
                         KExceptionGroup.COMPILER,
                         "Production is a constant and cannot be strict.",
@@ -146,7 +146,6 @@ public class StrictnessToContexts extends CopyOnWriteTransformer {
             }
             for (Attribute strictAttr : strictAttrs.getContents()) {
                 Attributes strictAttrAttrs = null;
-                String strictAttrKey = strictAttr.getKey();
                 String strictAttrValue = strictAttr.getValue();
                 if (strictAttrValue.isEmpty()) strictAttrAttrs = new Attributes();
                 else {
@@ -228,14 +227,14 @@ public class StrictnessToContexts extends CopyOnWriteTransformer {
                 Attribute newStrictAttr = newStrictAttrs.get(i);
                 TermCons termCons = (TermCons) MetaK.getTerm(prod, context);
                 for (int j = 0; j < prod.getArity(); ++j) {
-                    if (GlobalSettings.javaBackend) {
+                    if (kompileOptions.backend.java()) {
                         /*
                          * the Java Rewrite Engine only supports strictness with
                          * KItem variables The only exception is if the
                          * "use_concrete" flag is used (needed for test
                          * generation)
                          */
-                        if (!GlobalSettings.testgen) {
+                        if (kompileOptions.experimental.testGen) {
                             termCons.getContents().get(j).setSort(KSorts.KITEM);
                         }
                     } else {
@@ -252,7 +251,7 @@ public class StrictnessToContexts extends CopyOnWriteTransformer {
                 if (isSeq) {
                     for (int j = 0; j < i; ++j) {
                         Term arg = termCons.getContents().get(-1 + Integer.parseInt(newStrictAttrs.get(j).getKey()));
-                        if (GlobalSettings.testgen) {
+                        if (kompileOptions.experimental.testGen) {
                             KApp kResultPred = KApp.of(KLabelConstant.KRESULT_PREDICATE, arg);
                             sideCond = sideCond == null ? kResultPred : 
                                 KApp.of(KLabelConstant.BOOL_ANDBOOL_KLABEL, sideCond, kResultPred);
@@ -331,7 +330,7 @@ public class StrictnessToContexts extends CopyOnWriteTransformer {
      * If KLabel is seqstrict then add the condition isKResult(KList1)
      */
     private void kLabelStrictness(Production prod, boolean isSeq) {
-        List<Term> contents = new ArrayList<Term>(3);
+        List<Term> contents = new ArrayList<>(3);
         //first argument is a variable of sort KList
         Variable variable = Variable.getFreshVar(KSorts.KLIST);
         contents.add(variable);

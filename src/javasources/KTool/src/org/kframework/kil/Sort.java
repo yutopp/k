@@ -1,12 +1,11 @@
+// Copyright (c) 2012-2014 K Team. All Rights Reserved.
 package org.kframework.kil;
 
 import java.util.HashSet;
 import java.util.Set;
 
 import org.kframework.compile.utils.MetaK;
-import org.kframework.kil.visitors.Transformer;
 import org.kframework.kil.visitors.Visitor;
-import org.kframework.kil.visitors.exceptions.TransformerException;
 
 /** A nonterminal in a {@link Production}. Also abused in some places as a sort identifier */
 public class Sort extends ProductionItem {
@@ -20,12 +19,6 @@ public class Sort extends ProductionItem {
         baseSorts.add("KResult");
         baseSorts.add(KSorts.KITEM);
         baseSorts.add(KSorts.KLIST);
-        baseSorts.add("Map");
-        baseSorts.add("MapItem");
-        baseSorts.add("List");
-        baseSorts.add("ListItem");
-        baseSorts.add("Set");
-        baseSorts.add("SetItem");
         baseSorts.add("Bag");
         baseSorts.add("BagItem");
         baseSorts.add(KSorts.KLABEL);
@@ -74,13 +67,8 @@ public class Sort extends ProductionItem {
     }
 
     @Override
-    public void accept(Visitor visitor) {
-        visitor.visit(this);
-    }
-
-    @Override
-    public ASTNode accept(Transformer transformer) throws TransformerException {
-        return transformer.transform(this);
+    protected <P, R, E extends Throwable> R accept(Visitor<P, R, E> visitor, P p) throws E {
+        return visitor.complete(this, visitor.visit(this, p));
     }
 
     @Override

@@ -1,9 +1,11 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Copyright (c) 2012-2014 K Team. All Rights Reserved. -->
 <project basedir="." default="build" name="KTool Build file">
 
-	<property location="src/javasources" name="javasources" />
-	<property name="version" value="nightly" />
-	<property name="config" value="./tests/config.xml" />
+    <property location="src/javasources" name="javasources" />
+    <property name="version" value="nightly" />
+    <property name="config" value="./tests/config.xml" />
+    <property name="base" value="master" />
 
 	<target name="java">
 		<ant antfile="${javasources}/KTool/buildjava.xml" dir="${javasources}/KTool" />
@@ -51,8 +53,11 @@
 		<delete file="${javasources}/../../lib/java/k3.jar" />
 		<delete file="${javasources}/../../lib/version.txt" />
 		<delete dir="./k/" />
+                <!-- Next task is removable once everybody updates -->
+                <delete failonerror="false"> 
+                   <fileset dir="${javasources}/KTool/src/org/kframework/backend/pdmc/pda/buchi/parser" includes="*.java" />  
+                </delete>
 		<delete>
-			<fileset dir="${javasources}/KTool/src/org/kframework/backend/pdmc/pda/buchi/parser" includes="*.java" />
 			<fileset dir="${javasources}/KTool/src/org/kframework/parser/basic" includes="*.java" />
 			<fileset dir="${javasources}/KTool/src/org/kframework/utils/kastparser" includes="*.java" />
 		</delete>
@@ -61,11 +66,15 @@
 	<target name="makeversion">
 		<property name="version.file" value="./lib/version.txt" />
 
-		<exec executable="git" outputproperty="version.out">
+		<exec executable="git" outputproperty="version.out" failifexecutionfails="false">
 			<arg value="rev-parse" />
 			<arg value="--short" />
 			<arg value="HEAD^" />
 		</exec>
+		
+		<condition property="version.out" value="Failed to execute Git in command line.">
+			<isset property="version.out" />
+		</condition>
 
 		<tstamp>
 			<format property="date" pattern="EEE MMM d HH:mm:ss z yyyy" />
@@ -132,8 +141,6 @@
 				<include name="k/lib/maude/binaries/maude.linux64" />
 				<include name="k/lib/native/linux/sdf2table" />
 				<include name="k/lib/native/macosx/sdf2table" />
-				<include name="k/lib/native/linux/sglr-server" />
-				<include name="k/lib/native/macosx/sglr-server" />
 				<include name="k/lib/native/linux/gappa" />
 				<include name="k/lib/native/macosx/gappa" />
 				<include name="k/lib/scripts/checkJava" />
@@ -151,8 +158,6 @@
 				<exclude name="k/bin/maude/binaries/maude.linux64" />
 				<exclude name="k/bin/native/linux/sdf2table" />
 				<exclude name="k/bin/native/macosx/sdf2table" />
-				<exclude name="k/bin/native/linux/sglr-server" />
-				<exclude name="k/bin/native/macosx/sglr-server" />
 				<exclude name="k/bin/native/linux/gappa" />
 				<exclude name="k/bin/native/macosx/gappa" />
 				<exclude name="k/lib/scripts/checkJava" />
@@ -193,11 +198,35 @@
     <taskdef resource="checkstyletask.properties"
              classpath="${javasources}/KTool/lib/checkstyle-all.jar"/>
 
+    <property name="checkstyle.suppress.file" location="${javasources}/KTool/checkstyle-suppress.xml" />
+
     <target name="checkstyle">
         <checkstyle config="${javasources}/KTool/checkstyle.xml">
             <fileset dir="${javasources}/KTool">
                 <include name="**/*.java"/>
                 <exclude name="src/org/kframework/parser/concrete/lib/**" />
+                <exclude name="src/org/kframework/utils/kastparser/*.java" />
+                <exclude name="src/org/kframework/parser/basic/*.java" />
+            </fileset>
+        </checkstyle>
+    </target>
+
+    <target name="checkstyle-copyright">
+        <exec executable="git" outputproperty="git.diff.out" failifexecutionfails="false">
+            <arg value="diff" />
+            <arg value="${base}" />
+            <arg value="--name-only" />
+        </exec>
+        <condition property="git.diff.out" value="">
+            <isset property="git.diff.out" />
+        </condition>
+        <filelist id="git.diff.filelist" dir="." files="${git.diff.out}" />
+        <pathconvert property="checkstyle.files" pathsep="," refid="git.diff.filelist" dirsep="/">
+            <map from="/" to="" />
+        </pathconvert>
+        <checkstyle config="${javasources}/KTool/checkstyle-copyright.xml">
+            <fileset dir="/" includes="${checkstyle.files}">
+                <!-- TODO: exclude files here which should not be given copyright notices -->
             </fileset>
         </checkstyle>
     </target>

@@ -1,3 +1,4 @@
+// Copyright (c) 2013-2014 K Team. All Rights Reserved.
 package org.kframework.backend.java.kil;
 
 import org.kframework.backend.java.symbolic.Matcher;
@@ -17,7 +18,7 @@ import java.util.Set;
  *
  * @author AndreiS
  */
-public class Variable extends Term implements Sorted {
+public class Variable extends Term {
 
     protected static final String VARIABLE_PREFIX = "_";
     protected static int counter = 0;
@@ -97,6 +98,11 @@ public class Variable extends Term implements Sorted {
     }
 
     @Override
+    public boolean isExactSort() {
+        return false;
+    }
+
+    @Override
     public boolean isSymbolic() {
         return true;
     }
@@ -154,13 +160,13 @@ public class Variable extends Term implements Sorted {
      * Renames serialized anonymous variables to avoid name clashes with existing anonymous
      * variables.
      */
-    private Object readResolve() {
+    Object readResolve() {
         if (anonymous) {
             int id = Integer.parseInt(name.substring(VARIABLE_PREFIX.length()));
             if (id < counter) {
                 Variable variable = deserializationAnonymousVariableMap.get(id);
                 if (variable == null) {
-                    variable = getFreshVariable(sort);
+                    variable = getFreshCopy();
                     deserializationAnonymousVariableMap.put(id, variable);
                 }
                 return variable;

@@ -1,4 +1,14 @@
+// Copyright (c) 2012-2014 K Team. All Rights Reserved.
 package org.kframework.utils;
+
+import java.util.Arrays;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import org.apache.commons.lang3.StringUtils;
+
+import com.beust.jcommander.JCommander;
+import com.beust.jcommander.ParameterDescription;
 
 public class StringUtil {
     public static String unescape(String str) {
@@ -13,6 +23,8 @@ public class StringUtil {
                     sb.append('\r');
                 else if (str.charAt(i + 1) == 't')
                     sb.append('\t');
+                else if (str.charAt(i + 1) == 'f')
+                    sb.append('\f');
                 else if (str.charAt(i + 1) == '"')
                     sb.append('"');
                 i++;
@@ -42,6 +54,8 @@ public class StringUtil {
                 result.append("\\t");
             } else if (codepoint == '\r') {
                 result.append("\\r");
+            } else if (codepoint == '\f') {
+                result.append("\\f");
             } else if (codepoint >= 32 && codepoint < 127) {
                 result.append((char)codepoint);
             } else if (codepoint <= 0xff) {
@@ -56,8 +70,12 @@ public class StringUtil {
         if (codePoint >= 0xd800 && codePoint <= 0xdfff) {
             //we are trying to encode a surrogate pair, which the unicode
             //standard forbids
-            throw new IllegalArgumentException();
+            throw new IllegalArgumentException(Integer.toHexString(codePoint) +
+                    " is not in the accepted unicode range.");
         }
+        if (codePoint >= 0x110000)
+            throw new IllegalArgumentException(Integer.toHexString(codePoint) +
+                    " is not in the accepted unicode range.");
     }
 
     public static int lastIndexOfAny(String str, String search, int offset) {
@@ -92,8 +110,17 @@ public class StringUtil {
         return -1;
     }
 
-    public static String unescapeK(String str) {
+    /**
+     * Removes the first and last double-quote characters and unescapes special characters.
+     * @param str double-quoted string
+     * @return unescaped and unquoted string
+     */
+    public static String unquoteString(String str) {
         StringBuilder sb = new StringBuilder();
+        assert str.charAt(0) == '"' :
+                "Expected to find double quote at the beginning of string: " + str;
+        assert str.charAt(str.length() - 1) == '"' :
+                "Expected to find double quote at the end of string: " + str;
         for (int i = 1; i < str.length() - 1; i++) {
             if (str.charAt(i) == '\\') {
                 if (str.charAt(i + 1) == '"') {
@@ -110,6 +137,9 @@ public class StringUtil {
                     i++;
                 } else if (str.charAt(i + 1) == 't') {
                     sb.append('\t');
+                    i++;
+                } else if (str.charAt(i + 1) == 'f') {
+                    sb.append('\f');
                     i++;
                 } else if (str.charAt(i + 1) == 'x') {
                     String arg = str.substring(i + 2, i + 4);
@@ -135,8 +165,12 @@ public class StringUtil {
         return sb.toString();
     }
 
-    
-    public static String escapeK(String value) {
+    /**
+     * Adds double-quote at the beginning and end of the string and escapes special characters.
+     * @param value any string
+     * @return C like textual representation of the string
+     */
+    public static String enquoteString(String value) {
         final int length = value.length();
         StringBuilder result = new StringBuilder();
         result.append("\"");
@@ -152,6 +186,8 @@ public class StringUtil {
                 result.append("\\t");
             } else if (codepoint == '\r') {
                 result.append("\\r");
+            } else if (codepoint == '\f') {
+                result.append("\\f");
             } else if (codepoint >= 32 && codepoint < 127) {
                 result.append((char)codepoint);
             } else if (codepoint <= 0xff) {
@@ -167,25 +203,6 @@ public class StringUtil {
         }
         result.append("\"");
         return result.toString();
-    }
-
-    /**
-     * Use this function to print XML directly as string, and not when using DOM.
-     * 
-     * @param str
-     * @return
-     *
-
-    public static String escapeToXmlAttribute(String str) {
-        str = str.replaceAll("\\", "\\\\");
-        str = str.replaceAll("\n", "\\n");
-        str = str.replaceAll("\r", "\\r");
-        str = str.replaceAll("\t", "\\t");
-        str = str.replaceAll("&", "&amp;");
-        str = str.replaceAll("<", "&lt;");
-        str = str.replaceAll(">", "&gt;");
-        str = str.replaceAll("\"", "&quot;");
-        return str;
     }
 
     /**
@@ -438,14 +455,16 @@ public class StringUtil {
     public static String splitLines(String str, int col) {
         String[] lines = str.split("\n");
         StringBuilder builder = new StringBuilder();
+        String nl = "";
         for (String line : lines) {
+            builder.append(nl);
             if (line.length() < 80) {
                 builder.append(line);
-                builder.append("\n");
+                
             } else {
                 builder.append(splitLine(line, col));
-                builder.append("\n");
             }
+            nl = "\n";
         }
 
         return builder.toString();
@@ -463,5 +482,66 @@ public class StringUtil {
             }
         }
         return str.substring(0, lastIdx) + "\n" + splitLine(str.substring(lastIdx + 1), col);
+    }
+
+    /**
+     * Finesse the JCommander usage output to make it more readable to the user.
+     * 
+     * This function does two things. First, it reworks the indentation to fix a 
+     * bug where different commands are indented differently. Second, it
+     * separates out experimental and non-experimental options in order to print
+     * their usage separately.
+     * @param string The unfiltered output from JCommander's usage
+     * @return An array of strings. If the command has experimental options, they 
+     * are in the second string, and the main options are in the first string.
+     * Otherwise, there will only be one string outputted.
+     */
+    public static String[] finesseJCommanderUsage(String string, JCommander jc) {
+        //for some reason the usage pattern indents commands inconsistently, so we need to adjust it
+        string = string.replaceAll("        ", "    ");
+        String lastLine = "";
+        StringBuilder mainOptions = new StringBuilder();
+        StringBuilder experimentalOptions = new StringBuilder();
+        experimentalOptions.append("  Experimental Options:\n");
+        boolean inExperimentalOptions = false;
+        for (String line : string.split("\n")) {
+            if (line.startsWith("    --")) {
+                if (lastLine.compareTo(line) > 0) {
+                    inExperimentalOptions = true;
+                }
+                lastLine = line;
+            }
+            if (inExperimentalOptions) {
+                experimentalOptions.append(line);
+                experimentalOptions.append("\n");
+            } else {
+                mainOptions.append(line);
+                mainOptions.append("\n");
+            }
+        }
+        return new String[] {mainOptions.toString(), experimentalOptions.toString()};
+    }
+    
+    public static String escapeShell(String[] args, OS os) {
+        if (os.isPosix) {
+            StringBuilder sb = new StringBuilder();
+            for (String arg : args) {
+                sb.append("'");
+                sb.append(StringUtils.replace(arg, "'", "'\\''"));
+                sb.append("' ");
+            }
+            sb.deleteCharAt(sb.length() - 1);
+            return sb.toString();
+        } else if (os == OS.WIN) {
+            StringBuilder sb = new StringBuilder();
+            for (String arg : args) {
+                sb.append('"');
+                sb.append(StringUtils.replace(StringUtils.replace(arg, "\\", "\\\\"), "\"", "\\\""));
+                sb.append("\" ");
+            }
+            sb.deleteCharAt(sb.length() - 1);
+            return sb.toString();
+        }
+        throw new IllegalArgumentException("unsupported OS");
     }
 }

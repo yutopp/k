@@ -1,3 +1,4 @@
+// Copyright (c) 2014 K Team. All Rights Reserved.
 package org.kframework.backend.java.kil;
 
 import org.kframework.backend.java.symbolic.Matcher;
@@ -43,8 +44,18 @@ public class KItemProjection extends Term {
     }
 
     @Override
+    public boolean isExactSort() {
+        return false;
+    }
+
+    @Override
     public boolean isSymbolic() {
         return true;
+    }
+
+    @Override
+    public String sort() {
+        return kind.toString();
     }
 
     @Override

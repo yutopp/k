@@ -1,6 +1,8 @@
+// Copyright (c) 2013-2014 K Team. All Rights Reserved.
 package org.kframework.backend.java.symbolic;
 
 import org.kframework.backend.BasicBackend;
+import org.kframework.backend.java.indexing.IndexingAlgorithm;
 import org.kframework.backend.java.indexing.IndexingTable;
 import org.kframework.backend.java.indexing.pathIndex.PathIndex;
 import org.kframework.compile.FlattenModules;
@@ -17,16 +19,15 @@ import org.kframework.compile.utils.*;
 import org.kframework.kil.ASTNode;
 import org.kframework.kil.Definition;
 import org.kframework.kil.loader.AddConsesVisitor;
+import org.kframework.kil.loader.CollectBracketsVisitor;
 import org.kframework.kil.loader.CollectConsesVisitor;
 import org.kframework.kil.loader.CollectSubsortsVisitor;
 import org.kframework.kil.loader.Context;
 import org.kframework.kil.visitors.CopyOnWriteTransformer;
-import org.kframework.kil.visitors.exceptions.TransformerException;
 import org.kframework.main.FirstStep;
 import org.kframework.main.LastStep;
 import org.kframework.utils.BinaryLoader;
 import org.kframework.utils.Stopwatch;
-import org.kframework.utils.general.GlobalSettings;
 
 import java.io.File;
 import java.io.IOException;
@@ -40,8 +41,6 @@ import java.io.IOException;
 public class JavaSymbolicBackend extends BasicBackend {
 
     public static final String DEFINITION_FILENAME = "java_symbolic_definition.bin";
-    public static final String RULE_TABLE_INDEX = "table";
-    public static final String PATH_INDEX = "path";
 
     private class DefinitionSerializer extends CopyOnWriteTransformer {
 
@@ -49,8 +48,8 @@ public class JavaSymbolicBackend extends BasicBackend {
             super("Serialize Compiled Definition to XML", context);
         }
         @Override
-        public ASTNode transform(Definition node) throws TransformerException {
-            BinaryLoader.save(new File(context.dotk, "defx-java.bin").toString(), node);
+        public ASTNode visit(Definition node, Void _)  {
+            BinaryLoader.save(new File(context.kompiled, "defx-java.bin").toString(), node);
 
             return node;
         }
@@ -66,16 +65,15 @@ public class JavaSymbolicBackend extends BasicBackend {
         org.kframework.backend.java.kil.Definition definition =
                 new KILtoBackendJavaKILTransformer(context, true).transformDefinition(javaDef);
 
-        //TODO(OwolabiLeg): Add a way to measure how long it takes to build an index
-        if (GlobalSettings.ruleIndex.equals(RULE_TABLE_INDEX)){
+        if (options.experimental.ruleIndex == IndexingAlgorithm.RULE_TABLE) {
             definition.setIndex(new IndexingTable(definition));
-        } else if (GlobalSettings.ruleIndex.equals(PATH_INDEX)){
+        } else if (options.experimental.ruleIndex == IndexingAlgorithm.PATH) {
             definition.setIndex(new PathIndex(definition));
         }
 
         assert definition.getIndex() != null;
 
-        BinaryLoader.save(new File(context.dotk,
+        BinaryLoader.save(new File(context.kompiled,
                 JavaSymbolicBackend.DEFINITION_FILENAME).toString(),
                 definition);
 
@@ -109,6 +107,7 @@ public class JavaSymbolicBackend extends BasicBackend {
         steps.add(new CheckVisitorStep<Definition>(new AddConsesVisitor(context), context));
         steps.add(new CheckVisitorStep<Definition>(new CollectConsesVisitor(context), context));
         steps.add(new CheckVisitorStep<Definition>(new CollectSubsortsVisitor(context), context));
+        steps.add(new CheckVisitorStep<Definition>(new CollectBracketsVisitor(context), context));
         steps.add(new DefinitionSerializer(context));
 
         steps.add(new StrictnessToContexts(context));
@@ -117,7 +116,7 @@ public class JavaSymbolicBackend extends BasicBackend {
         //steps.add(new AddSupercoolDefinition(context));
         steps.add(new AddHeatingConditions(context));
         //steps.add(new AddSuperheatRules(context));
-        steps.add(new DesugarStreams(context, true));
+        steps.add(new DesugarStreams(context));
         steps.add(new ResolveFunctions(context));
         steps.add(new AddKCell(context));
         steps.add(new AddStreamCells(context));
@@ -140,7 +139,7 @@ public class JavaSymbolicBackend extends BasicBackend {
         steps.add(new AddInjections(context));
 
         steps.add(new FlattenSyntax(context));
-        steps.add(new ResolveBlockingInput(context, false));
+        steps.add(new ResolveBlockingInput(context));
         steps.add(new InitializeConfigurationStructure(context));
         //steps.add(new AddKStringConversion(context));
         //steps.add(new AddKLabelConstant(context));
@@ -150,7 +149,7 @@ public class JavaSymbolicBackend extends BasicBackend {
         steps.add(new ResolveRewrite(context));
 
         /* data structure related stuff */
-        steps.add(new CompileToBuiltins(context));
+       // steps.add(new CompileToBuiltins(context));
         steps.add(new CompileDataStructures(context));
         steps.add(new Cell2DataStructure(context));
         steps.add(new DataStructureToLookupUpdate(context));

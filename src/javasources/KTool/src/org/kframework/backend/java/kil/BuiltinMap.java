@@ -1,3 +1,4 @@
+// Copyright (c) 2013-2014 K Team. All Rights Reserved.
 package org.kframework.backend.java.kil;
 
 import org.kframework.backend.java.symbolic.Matcher;
@@ -23,7 +24,7 @@ import com.google.common.base.Joiner;
  *
  * @author AndreiS
  */
-public class BuiltinMap extends Collection implements Sorted {
+public class BuiltinMap extends Collection {
 
     private final Map<Term, Term> entries;
 
@@ -72,9 +73,11 @@ public class BuiltinMap extends Collection implements Sorted {
         return entries.size();
     }
 
-    /**
-     * Returns a {@code String} representation of the sort of this builtin map.
-     */
+    @Override
+    public boolean isExactSort() {
+        return true;
+    }
+
     @Override
     public String sort() {
         // TODO(AndreiS): track the original sort from the grammar

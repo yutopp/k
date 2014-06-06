@@ -1,3 +1,4 @@
+// Copyright (c) 2013-2014 K Team. All Rights Reserved.
 package org.kframework.backend.java.indexing;
 
 import org.kframework.backend.java.kil.*;
@@ -26,10 +27,9 @@ public class IndexingPair implements Serializable {
                         (KLabelConstant) frozenKItem.kLabel(),
                         ((KList) frozenKItem.kList()).getContents().indexOf(Hole.HOLE));
             }
-        } else if (term instanceof Sorted) {
-            Sorted sorted = (Sorted) term;
-            if (definition.builtinSorts().contains(sorted.sort())) {
-                return new TokenIndex(sorted.sort());
+        } else {
+            if (definition.builtinSorts().contains(term.sort())) {
+                return new TokenIndex(term.sort());
             }
         }
 

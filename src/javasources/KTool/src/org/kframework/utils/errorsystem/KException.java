@@ -1,3 +1,4 @@
+// Copyright (c) 2012-2014 K Team. All Rights Reserved.
 package org.kframework.utils.errorsystem;
 
 import java.util.HashMap;
@@ -21,7 +22,8 @@ public class KException {
 
         labels = new HashMap<KException.KExceptionGroup, String>();
         labels.put(KExceptionGroup.COMPILER, "Compiler");
-        labels.put(KExceptionGroup.PARSER, "Parser");
+        labels.put(KExceptionGroup.OUTER_PARSER, "Outer Parser");
+        labels.put(KExceptionGroup.INNER_PARSER, "Inner Parser");
         labels.put(KExceptionGroup.LISTS, "Lists");
         labels.put(KExceptionGroup.INTERNAL, "Internal");
         labels.put(KExceptionGroup.CRITICAL, "Critical");
@@ -46,7 +48,7 @@ public class KException {
     }
 
     public enum KExceptionGroup {
-        PARSER, COMPILER, LISTS, INTERNAL, CRITICAL
+        OUTER_PARSER, INNER_PARSER, COMPILER, LISTS, INTERNAL, CRITICAL
     }
 
     public enum ExceptionType {

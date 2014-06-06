@@ -1,3 +1,4 @@
+// Copyright (c) 2013-2014 K Team. All Rights Reserved.
 package org.kframework.backend.java.kil;
 
 import org.kframework.backend.java.symbolic.Matcher;
@@ -29,7 +30,17 @@ public class Z3Term extends Term {
     }
 
     @Override
+    public boolean isExactSort() {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
     public boolean isSymbolic() {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public String sort() {
         throw new UnsupportedOperationException();
     }
 

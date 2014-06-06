@@ -1,3 +1,4 @@
+// Copyright (c) 2013-2014 K Team. All Rights Reserved.
 package org.kframework.backend.java.kil;
 
 import org.kframework.backend.java.symbolic.Matcher;
@@ -22,8 +23,18 @@ public class Bottom extends Term {
     }
 
     @Override
+    public boolean isExactSort() {
+        return false;
+    }
+
+    @Override
     public boolean isSymbolic() {
         return false;
+    }
+
+    @Override
+    public String sort() {
+        return kind.toString();
     }
 
     @Override

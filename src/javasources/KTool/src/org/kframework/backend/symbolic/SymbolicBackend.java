@@ -1,3 +1,4 @@
+// Copyright (c) 2013-2014 K Team. All Rights Reserved.
 package org.kframework.backend.symbolic;
 
 import org.kframework.backend.Backend;
@@ -25,7 +26,6 @@ import org.kframework.main.FirstStep;
 import org.kframework.utils.Stopwatch;
 import org.kframework.utils.file.FileUtil;
 import org.kframework.utils.file.KPaths;
-import org.kframework.utils.general.GlobalSettings;
 
 import java.io.File;
 import java.io.IOException;
@@ -59,13 +59,13 @@ public class SymbolicBackend extends BasicBackend implements Backend {
             e.printStackTrace();
         }
         MaudeBuiltinsFilter builtinsFilter = new MaudeBuiltinsFilter(maudeHooks, specialMaudeHooks, context);
-        javaDef.accept(builtinsFilter);
+        builtinsFilter.visitNode(javaDef);
         final String mainModule = javaDef.getMainModule();
         StringBuilder builtins = new StringBuilder().append("mod ")
             .append(mainModule).append("-BUILTINS is\n")
             .append(" including ").append(mainModule).append("-BASE .\n")
             .append(builtinsFilter.getResult()).append("endm\n");
-        FileUtil.save(context.dotk.getAbsolutePath() + "/builtins.maude", builtins);
+        FileUtil.save(context.kompiled.getAbsolutePath() + "/builtins.maude", builtins);
         sw.printIntermediate("Generating equations for hooks");
         return super.firstStep(javaDef);
     }
@@ -78,7 +78,7 @@ public class SymbolicBackend extends BasicBackend implements Backend {
         String load = "load \"" + KPaths.getKBase(true) + KPaths.MAUDE_LIB_DIR + "/k-prelude\"\n";
 
         // load libraries if any
-        String maudeLib = GlobalSettings.lib.equals("") ? "" : "load " + KPaths.windowfyPath(new File(GlobalSettings.lib).getAbsolutePath()) + "\n";
+        String maudeLib = "".equals(options.experimental.lib) ? "" : "load " + KPaths.windowfyPath(new File(options.experimental.lib).getAbsolutePath()) + "\n";
         load += maudeLib;
 
         final String mainModule = javaDef.getMainModule();
@@ -90,10 +90,10 @@ public class SymbolicBackend extends BasicBackend implements Backend {
             .append("mod ").append(mainModule).append(" is \n")
             .append("  including ").append(mainModule).append("-BASE .\n")
             .append("  including ").append(mainModule).append("-BUILTINS .\n").append("endm\n");
-        FileUtil.save(context.dotk.getAbsolutePath() + "/" + "main.maude", main);
+        FileUtil.save(context.kompiled.getAbsolutePath() + "/" + "main.maude", main);
 
          UnparserFilter unparserFilter = new UnparserFilter(this.context);
-         javaDef.accept(unparserFilter);
+         unparserFilter.visitNode(javaDef);
         
 //        String unparsedText = unparserFilter.getResult();
 //        
@@ -132,7 +132,7 @@ public class SymbolicBackend extends BasicBackend implements Backend {
         steps.add(new AddHeatingConditions(context));
         steps.add(new AddSuperheatRules(context));
         steps.add(new ResolveSymbolicInputStream(context)); // symbolic step
-        steps.add(new DesugarStreams(context, false));
+        steps.add(new DesugarStreams(context));
         steps.add(new ResolveFunctions(context));
         steps.add(new TagUserRules(context)); // symbolic step
         steps.add(new ReachabilityRuleToKRule(context)); // symbolic step 
@@ -147,13 +147,13 @@ public class SymbolicBackend extends BasicBackend implements Backend {
         steps.add(new AddTopCellRules(context));
         steps.add(new ResolveBinder(context));
         steps.add(new ResolveAnonymousVariables(context));
-        steps.add(new ResolveBlockingInput(context, false));
+        steps.add(new FlattenSyntax(context));
+        steps.add(new ResolveBlockingInput(context));
         steps.add(new AddK2SMTLib(context));
         steps.add(new AddPredicates(context));
         steps.add(new ResolveSyntaxPredicates(context));
         steps.add(new ResolveBuiltins(context));
         steps.add(new ResolveListOfK(context));
-        steps.add(new FlattenSyntax(context));
         steps.add(new InitializeConfigurationStructure(context));
         steps.add(new AddKStringConversion(context));
         steps.add(new AddKLabelConstant(context));

@@ -1,15 +1,10 @@
+// Copyright (c) 2013-2014 K Team. All Rights Reserved.
 package org.kframework.backend.java.symbolic;
 
-import org.kframework.backend.java.builtins.BoolToken;
-import org.kframework.backend.java.builtins.Int32Token;
-import org.kframework.backend.java.builtins.IntToken;
-import org.kframework.backend.java.builtins.StringToken;
-import org.kframework.backend.java.builtins.UninterpretedToken;
+import org.kframework.backend.java.builtins.*;
 import org.kframework.backend.java.kil.*;
 import org.kframework.kil.ASTNode;
 import org.kframework.kil.visitors.Visitor;
-import org.kframework.kil.visitors.exceptions.TransformerException;
-
 
 /**
  * Performs transformation which includes pre-processing and post-processing.
@@ -190,11 +185,6 @@ public abstract class PrePostTransformer extends CopyOnWriteTransformer {
 
     @Override
     public ASTNode transform(IntToken intToken) {
-        return transform((Token) intToken);
-    }
-
-    @Override
-    public ASTNode transform(Int32Token intToken) {
         return transform((Token) intToken);
     }
 
@@ -453,12 +443,7 @@ public abstract class PrePostTransformer extends CopyOnWriteTransformer {
         private final ASTNode contents;
 
         @Override
-        public ASTNode accept(org.kframework.kil.visitors.Transformer transformer) throws TransformerException {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public void accept(Visitor visitor) {
+        protected <P, R, E extends Throwable> R accept(Visitor<P, R, E> visitor, P p) throws E {
             throw new UnsupportedOperationException();
         }
     }

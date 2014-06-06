@@ -1,4 +1,27 @@
+// Copyright (c) 2012-2014 K Team. All Rights Reserved.
 package org.kframework.kil.loader;
+
+import org.kframework.compile.utils.ConfigurationStructureMap;
+import org.kframework.compile.utils.MetaK;
+import org.kframework.kil.ASTNode;
+import org.kframework.kil.Attribute;
+import org.kframework.kil.Cell;
+import org.kframework.kil.CellDataStructure;
+import org.kframework.kil.DataStructureSort;
+import org.kframework.kil.KApp;
+import org.kframework.kil.KInjectedLabel;
+import org.kframework.kil.KSorts;
+import org.kframework.kil.Production;
+import org.kframework.kil.Sort;
+import org.kframework.kil.Term;
+import org.kframework.kil.UserList;
+import org.kframework.kompile.KompileOptions;
+import org.kframework.main.GlobalOptions;
+import org.kframework.utils.Poset;
+import org.kframework.utils.errorsystem.KException;
+import org.kframework.utils.errorsystem.KException.ExceptionType;
+import org.kframework.utils.errorsystem.KException.KExceptionGroup;
+import org.kframework.utils.general.GlobalSettings;
 
 import java.io.File;
 import java.io.IOException;
@@ -15,26 +38,8 @@ import java.util.Set;
 
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
-import org.kframework.compile.utils.ConfigurationStructureMap;
-import org.kframework.compile.utils.MetaK;
-import org.kframework.kil.ASTNode;
-import org.kframework.kil.Cell;
-import org.kframework.kil.CellDataStructure;
-import org.kframework.kil.DataStructureSort;
-import org.kframework.kil.KApp;
-import org.kframework.kil.KInjectedLabel;
-import org.kframework.kil.KSorts;
-import org.kframework.kil.Production;
-import org.kframework.kil.Sort;
-import org.kframework.kil.Term;
-import org.kframework.kil.UserList;
-import org.kframework.utils.Poset;
-import org.kframework.utils.errorsystem.KException;
-import org.kframework.utils.errorsystem.KException.ExceptionType;
-import org.kframework.utils.errorsystem.KException.KExceptionGroup;
-import org.kframework.utils.general.GlobalSettings;
-
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Sets;
 
 
 public class Context implements Serializable {
@@ -83,6 +88,8 @@ public class Context implements Serializable {
     public Map<String, Set<String>> listLabels = new HashMap<String, Set<String>>();
     public Map<String, ASTNode> locations = new HashMap<String, ASTNode>();
     public Map<String, Set<Production>> associativity = new HashMap<String, Set<Production>>();
+    
+    public Map<String, Production> canonicalBracketForSort = new HashMap<>();
     private Poset subsorts = new Poset();
     public java.util.Set<String> definedSorts = Sort.getBaseSorts();
     private Poset priorities = new Poset();
@@ -96,6 +103,7 @@ public class Context implements Serializable {
     protected java.util.List<String> komputationCells = null;
     public Map<String, CellDataStructure> cellDataStructures = new HashMap<>();
     public Set<String> variableTokenSorts = new HashSet<>();
+    public HashMap<String, String> freshFunctionNames = new HashMap<>();
 
     public int numModules, numSentences, numProductions, numCells;
 
@@ -128,11 +136,7 @@ public class Context implements Serializable {
 
     
     public java.util.List<String> getKomputationCells() {
-        return komputationCells;
-    }
-
-    public void setKomputationCells(java.util.List<String> komputationCells) {
-        this.komputationCells = komputationCells;
+        return kompileOptions.experimental.kCells;
     }
 
     public ConfigurationStructureMap getConfigurationStructureMap() {
@@ -152,14 +156,21 @@ public class Context implements Serializable {
         subsorts.addRelation(KSorts.KLIST, "KResult");
         subsorts.addRelation("K", "KResult");
         subsorts.addRelation("K", KSorts.KITEM);
-        subsorts.addRelation("Map", "MapItem");
-        subsorts.addRelation("Set", "SetItem");
-        subsorts.addRelation("List", "ListItem");
-        subsorts.addRelation("Bag", "BagItem");        
+        subsorts.addRelation("Bag", "BagItem");
+    }
+
+    // TODO(dwightguth): remove these fields and replace with injected dependencies
+    public transient GlobalOptions globalOptions;
+    public KompileOptions kompileOptions;
+    
+    public Context(GlobalOptions globalOptions) {
+        this.globalOptions = globalOptions;
+        initSubsorts();
     }
     
-    public Context() {
-        initSubsorts();
+    public Context(KompileOptions kompileOptions) {
+        this(kompileOptions.global);
+        this.kompileOptions = kompileOptions;
     }
 
     public void putLabel(Production p, String cons) {
@@ -248,6 +259,10 @@ public class Context implements Serializable {
      */
     public String getLUBSort(Set<String> sorts) {
         return subsorts.getLUB(sorts);
+    }
+    
+    public String getLUBSort(String... sorts) {
+        return subsorts.getLUB(Sets.newHashSet(sorts));
     }
 
     /**
@@ -485,6 +500,30 @@ public class Context implements Serializable {
         assert !initialized;
 
         this.tokenSorts = new HashSet<String>(tokenSorts);
+    }
+
+    public void makeFreshFunctionNamesMap(Set<Production> freshProductions) {
+        for (Production production : freshProductions) {
+            if (!production.containsAttribute(Attribute.FUNCTION_KEY)) {
+                GlobalSettings.kem.register(new KException(
+                        ExceptionType.ERROR,
+                        KExceptionGroup.COMPILER,
+                        "missing [function] attribute for fresh function " + production,
+                        production.getFilename(),
+                        production.getLocation()));
+            }
+
+            if (freshFunctionNames.containsKey(production.getSort())) {
+                GlobalSettings.kem.register(new KException(
+                        ExceptionType.ERROR,
+                        KExceptionGroup.COMPILER,
+                        "multiple fresh functions for sort " + production.getSort(),
+                        production.getFilename(),
+                        production.getLocation()));
+            }
+
+            freshFunctionNames.put(production.getSort(), production.getKLabel());
+        }
     }
 
 }

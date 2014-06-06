@@ -1,5 +1,5 @@
+// Copyright (c) 2013-2014 K Team. All Rights Reserved.
 package org.kframework.ktest.Test;
-
 
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -7,6 +7,8 @@ import org.kframework.ktest.*;
 import org.kframework.ktest.CmdArgs.CmdArg;
 import org.kframework.ktest.Config.InvalidConfigError;
 import org.kframework.ktest.Config.LocationData;
+import org.kframework.utils.OS;
+import org.kframework.utils.StringUtil;
 
 import java.io.File;
 import java.util.*;
@@ -46,17 +48,22 @@ public class TestCase {
     /**
      * List of command line arguments to pass to krun.
      */
-    private List<PgmArg> krunOpts;
+    private ProgramProfile krunOpts;
 
     /**
-     * Program full path, list of kompile arguments pairs.
+     * Program full path, list of krun arguments pairs.
      */
-    private Map<String, List<PgmArg>> pgmSpecificKRunOpts;
+    private Map<String, ProgramProfile> pgmSpecificKRunOpts;
 
     /**
      * Which tests to skip for this particular test case.
      */
     private final Set<KTestStep> skips;
+
+    /**
+     * Script to be executed before testing, only valid on Posix system
+     */
+    private String posixInitScript;
 
     public TestCase(Annotated<String, LocationData> definition,
                     List<Annotated<String, LocationData>> programs,
@@ -64,8 +71,8 @@ public class TestCase {
                     String[] excludes,
                     List<Annotated<String, LocationData>> results,
                     List<PgmArg> kompileOpts,
-                    List<PgmArg> krunOpts,
-                    Map<String, List<PgmArg>> pgmSpecificKRunOpts,
+                    ProgramProfile krunOpts,
+                    Map<String, ProgramProfile> pgmSpecificKRunOpts,
                     Set<KTestStep> skips) throws InvalidConfigError {
         // programs and results should be ordered set because of how search algorithm works
         this.definition = definition;
@@ -89,12 +96,13 @@ public class TestCase {
         List<Annotated<String,LocationData>> results = new LinkedList<>();
         results.add(new Annotated<>(cmdArgs.getResults(), new LocationData()));
 
-        List<PgmArg> emptyOpts = new ArrayList<>(0);
+        List<PgmArg> emptyOpts = Collections.emptyList();
+        ProgramProfile emptyProfile = new ProgramProfile(emptyOpts, false);
 
-        HashMap<String, List<PgmArg>> emptyOptsMap = new HashMap<>(0);
+        Map<String, ProgramProfile> emptyOptsMap = Collections.emptyMap();
 
         return new TestCase(targetFile, programs, cmdArgs.getExtensions(),
-                cmdArgs.getExcludes(), results, emptyOpts, emptyOpts, emptyOptsMap,
+                cmdArgs.getExcludes(), results, emptyOpts, emptyProfile, emptyOptsMap,
                 new HashSet<KTestStep>());
     }
 
@@ -131,32 +139,62 @@ public class TestCase {
         assert new File(definition.getObj()).isFile();
         return definition.getObj();
     }
-
+    
+    public File getWorkingDir() {
+        File f = new File(definition.getObj());
+        assert f.isFile();
+        return f.getParentFile();
+    }
+    
     /**
      * @return command array to pass process builder
      */
     public String[] getKompileCmd() {
         assert new File(getDefinition()).isFile();
-        String[] args = new String[kompileOpts.size() + 2];
-        args[0] = ExecNames.getKompile();
-        args[1] = getDefinition();
-        for (int i = 0; i < kompileOpts.size(); i++)
-            args[i+2] = kompileOpts.get(i).toString();
-        return args;
+        List<String> stringArgs = new ArrayList<String>();
+        stringArgs.add(ExecNames.getKompile());
+        stringArgs.add(getDefinition());
+        for (int i = 0; i < kompileOpts.size(); i++) {
+            stringArgs.addAll(kompileOpts.get(i).toStringList());
+        }
+        String[] argsArr = new String[stringArgs.size()];
+        return stringArgs.toArray(argsArr);
     }
 
     /**
      * @return String representation of kompile command to be used in logging.
      */
     public String toKompileLogString() {
-        String[] args = new String[kompileOpts.size() + 2];
-        args[0] = ExecNames.getKompile();
-        args[1] = getDefinition();
-        for (int i = 0; i < kompileOpts.size(); i++) {
-            PgmArg arg = kompileOpts.get(i);
-            args[i+2] = new PgmArg(arg.arg, QuoteHandling.quoteArgument(arg.val)).toString();
-        }
-        return StringUtils.join(args, " ");
+        return StringUtil.escapeShell(getKompileCmd(), OS.current());
+    }
+
+    /**
+     * @return true if posixInitScript attribute exists
+     */
+    public boolean hasPosixOnly() {
+        return posixInitScript != null;
+    }
+
+    /**
+     * @return posixInitScript attribute
+     */
+    public String getPosixInitScript() {
+        return posixInitScript;
+    }
+
+    /**
+     * @return command array to pass process builder
+     */
+    public String[] getPosixOnlyCmd() {
+        assert new File(posixInitScript).isFile();
+        return new String[] { posixInitScript };
+    }
+
+    /**
+     * @return String representation of posixInitScript command to be used in logging.
+     */
+    public String toPosixOnlyLogString() {
+        return StringUtil.escapeShell(getPosixOnlyCmd(), OS.current());
     }
 
     /**
@@ -164,14 +202,14 @@ public class TestCase {
      */
     public String[] getPdfCmd() {
         assert new File(getDefinition()).isFile();
-        return new String[] { ExecNames.getKompile(), "--backend=pdf", getDefinition() };
+        return new String[] { ExecNames.getKompile(), "--backend", "pdf", getDefinition() };
     }
 
     /**
      * @return String representation of PDF command to be used in logging.
      */
     public String toPdfLogString() {
-        return StringUtils.join(getPdfCmd(), " ");
+        return StringUtil.escapeShell(getPdfCmd(), OS.current());
     }
 
     public void setKompileOpts(List<PgmArg> kompileOpts) {
@@ -182,12 +220,16 @@ public class TestCase {
         this.excludes = toSet(excludes);
     }
 
-    public void setKrunOpts(List<PgmArg> krunOpts) {
+    public void setKrunOpts(ProgramProfile krunOpts) {
         this.krunOpts = krunOpts;
     }
 
-    public void setPgmSpecificKRunOpts(Map<String, List<PgmArg>> pgmSpecificKRunOpts) {
+    public void setPgmSpecificKRunOpts(Map<String, ProgramProfile> pgmSpecificKRunOpts) {
         this.pgmSpecificKRunOpts = pgmSpecificKRunOpts;
+    }
+
+    public void setPosixInitScript(String posixInitScript) {
+        this.posixInitScript = posixInitScript;
     }
 
     public void addProgram(Annotated<String, LocationData> program) {
@@ -224,8 +266,8 @@ public class TestCase {
                         r.getAnn());
     }
 
-    private List<PgmArg> getPgmOptions(String pgm) {
-        List<PgmArg> ret = pgmSpecificKRunOpts.get(FilenameUtils.getName(pgm));
+    private ProgramProfile getPgmOptions(String pgm) {
+        ProgramProfile ret = pgmSpecificKRunOpts.get(FilenameUtils.getName(pgm));
         if (ret == null)
             return krunOpts;
         return ret;
@@ -265,13 +307,13 @@ public class TestCase {
 
                     // set krun args
                     List<PgmArg> args = new LinkedList<>();
-                    for (PgmArg arg : getPgmOptions(pgmFilePath))
+                    ProgramProfile profile = getPgmOptions(pgmFilePath);
+                    for (PgmArg arg : profile.getArgs())
                         args.add(arg);
-                    args.add(new PgmArg("directory", definitionFilePath));
 
                     ret.add(new KRunProgram(
-                            pgmFilePath, args, inputFilePath, outputFilePath, errorFilePath,
-                            getNewOutputFilePath(outputFileName)));
+                            pgmFilePath, definitionFilePath, args, inputFilePath, outputFilePath, errorFilePath,
+                            getNewOutputFilePath(outputFileName), profile.isRegex()));
                 }
             } else {
                 ret.addAll(searchPrograms(pgmFile.getAbsolutePath()));

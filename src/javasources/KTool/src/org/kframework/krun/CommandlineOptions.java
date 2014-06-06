@@ -1,3 +1,4 @@
+// Copyright (c) 2012-2014 K Team. All Rights Reserved.
 package org.kframework.krun;
 
 import org.apache.commons.cli.*;
@@ -21,7 +22,7 @@ public class CommandlineOptions {
         help = new HelpFormatter();
         optionsStandard = new Options();
         optionsExperimental = new Options();
-        
+
         if (K.debug || K.guidebug) {
             initializeDebugOptions();
         }
@@ -58,6 +59,7 @@ public class CommandlineOptions {
         addOptionS(OptionBuilder.withLongOpt("help").withDescription("Print this help message.").create("h"));
         addOptionS(OptionBuilder.withLongOpt("version").withDescription("Print version information.").create());
         addOptionS(OptionBuilder.withLongOpt("verbose").withDescription("Verbose output.").create("v"));
+        addOptionS(OptionBuilder.withLongOpt("debug").withDescription("Debug messages").create());
 
         // Common K options
         addOptionS(OptionBuilder.withLongOpt("directory").hasArg().withArgName("dir").withDescription("Path to the directory in which the kompiled K definition resides. The default is the current directory.").create("d"));
@@ -86,11 +88,10 @@ public class CommandlineOptions {
         addOptionS(OptionBuilder.withLongOpt("backend").hasArg().withArgName("backend").withDescription("Specify the krun backend to execute with. <backend> is either [maude|java]. (Default: maude).").create());
         addOptionS(OptionBuilder.withLongOpt("simulation").hasArg().withArgName("string").withDescription("Simulation property of two programs in two semantics.").create());
         addOptionS(OptionBuilder.withLongOpt("help-experimental").withDescription("Print help on non-standard options.").create("X"));
-        
+
         // Experimental options
-        addOptionE(OptionBuilder.withLongOpt("fast-kast").withDescription("Using the (experimental) faster C SDF parser.").create());
         addOptionE(OptionBuilder.withLongOpt("statistics").hasArg().withArgName("[on|off]").withDescription("Print Maude's rewrite statistics. (Default: ...).").create());
-        addOptionE(OptionBuilder.withLongOpt("term").hasArg().withArgName("string").withDescription("Input argument will be parsed with the specified parser and used as the sole input to krun.").create());
+        addOptionE(OptionBuilder.withLongOpt("term").withDescription("Input argument will be parsed with the specified parser and used as the sole input to krun.").create());
         addOptionE(OptionBuilder.withLongOpt("maude-cmd").hasArg().withArgName("string").withDescription("Maude command used to execute the definition.").create());
 
         addOptionE(OptionBuilder.withLongOpt("log-io").hasArg().withArgName("[on|off]").withDescription("Make the IO server create logs. (Default: disabled).").create());
@@ -106,6 +107,7 @@ public class CommandlineOptions {
         addOptionE(OptionBuilder.withLongOpt("index").withDescription("Index the rules for faster rewriting.").create());
         addOptionE(OptionBuilder.withLongOpt("indexing-stats").withDescription("Measure indexing-related information.").create());
         addOptionE(OptionBuilder.withLongOpt("deterministic-functions").withDescription("Throw assertion failure during execution in the java backend if function definitions are not deterministic.").create());
+        addOptionE(OptionBuilder.withLongOpt("pattern-matching").withDescription("Use pattern-matching rather than unification to drive rewriting in the Java backend.").create());
 
         addOptionE(OptionBuilder.withLongOpt("output-file").hasArg().withArgName("file").withDescription("Store output in the file instead of displaying it.").create());
         addOptionE(OptionBuilder.withLongOpt("load-cfg").hasArg().withArgName("file").withDescription("Load a configuration saved with the \"binary\" output mode into the $PGM configuration variable instead of a program.").create());
@@ -171,5 +173,5 @@ public class CommandlineOptions {
     public void setOptionList(ArrayList<Option> optionList) {
         this.optionList = optionList;
     }
-    
+
 }

@@ -1,3 +1,4 @@
+// Copyright (c) 2012-2014 K Team. All Rights Reserved.
 package org.kframework.compile.transformers;
 
 import com.google.common.collect.HashMultimap;
@@ -17,21 +18,18 @@ import org.kframework.kil.ModuleItem;
 import org.kframework.kil.Production;
 import org.kframework.kil.Rule;
 import org.kframework.kil.Term;
-import org.kframework.kil.Variable;
 import org.kframework.kil.loader.Context;
 import org.kframework.kil.visitors.CopyOnWriteTransformer;
-import org.kframework.kil.visitors.exceptions.TransformerException;
-import org.kframework.krun.K;
+import org.kframework.utils.errorsystem.KException;
+import org.kframework.utils.errorsystem.KException.ExceptionType;
+import org.kframework.utils.errorsystem.KException.KExceptionGroup;
 import org.kframework.utils.general.GlobalSettings;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
 
 public class ResolveBinder extends CopyOnWriteTransformer {
 
@@ -50,7 +48,7 @@ public class ResolveBinder extends CopyOnWriteTransformer {
     }
 
     @Override
-    public ASTNode transform(Module node) throws TransformerException {
+    public ASTNode visit(Module node, Void _)  {
         Set<Production> prods = SyntaxByTag.get(node, "binder", context);
         if (prods.isEmpty())
             return node;
@@ -69,18 +67,15 @@ public class ResolveBinder extends CopyOnWriteTransformer {
 
             while (m.regionStart() < m.regionEnd()) {
                 if (!m.lookingAt()) {
-                    System.err.println("[error:] could not parse binder attribute \"" + bindInfo.substring(m.regionStart(), m.regionEnd()) + "\"");
-                    System.exit(1);
+                    GlobalSettings.kem.register(new KException(ExceptionType.ERROR, KExceptionGroup.CRITICAL, "could not parse binder attribute \"" + bindInfo.substring(m.regionStart(), m.regionEnd()) + "\""));
                 }
                 if (m.end() < m.regionEnd()) {
                     if (!m.group(4).equals(",")) {
-                        System.err.println("[error:] expecting ',' at the end \"" + m.group() + "\"");
-                        System.exit(1);
+                        GlobalSettings.kem.register(new KException(ExceptionType.ERROR, KExceptionGroup.CRITICAL, "expecting ',' at the end \"" + m.group() + "\""));
                     }
                 } else {
                     if (!m.group(4).equals("")) {
-                        System.err.println("[error:] unexpected ',' at the end \"" + m.group() + "\"");
-                        System.exit(1);
+                        GlobalSettings.kem.register(new KException(ExceptionType.ERROR, KExceptionGroup.CRITICAL, "unexpected ',' at the end \"" + m.group() + "\""));
                     }
                 }
 
@@ -100,7 +95,7 @@ public class ResolveBinder extends CopyOnWriteTransformer {
             prod.setBinderMap(bndMap);
 
             /* do not generate the rules below for the java backend */
-            if (!GlobalSettings.javaBackend) {
+            if (!kompileOptions.backend.java()) {
                 Rule rule = new Rule(
                         KApp.of(BINDER_PREDICATE, MetaK.getTerm(prod, context)),
                         BoolBuiltin.TRUE, context);
@@ -116,7 +111,7 @@ public class ResolveBinder extends CopyOnWriteTransformer {
                     rule = new Rule(new KApp(BOUNDED_PREDICATE, list), BoolBuiltin.TRUE, context);
                     rule.addAttribute(Attribute.ANYWHERE);
                     items.add(rule);
-                    String bndSort = prod.getChildSort(bndIdx - 1);
+                    //String bndSort = prod.getChildSort(bndIdx - 1);
                     // (AndreiS): the bounded sort is no longer automatically
                     // considered to be subsorted to Variable; Variable must be
                     // manually declared.
@@ -134,17 +129,6 @@ public class ResolveBinder extends CopyOnWriteTransformer {
                     items.add(rule);
                 }
             }
-/*
-if (bndIdx == 0 || bndIdx > prod.getArity())  {
-          System.err.println("[error:] argument index out of bounds: " + bndIdx);
-          System.exit(1);
-        }
-
-if (bndMap.containsKey(bndIndex)) {
-            System.err.println("[error:] " + bndIdx );
-            System.exit(1);
-          }
-*/
         }
 
         return node;

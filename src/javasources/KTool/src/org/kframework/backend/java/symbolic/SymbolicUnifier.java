@@ -1,3 +1,4 @@
+// Copyright (c) 2013-2014 K Team. All Rights Reserved.
 package org.kframework.backend.java.symbolic;
 
 import java.util.ArrayList;
@@ -7,11 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.kframework.backend.java.builtins.BoolToken;
-import org.kframework.backend.java.builtins.Int32Token;
-import org.kframework.backend.java.builtins.IntToken;
-import org.kframework.backend.java.builtins.StringToken;
-import org.kframework.backend.java.builtins.UninterpretedToken;
+import org.kframework.backend.java.builtins.*;
 import org.kframework.backend.java.kil.Bottom;
 import org.kframework.backend.java.kil.BuiltinList;
 import org.kframework.backend.java.kil.BuiltinMap;
@@ -654,6 +651,15 @@ public class SymbolicUnifier extends AbstractUnifier {
     }
 
     @Override
+    public void unify(BitVector bitVector, Term term) {
+        assert !(term instanceof Variable);
+
+        if (!bitVector.equals(term)) {
+            fail(bitVector, term);
+        }
+    }
+
+    @Override
     public void unify(BoolToken boolToken, Term term) {
         assert !(term instanceof Variable);
 
@@ -664,15 +670,6 @@ public class SymbolicUnifier extends AbstractUnifier {
 
     @Override
     public void unify(IntToken intToken, Term term) {
-        assert !(term instanceof Variable);
-
-        if (!intToken.equals(term)) {
-            fail(intToken, term);
-        }
-    }
-
-    @Override
-    public void unify(Int32Token intToken, Term term) {
         assert !(term instanceof Variable);
 
         if (!intToken.equals(term)) {

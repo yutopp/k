@@ -1,3 +1,4 @@
+// Copyright (c) 2012-2014 K Team. All Rights Reserved.
 package org.kframework.parser.generator;
 
 import java.io.File;
@@ -12,6 +13,9 @@ import org.kframework.kil.DefinitionItem;
 import org.kframework.kil.Module;
 import org.kframework.kil.Require;
 import org.kframework.kil.loader.Context;
+import org.kframework.kompile.KompileOptions;
+import org.kframework.kompile.KompileOptions.Backend;
+import org.kframework.main.GlobalOptions;
 import org.kframework.parser.basic.Basic;
 import org.kframework.utils.errorsystem.KException;
 import org.kframework.utils.errorsystem.KException.ExceptionType;
@@ -28,15 +32,14 @@ public class BasicParser {
     private String mainModule;
     private boolean autoinclude;
     private static final String missingFileMsg = "Could not find 'required' file: ";
-    private String autoincludeFileName;
+    
+    private KompileOptions kompileOptions;
+    private GlobalOptions globalOptions;
 
-    public BasicParser(boolean autoinclude) {
+    public BasicParser(boolean autoinclude, KompileOptions kompileOptions) {
         this.autoinclude = autoinclude;
-        if (GlobalSettings.javaBackend)
-            autoincludeFileName = "autoinclude-java.k";
-        else
-            autoincludeFileName ="autoinclude.k";
-
+        this.kompileOptions = kompileOptions;
+        this.globalOptions = kompileOptions.global;
     }
 
     /**
@@ -60,7 +63,10 @@ public class BasicParser {
                 List<DefinitionItem> tempmi = moduleItems;
                 moduleItems = new ArrayList<DefinitionItem>();
 
-                file = buildCanonicalPath(autoincludeFileName, new File(fileName));
+                if (context.kompileOptions.backend.java())
+                    file = buildCanonicalPath("autoinclude-java.k", new File(fileName));
+                else
+                    file = buildCanonicalPath("autoinclude.k", new File(fileName));
                 if (file == null)
                     GlobalSettings.kem.register(new KException(ExceptionType.ERROR, KExceptionGroup.CRITICAL,
                             missingFileMsg + fileName + " autoimported for every definition ", fileName, ""));
@@ -92,7 +98,7 @@ public class BasicParser {
         if (!filePaths.contains(canonicalPath)) {
             filePaths.add(canonicalPath);
 
-            if (GlobalSettings.verbose)
+            if (globalOptions.verbose)
                 System.out.println("Including file: " + file.getAbsolutePath());
             List<DefinitionItem> defItemList = Basic.parse(file.getAbsolutePath(), FileUtil.getFileContent(file.getAbsolutePath()), context);
 
@@ -114,7 +120,7 @@ public class BasicParser {
 
             boolean predefined = file.getCanonicalPath().startsWith(KPaths.getKBase(false) + File.separator + "include");
             if (!predefined)
-                context.addFileRequirement(buildCanonicalPath(autoincludeFileName, file).getCanonicalPath(), file.getCanonicalPath());
+                context.addFileRequirement(buildCanonicalPath("autoinclude.k", file).getCanonicalPath(), file.getCanonicalPath());
 
             // add the modules to the modules list and to the map for easy access
             for (DefinitionItem di : defItemList) {

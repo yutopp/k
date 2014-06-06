@@ -1,10 +1,9 @@
+// Copyright (c) 2012-2014 K Team. All Rights Reserved.
 package org.kframework.kil;
 
 import com.google.common.collect.Multimap;
 import org.kframework.compile.utils.MetaK;
-import org.kframework.kil.visitors.Transformer;
 import org.kframework.kil.visitors.Visitor;
-import org.kframework.kil.visitors.exceptions.TransformerException;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -12,7 +11,7 @@ import java.util.List;
 /**
  * A production. Any explicit attributes on the production are stored in {@link ASTNode#attributes}.
  */
-public class Production extends ASTNode {
+public class Production extends ASTNode implements Interfaces.MutableList<ProductionItem, Enum<?>> {
 
     /*
      * Andrei S: It appears that the cons attribute is mandatory for all new production added during compilation, otherwise a null pointer exception can be thrown in one of the later compilation
@@ -47,16 +46,79 @@ public class Production extends ASTNode {
         return items.size() == 1 && items.get(0) instanceof UserList;
     }
 
+    /**
+     * Retrieves the {@link UserList} object of the production if this is a list declaration.
+     * Should not be called on other types of productions.
+     * @return the list object
+     */
+    public UserList getListDecl() {
+        assert isListDecl();
+        return (UserList) items.get(0);
+    }
+
     public boolean isSubsort() {
         return items.size() == 1 && items.get(0) instanceof Sort;
+    }
+
+    /**
+     * Retrieves the {@link Sort} object of the production if this is a subsorting.
+     * Should not be called on other types of productions.
+     * @return the Sort object
+     */
+    public Sort getSubsort() {
+        assert isSubsort();
+        return (Sort) items.get(0);
     }
 
     public boolean isLexical() {
         return items.size() == 1 && items.get(0) instanceof Lexical;
     }
 
+    /**
+     * Retrieves the {@link Lexical} object of the production if this is a lexical token.
+     * Should not be called on other types of productions.
+     * @return the Lexical object
+     */
+    public Lexical getLexical() {
+        assert isLexical();
+        return (Lexical) items.get(0);
+    }
+
     public boolean isConstant() {
-        return items.size() == 1 && items.get(0) instanceof Terminal && (sort.startsWith("#") || sort.equals(KSorts.KLABEL));
+        // TODO(Radu): properly determine if a production is a constant or not, just like below
+        return isTerminal() && (sort.startsWith("#") || sort.equals(KSorts.KLABEL));
+    }
+
+    public boolean isConstant(org.kframework.kil.loader.Context context) {
+        return isTerminal() && (sort.startsWith("#") ||
+                                sort.equals(KSorts.KLABEL) ||
+                                context.getTokenSorts().contains(this.getSort()));
+    }
+
+    public boolean isBracket() {
+        return getArity() == 1 && getAttribute(Attribute.BRACKET.getKey()) != null;
+    }
+
+    /**
+     * Retrieves the {@link Terminal} object of the production if this is a constant.
+     * Should not be called on other types of productions.
+     * @return the Terminal object
+     */
+    public Terminal getConstant() {
+        assert isTerminal(); // should be at least a single terminal
+        return (Terminal) items.get(0);
+    }
+
+    /**
+     * Returns true if this production consists of exactly one terminal.
+     */
+    public boolean isTerminal() {
+        return items.size() == 1 && items.get(0) instanceof Terminal;
+    }
+    
+    public String getBracketSort() {
+        assert isBracket();
+        return getChildSort(0);
     }
 
     public Production(Production node) {
@@ -145,13 +207,8 @@ public class Production extends ASTNode {
     }
 
     @Override
-    public void accept(Visitor visitor) {
-        visitor.visit(this);
-    }
-
-    @Override
-    public ASTNode accept(Transformer transformer) throws TransformerException {
-        return transformer.transform(this);
+    protected <P, R, E extends Throwable> R accept(Visitor<P, R, E> visitor, P p) throws E {
+        return visitor.complete(this, visitor.visit(this, p));
     }
 
     public String getSort() {
@@ -291,5 +348,15 @@ public class Production extends ASTNode {
 
     public void setBinderMap(Multimap<Integer, Integer> binderMap) {
         this.binderMap = binderMap;
+    }
+
+    @Override
+    public List<ProductionItem> getChildren(Enum<?> _) {
+        return items;
+    }
+    
+    @Override
+    public void setChildren(List<ProductionItem> children, Enum<?> _) {
+        this.items = children;
     }
 }

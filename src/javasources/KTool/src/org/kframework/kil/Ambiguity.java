@@ -1,12 +1,10 @@
+// Copyright (c) 2012-2014 K Team. All Rights Reserved.
 package org.kframework.kil;
 
-import org.kframework.kil.matchers.Matcher;
-import org.kframework.kil.visitors.Transformer;
 import org.kframework.kil.visitors.Visitor;
-import org.kframework.kil.visitors.exceptions.TransformerException;
 import org.w3c.dom.Element;
 
-import aterm.ATermAppl;
+import java.util.ArrayList;
 
 /**
  * Used for representing parsing ambiguity. Shouldn't exist after disambiguation.
@@ -17,10 +15,6 @@ public class Ambiguity extends Collection {
         super(element);
     }
 
-    public Ambiguity(ATermAppl atm) {
-        super(atm);
-    }
-
     public Ambiguity(Ambiguity node) {
         super(node);
     }
@@ -28,6 +22,8 @@ public class Ambiguity extends Collection {
     public Ambiguity(String sort, java.util.List<Term> col) {
         super(sort, col);
     }
+
+    public Ambiguity(String sort, java.util.Collection<? extends Term> col) { this(sort, new ArrayList<>(col)); }
 
     @Override
     public String toString() {
@@ -40,22 +36,7 @@ public class Ambiguity extends Collection {
         if (content.length() > 1)
             content = content.substring(0, content.length() - 1);
 
-        return "amb(" + content + ")";
-    }
-
-    @Override
-    public void accept(Visitor visitor) {
-        visitor.visit(this);
-    }
-
-    @Override
-    public ASTNode accept(Transformer transformer) throws TransformerException {
-        return transformer.transform(this);
-    }
-
-    @Override
-    public void accept(Matcher matcher, Term toMatch) {
-        matcher.match(this, toMatch);
+        return "'amb(" + content + ")";
     }
 
     @Override
@@ -75,5 +56,10 @@ public class Ambiguity extends Collection {
             }
         }
         return false;
+    }
+
+    @Override
+    protected <P, R, E extends Throwable> R accept(Visitor<P, R, E> visitor, P p) throws E {
+        return visitor.complete(this, visitor.visit(this, p));
     }
 }

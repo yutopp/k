@@ -1,3 +1,4 @@
+// Copyright (c) 2012-2014 K Team. All Rights Reserved.
 package org.kframework.backend.latex;
 
 import org.apache.commons.io.FileUtils;
@@ -36,7 +37,7 @@ public class LatexBackend extends BasicBackend {
         LatexFilter lf;
         if(makeDocument) lf = new DocumentationFilter(context);
         else lf = new LatexFilter(context);
-        javaDef.accept(lf);
+        lf.visitNode(javaDef);
 
         String kLatexStyle = KPaths.getKBase(false) + fileSep + "include" + fileSep + "latex" + fileSep + "k.sty";
         latexStyleFile = new File(context.dotk.getAbsolutePath() + fileSep + "k.sty");
@@ -45,11 +46,11 @@ public class LatexBackend extends BasicBackend {
         String latexified = "\\nonstopmode" + endl +
                 "\\PassOptionsToPackage{pdftex,usenames,dvipsnames,svgnames,x11names}{xcolor}"+ endl +
                 "\\PassOptionsToPackage{pdftex}{hyperref}"+ endl +
-                "\\documentclass{article}" + endl + "\\usepackage[" + GlobalSettings.style + "]{k}" + endl;
+                "\\documentclass{article}" + endl + "\\usepackage[" + options.docStyle() + "]{k}" + endl;
         String preamble = lf.getPreamble().toString();
         latexified += preamble + "\\begin{document}" + endl + lf.getResult() + "\\end{document}" + endl;
 
-        File canonicalFile = GlobalSettings.mainFile.getCanonicalFile();
+        File canonicalFile = options.mainDefinitionFile();
         String latexFilePath;
         if(makeDocument) latexFilePath= context.dotk.getAbsolutePath() + fileSep + FilenameUtils.removeExtension(canonicalFile.getName()) + "-doc.tex";
         else latexFilePath = context.dotk.getAbsolutePath() + fileSep + FilenameUtils.removeExtension(canonicalFile.getName()) + ".tex";
@@ -60,8 +61,8 @@ public class LatexBackend extends BasicBackend {
     }
 
     public void copyFiles() throws IOException {
-        FileUtils.copyFile(latexFile, new File(GlobalSettings.outputDir + File.separator + latexFile.getName()));
-        FileUtils.copyFile(latexStyleFile, new File(GlobalSettings.outputDir + File.separator + latexStyleFile.getName()));
+        FileUtils.copyFile(latexFile, new File(options.directory, latexFile.getName()));
+        FileUtils.copyFile(latexStyleFile, new File(options.directory, latexStyleFile.getName()));
     }
 
     @Override

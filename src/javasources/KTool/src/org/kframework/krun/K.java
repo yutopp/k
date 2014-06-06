@@ -1,3 +1,4 @@
+// Copyright (c) 2012-2014 K Team. All Rights Reserved.
 package org.kframework.krun;
 
 import org.kframework.kil.loader.Context;
@@ -18,14 +19,14 @@ public class K {
     public static final String userdir = System.getProperty("user.dir");
     public static final String fileSeparator = System.getProperty("file.separator");
     public static final String lineSeparator = System.getProperty("line.separator");
-    
-    //define some constants for print 
+
+    //define some constants for print
     public static final String PRETTY = "pretty";
     public static final String KORE = "kore";
     public static final String COMPATIBLE = "compatible";
 
     public static String kdir;
-    
+
     public static void init(Context context) {
         if (context.dotk == null) {
             context.dotk = new File(userdir + File.separator + ".k");
@@ -37,7 +38,7 @@ public class K {
             e.printStackTrace();
         }
     }
-    
+
     public static String krunDir, krunTempDir, maude_in, maude_out, maude_err, maude_output, processed_maude_output, krun_output;
 
     public static void setKDir() {
@@ -50,14 +51,14 @@ public class K {
         //where to write the XML output from Maude
         maude_output = krunTempDir + fileSeparator + "maudeoutput.xml";
         processed_maude_output = krunTempDir + fileSeparator + "maudeoutput_simplified.xml";
-    
+
         // where to write the pretty-printed output of jkrun
         krun_output = krunTempDir + fileSeparator + "krun_output";
     }
 
     // the default values for jkrun commandline options
     public static String pgm;
-    public static String term = null;
+    public static boolean term = false;
     public static String directory = null;
     public static String main_module;
     public static String syntax_module;
@@ -92,7 +93,7 @@ public class K {
     public static boolean io = true;
     public static boolean statistics = false;
     public static ColorSetting color = ColorSetting.ON;
-    public static Color terminalColor = ColorUtil.getColorByName("black");
+    private static Color terminalColor = null;
     public static boolean do_kompilation = false;
     public static boolean do_concrete_exec = false;
     public static boolean do_search = false;
@@ -109,10 +110,16 @@ public class K {
     public static boolean profile = false;
     public static String smt = "z3";
     public static boolean deterministic_functions = false;
+    public static boolean pattern_matching = false;
 
+
+    /**
+     * Whether to wrap output at 80 characters.
+     */
+    public static boolean wrap = true;
 
     public static Properties configuration_variables = new Properties();
-    public static Properties cfg_parsers = new Properties();    
+    public static Properties cfg_parsers = new Properties();
 
     public static Definition definition;
     public static Configuration kompiled_cfg;
@@ -125,5 +132,16 @@ public class K {
 
     public static String getProgramParser() {
         return customParser != null ? customParser : parser;
+    }
+
+    public static Color getTerminalColor() {
+        if (terminalColor == null) {
+            terminalColor = ColorUtil.getColorByName("black");
+        }
+        return terminalColor;
+    }
+
+    public static void setTerminalColor(Color terminalColor) {
+        K.terminalColor = terminalColor;
     }
 }

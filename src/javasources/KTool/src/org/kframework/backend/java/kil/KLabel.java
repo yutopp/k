@@ -1,3 +1,4 @@
+// Copyright (c) 2013-2014 K Team. All Rights Reserved.
 package org.kframework.backend.java.kil;
 
 import org.kframework.backend.java.symbolic.Transformer;
@@ -17,9 +18,19 @@ public abstract class KLabel extends Term {
     }
 
     @Override
+    public boolean isExactSort() {
+        return true;
+    }
+
+    @Override
     public boolean isSymbolic() {
         /* AndreiS: no support for symbolic KLabels */
         return false;
+    }
+
+    @Override
+    public String sort() {
+        return kind.toString();
     }
 
     /**

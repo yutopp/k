@@ -47,8 +47,9 @@ class BuchiTrackingLabel<Control, Alphabet> extends TrackingLabel<Pair<Control, 
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public void update(PushdownSystemInterface pds, Pair<Control, BuchiState> pPrime) {
         assert pds instanceof BuchiPushdownSystem;
-        repeated |= ((BuchiPushdownSystem) pds).isFinal(pPrime);
+        repeated |= ((BuchiPushdownSystem<Control, Alphabet>) pds).isFinal(pPrime);
     }
 }

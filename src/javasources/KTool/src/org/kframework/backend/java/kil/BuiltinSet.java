@@ -1,3 +1,4 @@
+// Copyright (c) 2013-2014 K Team. All Rights Reserved.
 package org.kframework.backend.java.kil;
 
 import com.google.common.base.Joiner;
@@ -24,7 +25,7 @@ import java.util.Set;
  *
  * @author AndreiS
  */
-public class BuiltinSet extends Collection implements Sorted {
+public class BuiltinSet extends Collection {
 
 //    public abstract class Operation {
 //
@@ -113,9 +114,11 @@ public class BuiltinSet extends Collection implements Sorted {
         return elements.size();
     }
 
-    /**
-     * Returns a {@code String} representation of the sort of this object.
-     */
+    @Override
+    public boolean isExactSort() {
+        return true;
+    }
+
     @Override
     public String sort() {
         return KSorts.SET;

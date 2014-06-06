@@ -1,3 +1,4 @@
+// Copyright (c) 2012-2014 K Team. All Rights Reserved.
 package org.kframework.backend.maude;
 
 import org.apache.commons.lang3.StringEscapeUtils;
@@ -7,11 +8,9 @@ import org.kframework.kil.Definition;
 import org.kframework.kil.Production;
 import org.kframework.kil.UserList;
 import org.kframework.kil.loader.Context;
-import org.kframework.kil.visitors.exceptions.TransformerException;
 import org.kframework.utils.Stopwatch;
 import org.kframework.utils.StringBuilderUtil;
 import org.kframework.utils.file.FileUtil;
-import org.kframework.utils.general.GlobalSettings;
 
 import java.io.IOException;
 import java.util.Map;
@@ -24,17 +23,15 @@ public class MaudeBackend extends BasicBackend {
 
     @Override
     public void run(Definition definition) throws IOException {
-        try {
-            definition = (Definition) definition.accept(new FreshVariableNormalizer(context));
-        } catch (TransformerException e) { }
+        definition = (Definition) new FreshVariableNormalizer(context).visitNode(definition);
         MaudeFilter maudeFilter = new MaudeFilter(context);
-        definition.accept(maudeFilter);
+        maudeFilter.visitNode(definition);
 
         final String mainModule = definition.getMainModule();
         StringBuilder maudified = maudeFilter.getResult();
         StringBuilderUtil.replaceFirst(maudified, mainModule, mainModule + "-BASE");
 
-        FileUtil.save(context.dotk.getAbsolutePath() + "/base.maude", maudified);
+        FileUtil.save(context.kompiled.getAbsolutePath() + "/base.maude", maudified);
         sw.printIntermediate("Generating Maude file");
 
         StringBuilder consTable = getLabelTable(definition);

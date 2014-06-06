@@ -1,3 +1,4 @@
+// Copyright (c) 2013-2014 K Team. All Rights Reserved.
 package org.kframework.backend.java.symbolic;
 
 import java.util.ArrayList;
@@ -7,11 +8,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
-import org.kframework.backend.java.builtins.BoolToken;
-import org.kframework.backend.java.builtins.Int32Token;
-import org.kframework.backend.java.builtins.IntToken;
-import org.kframework.backend.java.builtins.StringToken;
-import org.kframework.backend.java.builtins.UninterpretedToken;
+import org.kframework.backend.java.builtins.*;
 import org.kframework.backend.java.kil.*;
 import org.kframework.kil.ASTNode;
 
@@ -192,16 +189,17 @@ public class CopyOnWriteTransformer implements Transformer {
     }
 
     @Override
+    public ASTNode transform(BitVector bitVector) {
+        return transform((Token) bitVector);
+    }
+
+    @Override
     public ASTNode transform(BoolToken boolToken) {
         return transform((Token) boolToken);
     }
 
     @Override
     public ASTNode transform(IntToken intToken) {
-        return transform((Token) intToken);
-    }
-
-    public ASTNode transform(Int32Token intToken) {
         return transform((Token) intToken);
     }
 

@@ -1,3 +1,4 @@
+// Copyright (c) 2013-2014 K Team. All Rights Reserved.
 module TEST
 
 syntax KItem ::= open(String, String) | tell(Int) | getc(Int) | read(Int, Int)
@@ -7,7 +8,7 @@ syntax KItem ::= assertEqual(K, K)
 
 syntax KResult ::= Int | String | TCPError
 
-syntax KIetm ::= K "-" K [strict]
+syntax KItem ::= K "-" K [strict]
 
 rule I1:Int - I2:Int => I1 -Int I2
 
