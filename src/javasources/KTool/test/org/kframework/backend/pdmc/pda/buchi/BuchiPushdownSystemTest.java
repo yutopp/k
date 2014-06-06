@@ -155,9 +155,9 @@ public class BuchiPushdownSystemTest {
         System.err.println("\n\n\n----CounterExample Graph----");
         System.err.println(counterExampleGraph.toString());
         System.err.println("\n\n\n----Reachability paths for vertices in the CounterExample Graph----");
-        for (ConfigurationHead<Pair<String, BuchiState>, String> head : counterExampleGraph.getVertices()) {
-            System.err.println(bpsTool.getReachableConfiguration(head).toString());
-        }
+        ConfigurationHead<Pair<String, BuchiState>, String> head = counterExampleGraph.getVertices().iterator().next();
+        System.err.println(bpsTool.getReachableConfiguration(head).toString());
+        System.err.println(bpsTool.getRepeatingCycle(head).toString());
     }
 
     @Test
@@ -309,8 +309,8 @@ public class BuchiPushdownSystemTest {
         System.err.println("\n\n\n----CounterExample Graph----");
         System.err.println(counterExampleGraph.toString());
         System.err.println("\n\n\n----Reachability paths for vertices in the CounterExample Graph----");
-        for (ConfigurationHead<Pair<String, BuchiState>, String> head : counterExampleGraph.getVertices()) {
-            System.err.println(bpsTool.getReachableConfiguration(head).toString());
-        }
+        ConfigurationHead<Pair<String, BuchiState>, String> head = counterExampleGraph.getVertices().iterator().next();
+        System.err.println(bpsTool.getReachableConfiguration(head).toString());
+        System.err.println(bpsTool.getRepeatingCycle(head).toString());
     }
 }

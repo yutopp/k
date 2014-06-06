@@ -177,34 +177,28 @@ public class BuchiPushdownSystemTools<Control, Alphabet> {
         Rule<Pair<Control, BuchiState>, Alphabet> rule = label.getRule();
         assert label.getBackState() == null;
         while (rule != null) {
-            if (rule.endStack().size() == 2) { // reduce step 3.2 to step 3.1 by shifting transition & rules
+            if (rule.endStack().size() == 2) {
                 // First transitions: p -a-> q<p,a> -b-> q            [...  -w->* fin  ]
                 // labeling rule: <p',c>  => <p, a b>
                 // then add  p' -c-> q              [... -w->* fin
+                // reduce step 3.2 to step 3.1 by shifting transition
                 assert transition.getLetter()!=null;
                 assert transition.getEnd().getLetter()!= null; // this is an intermediate stare
                 transition = getUncompressedTransition(path);
-                head = rule.getHead();
-                transition = Transition.of(
-                        PAutomatonState.<Pair<Control, BuchiState>, Alphabet>of(head.getState()),
-                        head.getLetter(),
-                        transition.getEnd()
-                );
-                assert transition.getLetter()!=null;
-                path.addFirst(transition);
+
             } else {
                 // First transition: p -w-> q
                 // labeling rule: <p',c> => <p,w>
                 // then add p' -c-> q
-                head = rule.getHead();
-                transition = Transition.of(
-                        PAutomatonState.<Pair<Control, BuchiState>, Alphabet>of(head.getState()),
-                        head.getLetter(),
-                        transition.getEnd()
-                );
-                path.addFirst(transition);
             }
-
+            head = rule.getHead();
+            transition = Transition.of(
+                    PAutomatonState.<Pair<Control, BuchiState>, Alphabet>of(head.getState()),
+                    head.getLetter(),
+                    transition.getEnd()
+            );
+            assert transition.getLetter()!=null;
+            path.addFirst(transition);
             // Add rule to list of rules
             result.addFirst(rule);
             transition = getUncompressedTransition(path);
@@ -233,4 +227,62 @@ public class BuchiPushdownSystemTools<Control, Alphabet> {
         return transition;
     }
 
+    public Deque<Rule<Pair<Control, BuchiState>, Alphabet>> getRepeatingCycle(ConfigurationHead<Pair<Control, BuchiState>, Alphabet> head) {
+        TarjanSCC<ConfigurationHead<Pair<Control, BuchiState>, Alphabet>, BuchiTrackingLabel<Control, Alphabet>>
+                counter = getCounterExampleGraph();
+        Deque<DFSFrame> stack = new ArrayDeque<>();
+        Set<ConfigurationHead<Pair<Control, BuchiState>, Alphabet>> visited = new HashSet<>();
+        Map<ConfigurationHead<Pair<Control, BuchiState>, Alphabet>, Map<ConfigurationHead<Pair<Control, BuchiState>, Alphabet>, BuchiTrackingLabel<Control, Alphabet>>> edgeSet = counter.getEdgeSet();
+        stack.add(new DFSFrame(head, null, edgeSet.get(head).entrySet().iterator(), false));
+        visited.add(head);
+        while (!stack.isEmpty()) {
+            DFSFrame top = stack.peekLast();
+            if (!top.nextEntry.hasNext()) {
+                stack.pop(); visited.remove(head);
+            } else {
+                Map.Entry<ConfigurationHead<Pair<Control, BuchiState>, Alphabet>,
+                BuchiTrackingLabel<Control, Alphabet>> nextEntry = top.nextEntry.next();
+                ConfigurationHead<Pair<Control, BuchiState>, Alphabet> nextHead = nextEntry.getKey();
+                boolean repeated = nextEntry.getValue().isRepeated();
+                if (!visited.contains(nextHead)) {
+                    stack.add(new DFSFrame(nextHead, nextEntry.getValue(), edgeSet.get(nextHead).entrySet().iterator(), repeated));
+                    visited.add(nextHead);
+                } else {
+                    if (repeated || top.repeating) {
+                        stack.add(new DFSFrame(nextHead, nextEntry.getValue(), edgeSet.get(nextHead).entrySet().iterator(), repeated));
+                        break;
+                    }
+                }
+            }
+        }
+        if (!stack.isEmpty()) {
+            Deque<Rule<Pair<Control, BuchiState>, Alphabet>> rules = new ArrayDeque<>();
+            for (DFSFrame frame : stack) {
+                if (frame.label != null) {
+                    rules.add(frame.label.getRule());
+                }
+            }
+            return rules;
+        }
+        return null;
+    }
+
+    public class DFSFrame {
+        ConfigurationHead<Pair<Control, BuchiState>, Alphabet> data;
+        BuchiTrackingLabel<Control, Alphabet> label;
+        Iterator<Map.Entry<ConfigurationHead<Pair<Control, BuchiState>, Alphabet>,
+                BuchiTrackingLabel<Control, Alphabet>>> nextEntry;
+        boolean repeating;
+
+        public DFSFrame(ConfigurationHead<Pair<Control, BuchiState>, Alphabet> data,
+                        BuchiTrackingLabel<Control, Alphabet> label,
+                        Iterator<Map.Entry<ConfigurationHead<Pair<Control, BuchiState>, Alphabet>,
+                                BuchiTrackingLabel<Control, Alphabet>>> nextEntry,
+                        boolean repeating) {
+            this.data = data;
+            this.label = label;
+            this.nextEntry = nextEntry;
+            this.repeating = repeating;
+        }
+    }
 }

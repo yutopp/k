@@ -1,5 +1,10 @@
 package org.kframework.backend.pdmc.pda.graph;
 
+import org.apache.commons.lang3.tuple.Pair;
+import org.kframework.backend.pdmc.pda.ConfigurationHead;
+import org.kframework.backend.pdmc.pda.Rule;
+import org.kframework.backend.pdmc.pda.buchi.BuchiState;
+
 import java.util.*;
 
 /**
@@ -25,7 +30,7 @@ public class TarjanSCC<Data, Label> {
         sccs = null;
     }
 
-    /**
+   /**
      * Indexing class for graph vertices specialized for Tarjan's SCC algorithm
      */
     public class TarjanSCCVertex {
