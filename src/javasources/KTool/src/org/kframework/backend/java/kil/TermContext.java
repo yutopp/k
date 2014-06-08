@@ -16,7 +16,7 @@ import com.google.common.collect.Table;
 /**
  * An object containing context specific to a particular configuration.
  */
-public class TermContext extends JavaSymbolicObject {
+public class TermContext {
 
     private static Map<Definition, TermContext> cache1 = new HashMap<Definition, TermContext>();
     private static Table<Definition, FileSystem, TermContext> cache2 = HashBasedTable.create();
@@ -73,15 +73,4 @@ public class TermContext extends JavaSymbolicObject {
     public FileSystem fileSystem() {
         return fs;
     }
-
-    @Override
-    public ASTNode accept(Transformer transformer) {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public void accept(Visitor visitor) {
-        throw new UnsupportedOperationException();
-    }
-
 }
