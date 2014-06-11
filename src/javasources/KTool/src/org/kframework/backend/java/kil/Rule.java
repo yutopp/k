@@ -10,7 +10,7 @@ import java.util.Set;
 import org.kframework.backend.java.builtins.BoolToken;
 import org.kframework.backend.java.indexing.IndexingPair;
 import org.kframework.backend.java.symbolic.BottomUpVisitor;
-import org.kframework.backend.java.symbolic.SymbolicConstraint;
+import org.kframework.backend.java.symbolic.ActiveSymbolicConstraint;
 import org.kframework.backend.java.symbolic.Transformer;
 import org.kframework.backend.java.symbolic.UninterpretedConstraint;
 import org.kframework.backend.java.symbolic.Visitor;
@@ -292,7 +292,7 @@ public class Rule extends JavaSymbolicObject {
             if (requires == null) {
                 string += " when ";
             } else {
-                string += " " + SymbolicConstraint.SEPARATOR + " ";
+                string += " " + ActiveSymbolicConstraint.SEPARATOR + " ";
             }
             string += lookups;
         }

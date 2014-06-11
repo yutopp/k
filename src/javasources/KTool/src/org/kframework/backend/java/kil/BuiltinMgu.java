@@ -2,7 +2,7 @@
 package org.kframework.backend.java.kil;
 
 import org.kframework.backend.java.symbolic.Matcher;
-import org.kframework.backend.java.symbolic.SymbolicConstraint;
+import org.kframework.backend.java.symbolic.ActiveSymbolicConstraint;
 import org.kframework.backend.java.symbolic.Transformer;
 import org.kframework.backend.java.symbolic.Unifier;
 import org.kframework.backend.java.symbolic.Visitor;
@@ -15,28 +15,28 @@ public class BuiltinMgu extends Term {
     
     public static String EMPTY_MGU = ".Mgu";
   
-    private final SymbolicConstraint constraint;
+    private final ActiveSymbolicConstraint constraint;
     
-    private BuiltinMgu(SymbolicConstraint constraint, TermContext context) {
+    private BuiltinMgu(ActiveSymbolicConstraint constraint, TermContext context) {
         // YilongL: The kind of a BuiltinMgu should be Kind.KITEM rather than a
         // new created kind for two reasons: 1) an Mgu is a builtin which should
         // be subsorted into KItem; 2) if we assign Mgu its own kind, say MGU,
         // then we have a problem deciding the kind of MguOrError.
         super(Kind.KITEM);
-        this.constraint = constraint == null ? new SymbolicConstraint(context)
-                : new SymbolicConstraint(constraint, context);
+        this.constraint = constraint == null ? new ActiveSymbolicConstraint(context)
+                : new ActiveSymbolicConstraint(constraint, context);
     }
 
     public static BuiltinMgu emptyMgu(TermContext context) {
         return new BuiltinMgu(null, context);
     }
 
-    public static BuiltinMgu of(SymbolicConstraint constraint,
+    public static BuiltinMgu of(ActiveSymbolicConstraint constraint,
             TermContext context) {
         return new BuiltinMgu(constraint, context);
     }
     
-    public SymbolicConstraint constraint() {
+    public ActiveSymbolicConstraint constraint() {
         return constraint;
     }
        

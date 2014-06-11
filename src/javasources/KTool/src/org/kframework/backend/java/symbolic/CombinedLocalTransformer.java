@@ -194,7 +194,7 @@ public class CombinedLocalTransformer extends LocalTransformer {
     }
 
     @Override
-    public ASTNode transform(SymbolicConstraint node) {
+    public ASTNode transform(ActiveSymbolicConstraint node) {
         return transformAll(node);
     }
 

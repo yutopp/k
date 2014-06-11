@@ -15,18 +15,18 @@ public class LocalEvaluator extends LocalTransformer {
      * The symbolic constraint of the {@code ConstrainedTerm} which contains the
      * terms to be evaluated by this evaluator.
      */
-    private final SymbolicConstraint constraint;
+    private final ActiveSymbolicConstraint constraint;
 
     public LocalEvaluator(TermContext context) {
         this(null, context);
     }
 
-    public LocalEvaluator(SymbolicConstraint constraint, TermContext context) {
+    public LocalEvaluator(ActiveSymbolicConstraint constraint, TermContext context) {
         super(context);
         this.constraint = constraint;
     }
     
-    public SymbolicConstraint constraint() {
+    public ActiveSymbolicConstraint constraint() {
         return constraint;
     }
     

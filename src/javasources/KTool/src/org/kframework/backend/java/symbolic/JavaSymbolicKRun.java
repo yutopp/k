@@ -104,7 +104,7 @@ public class JavaSymbolicKRun implements KRun {
             return rewriteResult;
         } else {
             SymbolicRewriter symbolicRewriter = new SymbolicRewriter(definition);
-            SymbolicConstraint constraint = new SymbolicConstraint(termContext);
+            ActiveSymbolicConstraint constraint = new ActiveSymbolicConstraint(termContext);
             ConstrainedTerm constrainedTerm = new ConstrainedTerm(term, constraint, termContext);
             if (K.get_indexing_stats){
                 IndexingStatistics.preProcessStopWatch.stop();
@@ -178,7 +178,7 @@ public class JavaSymbolicKRun implements KRun {
                     (org.kframework.kil.Rule) mapTransformer.visitNode(kilDummyRule),
                     definition);
 
-            SymbolicConstraint initialConstraint = new SymbolicConstraint(termContext);
+            ActiveSymbolicConstraint initialConstraint = new ActiveSymbolicConstraint(termContext);
             //initialConstraint.addAll(rule.condition());
             initialConstraint.addAll(dummyRule.requires());
             ConstrainedTerm initialTerm = new ConstrainedTerm(
@@ -186,7 +186,7 @@ public class JavaSymbolicKRun implements KRun {
                     initialConstraint,
                     termContext);
 
-            SymbolicConstraint targetConstraint = new SymbolicConstraint(termContext);
+            ActiveSymbolicConstraint targetConstraint = new ActiveSymbolicConstraint(termContext);
             targetConstraint.addAll(dummyRule.ensures());
             ConstrainedTerm targetTerm = new ConstrainedTerm(
                     dummyRule.leftHandSide(),

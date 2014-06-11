@@ -195,7 +195,7 @@ public class CombinedLocalVisitor extends LocalVisitor {
     }
 
     @Override
-    public void visit(SymbolicConstraint node) {
+    public void visit(ActiveSymbolicConstraint node) {
         visitAll(node);
     }
 

@@ -12,8 +12,8 @@ import org.kframework.backend.java.kil.Variable;
 import org.kframework.backend.java.kil.Z3Term;
 import org.kframework.backend.java.symbolic.JavaSymbolicKRun;
 import org.kframework.backend.java.symbolic.KILtoZ3;
-import org.kframework.backend.java.symbolic.SymbolicConstraint;
-import org.kframework.backend.java.symbolic.SymbolicConstraint.Equality;
+import org.kframework.backend.java.symbolic.ActiveSymbolicConstraint;
+import org.kframework.backend.java.symbolic.ActiveSymbolicConstraint.Equality;
 import org.kframework.backend.java.util.Z3Wrapper;
 import org.kframework.backend.java.kil.Term;
 import org.kframework.backend.java.kil.Cell;
@@ -80,9 +80,9 @@ public class Adjuster {
         @SuppressWarnings("unchecked")
         Term newSepcContent = ((Cell<Term>)newSpecTerm).getContent();
 
-        SymbolicConstraint newImplside = 
+        ActiveSymbolicConstraint newImplside = 
                 implside.constraint().substituteWithBinders(implVars, implside.termContext());
-        SymbolicConstraint newSpecside = 
+        ActiveSymbolicConstraint newSpecside = 
                 specside.constraint().substituteWithBinders(specVars, specside.termContext());
 
         

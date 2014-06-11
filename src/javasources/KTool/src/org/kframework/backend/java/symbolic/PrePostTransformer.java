@@ -370,15 +370,15 @@ public abstract class PrePostTransformer extends CopyOnWriteTransformer {
     }
 
     @Override
-    public ASTNode transform(SymbolicConstraint symbolicConstraint) {
-        ASTNode astNode = symbolicConstraint.accept(preTransformer);
+    public ASTNode transform(ActiveSymbolicConstraint activeSymbolicConstraint) {
+        ASTNode astNode = activeSymbolicConstraint.accept(preTransformer);
         if (astNode instanceof DoneTransforming) {
             return ((DoneTransforming) astNode).getContents();
         }
-        assert astNode instanceof SymbolicConstraint : "preTransformer should not modify type";
-        symbolicConstraint = (SymbolicConstraint) astNode;
-        symbolicConstraint = (SymbolicConstraint) super.transform(symbolicConstraint);
-        return symbolicConstraint.accept(postTransformer);
+        assert astNode instanceof ActiveSymbolicConstraint : "preTransformer should not modify type";
+        activeSymbolicConstraint = (ActiveSymbolicConstraint) astNode;
+        activeSymbolicConstraint = (ActiveSymbolicConstraint) super.transform(activeSymbolicConstraint);
+        return activeSymbolicConstraint.accept(postTransformer);
     }
 
     @Override

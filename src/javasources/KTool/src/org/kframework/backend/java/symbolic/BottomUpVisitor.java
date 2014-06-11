@@ -228,12 +228,12 @@ public class BottomUpVisitor implements Visitor {
     }
 
     @Override
-    public void visit(SymbolicConstraint node) {
+    public void visit(ActiveSymbolicConstraint node) {
         for (Map.Entry<Variable, Term> entry : node.substitution().entrySet()) {
             entry.getKey().accept(this);
             entry.getValue().accept(this);
         }
-        for (SymbolicConstraint.Equality equality : node.equalities()) {
+        for (ActiveSymbolicConstraint.Equality equality : node.equalities()) {
             equality.leftHandSide().accept(this);
             equality.rightHandSide().accept(this);
         }

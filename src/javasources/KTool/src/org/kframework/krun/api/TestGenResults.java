@@ -4,7 +4,7 @@ package org.kframework.krun.api;
 import java.util.List;
 import java.util.Map;
 
-import org.kframework.backend.java.symbolic.SymbolicConstraint;
+import org.kframework.backend.java.symbolic.ActiveSymbolicConstraint;
 import org.kframework.backend.unparser.UnparserFilter;
 import org.kframework.kil.Term;
 import org.kframework.kil.loader.Context;

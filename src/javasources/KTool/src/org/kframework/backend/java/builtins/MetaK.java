@@ -11,7 +11,7 @@ import org.kframework.backend.java.kil.Term;
 import org.kframework.backend.java.kil.TermContext;
 import org.kframework.backend.java.kil.Variable;
 import org.kframework.backend.java.symbolic.PatternMatcher;
-import org.kframework.backend.java.symbolic.SymbolicConstraint;
+import org.kframework.backend.java.symbolic.ActiveSymbolicConstraint;
 import org.kframework.backend.java.symbolic.SymbolicUnifier;
 import org.kframework.backend.java.symbolic.UnificationFailure;
 
@@ -43,7 +43,7 @@ public class MetaK {
     public static BoolToken unifiable(Term term1, Term term2, TermContext context) {
 //        Term freshTerm1 = term1.substitute(Variable.getFreshSubstitution(term1.variableSet()), context);
 //        Term freshTerm2 = term2.substitute(Variable.getFreshSubstitution(term2.variableSet()), context);
-        SymbolicConstraint constraint = new SymbolicConstraint(context);
+        ActiveSymbolicConstraint constraint = new ActiveSymbolicConstraint(context);
         SymbolicUnifier unifier = new SymbolicUnifier(constraint, context);
         try {
             unifier.unify(term1, term2);

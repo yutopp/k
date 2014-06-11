@@ -20,7 +20,7 @@ import java.util.List;
  * The uninterpreted version of a symbolic constraint. Used merely as a
  * container for equalities between terms.
  * 
- * @see org.kframework.backend.java.symbolic.SymbolicConstraint
+ * @see org.kframework.backend.java.symbolic.ActiveSymbolicConstraint
  * 
  * @author AndreiS
  */
@@ -110,12 +110,12 @@ public class UninterpretedConstraint extends JavaSymbolicObject {
      *            the term context
      * @return the corresponding symbolic constraint
      */
-    public SymbolicConstraint getSymbolicConstraint(TermContext context) {
-        SymbolicConstraint symbolicConstraint = new SymbolicConstraint(context);
+    public ActiveSymbolicConstraint getSymbolicConstraint(TermContext context) {
+        ActiveSymbolicConstraint activeSymbolicConstraint = new ActiveSymbolicConstraint(context);
         for (Equality equality : equalities) {
-            symbolicConstraint.add(equality.leftHandSide, equality.rightHandSide);
+            activeSymbolicConstraint.add(equality.leftHandSide, equality.rightHandSide);
         }
-        return symbolicConstraint;
+        return activeSymbolicConstraint;
     }
 
     @Override

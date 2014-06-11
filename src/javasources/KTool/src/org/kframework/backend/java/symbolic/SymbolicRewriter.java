@@ -193,7 +193,7 @@ public class SymbolicRewriter {
                 ruleStopwatch.reset();
                 ruleStopwatch.start();
 
-                SymbolicConstraint leftHandSideConstraint = new SymbolicConstraint(
+                ActiveSymbolicConstraint leftHandSideConstraint = new ActiveSymbolicConstraint(
                         constrainedTerm.termContext());
                 leftHandSideConstraint.addAll(rule.requires());
 
@@ -209,7 +209,7 @@ public class SymbolicRewriter {
                         leftHandSideConstraint,
                         constrainedTerm.termContext());
 
-                SymbolicConstraint constraint = constrainedTerm.matchImplies(leftHandSideTerm);
+                ActiveSymbolicConstraint constraint = constrainedTerm.matchImplies(leftHandSideTerm);
                 if (constraint == null) {
                     continue;
                 }
@@ -273,7 +273,7 @@ public class SymbolicRewriter {
 
                 ConstrainedTerm constrainedPattern = preparePattern(rule, constrainedSubject.termContext());
 
-                for (SymbolicConstraint constraint1 : getUnificationResults(constrainedSubject, constrainedPattern)) {
+                for (ActiveSymbolicConstraint constraint1 : getUnificationResults(constrainedSubject, constrainedPattern)) {
                     /* compute all results */
                     ConstrainedTerm newCnstrTerm = constructNewSubjectTerm(
                             rule, constraint1);
@@ -335,7 +335,7 @@ public class SymbolicRewriter {
      * @return the pattern term
      */
     private ConstrainedTerm preparePattern(Rule rule, TermContext termContext) {
-        SymbolicConstraint leftHandSideConstraint = new SymbolicConstraint(
+        ActiveSymbolicConstraint leftHandSideConstraint = new ActiveSymbolicConstraint(
                 termContext);
         leftHandSideConstraint.addAll(rule.requires());
         for (Variable variable : rule.freshVariables()) {
@@ -363,7 +363,7 @@ public class SymbolicRewriter {
      *            rewrite rule and the current subject term
      * @return the new subject term
      */
-    private ConstrainedTerm constructNewSubjectTerm(Rule rule, SymbolicConstraint constraint) {
+    private ConstrainedTerm constructNewSubjectTerm(Rule rule, ActiveSymbolicConstraint constraint) {
         /*
          * TODO(YilongL): had to comment out the following assertion because
          * logik.k uses unification even in concrete execution mode
@@ -404,7 +404,7 @@ public class SymbolicRewriter {
      * This method is extracted to simplify the profiling script.
      * </p>
      */
-    private List<SymbolicConstraint> getUnificationResults(
+    private List<ActiveSymbolicConstraint> getUnificationResults(
             ConstrainedTerm constrainedTerm,
             ConstrainedTerm otherConstrainedTerm) {
         return constrainedTerm.unify(otherConstrainedTerm);
@@ -418,7 +418,7 @@ public class SymbolicRewriter {
             ruleStopwatch.reset();
             ruleStopwatch.start();
 
-            SymbolicConstraint leftHandSideConstraint = new SymbolicConstraint(
+            ActiveSymbolicConstraint leftHandSideConstraint = new ActiveSymbolicConstraint(
                     constrainedTerm.termContext());
             leftHandSideConstraint.addAll(rule.requires());
 
@@ -428,7 +428,7 @@ public class SymbolicRewriter {
                     leftHandSideConstraint,
                     constrainedTerm.termContext());
 
-            SymbolicConstraint constraint = constrainedTerm.matchImplies(leftHandSideTerm);
+            ActiveSymbolicConstraint constraint = constrainedTerm.matchImplies(leftHandSideTerm);
             if (constraint == null) {
                 continue;
             }
@@ -459,7 +459,7 @@ public class SymbolicRewriter {
     // can't be unified with the pattern.
     private Map<Variable, Term> getSubstitutionMap(ConstrainedTerm term, Rule pattern) {
         // Create the initial constraints based on the pattern
-        SymbolicConstraint termConstraint = new SymbolicConstraint(term.termContext());
+        ActiveSymbolicConstraint termConstraint = new ActiveSymbolicConstraint(term.termContext());
         termConstraint.addAll(pattern.requires());
         for (Variable var : pattern.freshVariables()) {
             termConstraint.add(var, FreshOperations.fresh(var.sort(), term.termContext()));
@@ -476,7 +476,7 @@ public class SymbolicRewriter {
         VariableCollector visitor = new VariableCollector();
         lhs.accept(visitor);
 
-        Collection<SymbolicConstraint> constraints = getUnificationResults(term, lhs);
+        Collection<ActiveSymbolicConstraint> constraints = getUnificationResults(term, lhs);
         if (constraints.isEmpty()) {
             return null;
         }
@@ -484,7 +484,7 @@ public class SymbolicRewriter {
         // Build a substitution map containing the variables in the pattern from
         // the substitution constraints given by unification.
         Map<Variable, Term> map = new HashMap<Variable, Term>();
-        for (SymbolicConstraint constraint : constraints) {
+        for (ActiveSymbolicConstraint constraint : constraints) {
             if (!constraint.isSubstitution()) {
                 return null;
             }
@@ -888,7 +888,7 @@ public class SymbolicRewriter {
             /* rename rule variables */
             Map<Variable, Variable> freshSubstitution = Variable.getFreshSubstitution(rule.variableSet());
 
-            SymbolicConstraint sideConstraint = new SymbolicConstraint(context);
+            ActiveSymbolicConstraint sideConstraint = new ActiveSymbolicConstraint(context);
             sideConstraint.addAll(rule.requires());
             ConstrainedTerm initialTerm = new ConstrainedTerm(
                     rule.leftHandSide().substituteWithBinders(freshSubstitution, context),

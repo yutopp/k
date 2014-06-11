@@ -180,8 +180,8 @@ public class LocalTransformer implements Transformer {
     }
 
     @Override
-    public ASTNode transform(SymbolicConstraint symbolicConstraint) {
-        return transform((JavaSymbolicObject) symbolicConstraint);
+    public ASTNode transform(ActiveSymbolicConstraint activeSymbolicConstraint) {
+        return transform((JavaSymbolicObject) activeSymbolicConstraint);
     }
 
     @Override

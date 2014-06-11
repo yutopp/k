@@ -617,16 +617,16 @@ public class CopyOnWriteTransformer implements Transformer {
     }
 
     @Override
-    public ASTNode transform(SymbolicConstraint symbolicConstraint) {
-        SymbolicConstraint transformedSymbolicConstraint = new SymbolicConstraint(context);
+    public ASTNode transform(ActiveSymbolicConstraint activeSymbolicConstraint) {
+        ActiveSymbolicConstraint transformedSymbolicConstraint = new ActiveSymbolicConstraint(context);
 
-        for (Map.Entry<Variable, Term> entry : symbolicConstraint.substitution().entrySet()) {
+        for (Map.Entry<Variable, Term> entry : activeSymbolicConstraint.substitution().entrySet()) {
             transformedSymbolicConstraint.add(
                     (Term) entry.getKey().accept(this),
                     (Term) entry.getValue().accept(this));
         }
 
-        for (SymbolicConstraint.Equality equality : symbolicConstraint.equalities()) {
+        for (ActiveSymbolicConstraint.Equality equality : activeSymbolicConstraint.equalities()) {
             transformedSymbolicConstraint.add(
                     (Term) equality.leftHandSide().accept(this),
                     (Term) equality.rightHandSide().accept(this));
@@ -647,7 +647,7 @@ public class CopyOnWriteTransformer implements Transformer {
     
     @Override
     public ASTNode transform(BuiltinMgu mgu) {
-        SymbolicConstraint transformedConstraint = (SymbolicConstraint) mgu.constraint().accept(this);
+        ActiveSymbolicConstraint transformedConstraint = (ActiveSymbolicConstraint) mgu.constraint().accept(this);
         if (transformedConstraint == mgu.constraint()) {
             return BuiltinMgu.of(transformedConstraint, context);
         } else {

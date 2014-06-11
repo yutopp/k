@@ -6,7 +6,7 @@ import org.kframework.backend.java.kil.KLabelConstant;
 import org.kframework.backend.java.kil.KList;
 import org.kframework.backend.java.kil.Term;
 import org.kframework.backend.java.kil.TermContext;
-import org.kframework.backend.java.symbolic.SymbolicConstraint;
+import org.kframework.backend.java.symbolic.ActiveSymbolicConstraint;
 
 import com.google.common.collect.ImmutableList;
 
@@ -34,7 +34,7 @@ public class FreshOperations {
                 KLabelConstant.of(name, context.definition()),
                 new KList(ImmutableList.<Term>of(IntToken.of(context.incrementCounter()))),
                 context);
-        return freshFunction.evaluateFunction(new SymbolicConstraint(context), context);
+        return freshFunction.evaluateFunction(new ActiveSymbolicConstraint(context), context);
     }
 
 }

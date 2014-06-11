@@ -11,9 +11,9 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import org.kframework.backend.java.symbolic.SymbolicConstraint;
-import org.kframework.backend.java.symbolic.SymbolicConstraint.Equality;
-import org.kframework.backend.java.symbolic.SymbolicConstraint.TruthValue;
+import org.kframework.backend.java.symbolic.ActiveSymbolicConstraint;
+import org.kframework.backend.java.symbolic.ActiveSymbolicConstraint.Equality;
+import org.kframework.backend.java.symbolic.ActiveSymbolicConstraint.TruthValue;
 import org.kframework.backend.java.symbolic.Transformer;
 import org.kframework.backend.java.symbolic.UninterpretedConstraint;
 import org.kframework.backend.java.symbolic.Visitor;
@@ -41,11 +41,11 @@ public class ConstrainedTerm extends JavaSymbolicObject {
      * Represents key lookups of builtin data-structures as a symbolic
      * constraint.
      */
-    private final SymbolicConstraint lookups;
-    private final SymbolicConstraint constraint;
+    private final ActiveSymbolicConstraint lookups;
+    private final ActiveSymbolicConstraint constraint;
     private final TermContext context;
 
-    public ConstrainedTerm(Term term, SymbolicConstraint lookups, SymbolicConstraint constraint,
+    public ConstrainedTerm(Term term, ActiveSymbolicConstraint lookups, ActiveSymbolicConstraint constraint,
             TermContext context) {
         super();
         this.term = term;
@@ -55,19 +55,19 @@ public class ConstrainedTerm extends JavaSymbolicObject {
         context.setConstrainedTermData(this.data());
     }
 
-    public ConstrainedTerm(Term term, SymbolicConstraint constraint, TermContext context) {
-        this(term, new SymbolicConstraint(context), constraint, context);
+    public ConstrainedTerm(Term term, ActiveSymbolicConstraint constraint, TermContext context) {
+        this(term, new ActiveSymbolicConstraint(context), constraint, context);
     }
 
     public ConstrainedTerm(Term term, TermContext context) {
-        this(term, new SymbolicConstraint(context), new SymbolicConstraint(context), context);
+        this(term, new ActiveSymbolicConstraint(context), new ActiveSymbolicConstraint(context), context);
     }
 
     public TermContext termContext() {
         return context;
     }
 
-    public SymbolicConstraint constraint() {
+    public ActiveSymbolicConstraint constraint() {
         return constraint;
     }
 
@@ -75,7 +75,7 @@ public class ConstrainedTerm extends JavaSymbolicObject {
         return matchImplies(constrainedTerm) != null;
     }
 
-    public SymbolicConstraint lookups() {
+    public ActiveSymbolicConstraint lookups() {
         return lookups;
     }
     /*
@@ -97,8 +97,8 @@ public class ConstrainedTerm extends JavaSymbolicObject {
     }
     */
 
-    public SymbolicConstraint matchImplies(ConstrainedTerm constrainedTerm) {
-        SymbolicConstraint unificationConstraint = new SymbolicConstraint(constrainedTerm.termContext());
+    public ActiveSymbolicConstraint matchImplies(ConstrainedTerm constrainedTerm) {
+        ActiveSymbolicConstraint unificationConstraint = new ActiveSymbolicConstraint(constrainedTerm.termContext());
         unificationConstraint.add(term, constrainedTerm.term);
         unificationConstraint.simplify();
         Set<Variable> variables = constrainedTerm.variableSet();
@@ -108,7 +108,7 @@ public class ConstrainedTerm extends JavaSymbolicObject {
             return null;
         }
 
-        SymbolicConstraint implicationConstraint = new SymbolicConstraint(constrainedTerm.termContext());
+        ActiveSymbolicConstraint implicationConstraint = new ActiveSymbolicConstraint(constrainedTerm.termContext());
         implicationConstraint.addAll(unificationConstraint);
         implicationConstraint.addAll(constrainedTerm.lookups);
         implicationConstraint.addAll(constrainedTerm.constraint);
@@ -145,13 +145,13 @@ public class ConstrainedTerm extends JavaSymbolicObject {
      *            another constrained term
      * @return solutions to the unification problem
      */
-    public List<SymbolicConstraint> unify(ConstrainedTerm constrainedTerm) {
+    public List<ActiveSymbolicConstraint> unify(ConstrainedTerm constrainedTerm) {
         int numOfInvoc = Debug.incDebugMethodCounter();
         if (numOfInvoc == Integer.MAX_VALUE) {
             Debug.setBreakPointHere();
         }
         
-        List<SymbolicConstraint> solutions = unifyImpl(constrainedTerm);
+        List<ActiveSymbolicConstraint> solutions = unifyImpl(constrainedTerm);
         
         Debug.printUnifyResult(numOfInvoc, this, constrainedTerm, solutions);
         return solutions;
@@ -164,24 +164,24 @@ public class ConstrainedTerm extends JavaSymbolicObject {
      *            another constrained term
      * @return solutions to the unification problem
      */
-    private List<SymbolicConstraint> unifyImpl(ConstrainedTerm constrainedTerm) {
+    private List<ActiveSymbolicConstraint> unifyImpl(ConstrainedTerm constrainedTerm) {
         if (!term.kind.equals(constrainedTerm.term.kind)) {
             return Collections.emptyList();
         }
 
         /* unify the subject term and the pattern term without considering those associated constraints */
-        SymbolicConstraint unificationConstraint = new SymbolicConstraint(constrainedTerm.termContext());
+        ActiveSymbolicConstraint unificationConstraint = new ActiveSymbolicConstraint(constrainedTerm.termContext());
         unificationConstraint.add(term, constrainedTerm.term);
         unificationConstraint.simplify();
         if (unificationConstraint.isFalse()) {
             return Collections.emptyList();
         }
         
-        List<SymbolicConstraint> solutions = new ArrayList<SymbolicConstraint>();
-        for (SymbolicConstraint candidate : unificationConstraint.getMultiConstraints()) {
-            if (SymbolicConstraint.TruthValue.FALSE == candidate.addAll(constrainedTerm.lookups)) continue;
-            if (SymbolicConstraint.TruthValue.FALSE == candidate.addAll(constrainedTerm.constraint)) continue;
-            if (SymbolicConstraint.TruthValue.FALSE == candidate.addAll(constraint)) continue;
+        List<ActiveSymbolicConstraint> solutions = new ArrayList<ActiveSymbolicConstraint>();
+        for (ActiveSymbolicConstraint candidate : unificationConstraint.getMultiConstraints()) {
+            if (ActiveSymbolicConstraint.TruthValue.FALSE == candidate.addAll(constrainedTerm.lookups)) continue;
+            if (ActiveSymbolicConstraint.TruthValue.FALSE == candidate.addAll(constrainedTerm.constraint)) continue;
+            if (ActiveSymbolicConstraint.TruthValue.FALSE == candidate.addAll(constraint)) continue;
 
             candidate.simplify();
             if (candidate.isFalse()) {
@@ -205,18 +205,18 @@ public class ConstrainedTerm extends JavaSymbolicObject {
         if (K.do_testgen && !solutions.isEmpty()) {
             // TODO(AndreiS): deal with KLabel variables
             boolean changed;
-            List<SymbolicConstraint> tmpSolutions = solutions;
+            List<ActiveSymbolicConstraint> tmpSolutions = solutions;
             Set<Variable> sortIntersectionVariables = new HashSet<Variable>();
-            Map<SymbolicConstraint, Set<Variable>> orientedVarsOfCnstr = new HashMap<SymbolicConstraint, Set<Variable>>();
+            Map<ActiveSymbolicConstraint, Set<Variable>> orientedVarsOfCnstr = new HashMap<ActiveSymbolicConstraint, Set<Variable>>();
 
             do {
                 changed = false;
                 solutions = tmpSolutions;
-                tmpSolutions = new ArrayList<SymbolicConstraint>();
+                tmpSolutions = new ArrayList<ActiveSymbolicConstraint>();
 //                System.out.printf("sols=%s\n", solutions);
 
             iteratingSymbCnstr:
-                for (SymbolicConstraint cnstr : solutions) {
+                for (ActiveSymbolicConstraint cnstr : solutions) {
                     Set<Variable> orientedVars = orientedVarsOfCnstr.get(cnstr);
                     orientedVarsOfCnstr.remove(cnstr);
                     if (orientedVars == null) orientedVars = new HashSet<Variable>();
@@ -256,7 +256,7 @@ public class ConstrainedTerm extends JavaSymbolicObject {
 
                             // get the interpreted version of the constraint
                             for (UninterpretedConstraint uninterpretedCnstr : uninterpretedCnstrs) {
-                                SymbolicConstraint newCnstr = uninterpretedCnstr.getSymbolicConstraint(context);
+                                ActiveSymbolicConstraint newCnstr = uninterpretedCnstr.getSymbolicConstraint(context);
                                 if (newCnstr.simplify() != TruthValue.FALSE) {
                                     tmpSolutions.add(newCnstr);
                                     orientedVarsOfCnstr.put(newCnstr, new HashSet<Variable>(orientedVars));
@@ -291,7 +291,7 @@ public class ConstrainedTerm extends JavaSymbolicObject {
 
                             // get the interpreted version of the constraint
                             for (UninterpretedConstraint uninterpretedCnstr : uninterpretedCnstrs) {
-                                SymbolicConstraint newCnstr = uninterpretedCnstr.getSymbolicConstraint(context);
+                                ActiveSymbolicConstraint newCnstr = uninterpretedCnstr.getSymbolicConstraint(context);
                                 if (newCnstr.simplify() != TruthValue.FALSE) {
                                     tmpSolutions.add(newCnstr);
                                     orientedVarsOfCnstr.put(newCnstr, new HashSet<Variable>(orientedVars));
@@ -332,7 +332,7 @@ public class ConstrainedTerm extends JavaSymbolicObject {
                                 
                                 // get the interpreted version of the constraint
                                 for (UninterpretedConstraint uninterpretedCnstr : uninterpretedCnstrs) {
-                                    SymbolicConstraint newCnstr = uninterpretedCnstr.getSymbolicConstraint(context);
+                                    ActiveSymbolicConstraint newCnstr = uninterpretedCnstr.getSymbolicConstraint(context);
                                     if (newCnstr.simplify() != TruthValue.FALSE) {
                                         tmpSolutions.add(newCnstr);
                                         orientedVarsOfCnstr.put(newCnstr, new HashSet<Variable>(orientedVars));
@@ -366,7 +366,7 @@ public class ConstrainedTerm extends JavaSymbolicObject {
 
                             // get the interpreted version of the constraint
                             for (UninterpretedConstraint uninterpretedCnstr : uninterpretedCnstrs) {
-                                SymbolicConstraint newCnstr = uninterpretedCnstr.getSymbolicConstraint(context);
+                                ActiveSymbolicConstraint newCnstr = uninterpretedCnstr.getSymbolicConstraint(context);
                                 if (newCnstr.simplify() != TruthValue.FALSE) {
                                     tmpSolutions.add(newCnstr);
                                     orientedVarsOfCnstr.put(newCnstr, new HashSet<Variable>(orientedVars));
@@ -496,7 +496,7 @@ public class ConstrainedTerm extends JavaSymbolicObject {
 
     @Override
     public String toString() {
-        return term + SymbolicConstraint.SEPARATOR + constraint + SymbolicConstraint.SEPARATOR + lookups;
+        return term + ActiveSymbolicConstraint.SEPARATOR + constraint + ActiveSymbolicConstraint.SEPARATOR + lookups;
     }
 
     @Override
@@ -512,10 +512,10 @@ public class ConstrainedTerm extends JavaSymbolicObject {
     public static class Data {
 
         public Term term;
-        public SymbolicConstraint.Data lookups;
-        public SymbolicConstraint.Data constraint;
+        public ActiveSymbolicConstraint.Data lookups;
+        public ActiveSymbolicConstraint.Data constraint;
 
-        public Data(Term term, SymbolicConstraint lookups, SymbolicConstraint constraint) {
+        public Data(Term term, ActiveSymbolicConstraint lookups, ActiveSymbolicConstraint constraint) {
             this.term = term;
             this.lookups = lookups.data();
             this.constraint = constraint.data();

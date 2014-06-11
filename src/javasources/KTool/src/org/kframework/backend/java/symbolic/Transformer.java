@@ -45,7 +45,7 @@ public interface Transformer {
     public ASTNode transform(SetElementChoice setElementChoice);
     public ASTNode transform(SetLookup setLookup);
     public ASTNode transform(SetUpdate setUpdate);
-    public ASTNode transform(SymbolicConstraint symbolicConstraint);
+    public ASTNode transform(ActiveSymbolicConstraint activeSymbolicConstraint);
     public ASTNode transform(StringToken stringToken);
     public ASTNode transform(Term node);
     public ASTNode transform(Token token);

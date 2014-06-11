@@ -188,7 +188,7 @@ public class LocalVisitor implements Visitor {
     }
 
     @Override
-    public void visit(SymbolicConstraint node) {
+    public void visit(ActiveSymbolicConstraint node) {
         visit((JavaSymbolicObject) node);
     }
 

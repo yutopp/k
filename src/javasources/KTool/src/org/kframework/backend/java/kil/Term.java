@@ -10,7 +10,7 @@ import org.kframework.backend.java.symbolic.KILtoBackendJavaKILTransformer;
 import org.kframework.backend.java.symbolic.LocalEvaluator;
 import org.kframework.backend.java.symbolic.Matchable;
 import org.kframework.backend.java.symbolic.SubstitutionTransformer;
-import org.kframework.backend.java.symbolic.SymbolicConstraint;
+import org.kframework.backend.java.symbolic.ActiveSymbolicConstraint;
 import org.kframework.backend.java.symbolic.Transformable;
 import org.kframework.backend.java.symbolic.Unifiable;
 import org.kframework.backend.java.util.Utils;
@@ -129,7 +129,7 @@ public abstract class Term extends JavaSymbolicObject implements Transformable, 
      *            the term context
      * @return the result {@code Term} instance
      */
-    public Term evaluate(SymbolicConstraint constraint, TermContext context) {
+    public Term evaluate(ActiveSymbolicConstraint constraint, TermContext context) {
         return Evaluator.evaluate(this, constraint, context);
     }
 

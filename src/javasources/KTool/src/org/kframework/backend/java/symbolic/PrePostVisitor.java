@@ -345,7 +345,7 @@ public class PrePostVisitor implements Visitor {
     }
 
     @Override
-    public void visit(SymbolicConstraint node) {
+    public void visit(ActiveSymbolicConstraint node) {
         preVisitor.resetProceed();
         node.accept(preVisitor);
         if (!preVisitor.isProceed()) return;
@@ -353,7 +353,7 @@ public class PrePostVisitor implements Visitor {
             entry.getKey().accept(this);
             entry.getValue().accept(this);
         }
-        for (SymbolicConstraint.Equality equality : node.equalities()) {
+        for (ActiveSymbolicConstraint.Equality equality : node.equalities()) {
             equality.leftHandSide().accept(this);
             equality.rightHandSide().accept(this);
         }

@@ -9,10 +9,10 @@ import org.kframework.kil.ASTNode;
 
 /**
  * Refers to a computation which never completes successfully.
- * A {@link org.kframework.backend.java.symbolic.SymbolicConstraint.Equality} instance between
+ * A {@link org.kframework.backend.java.symbolic.ActiveSymbolicConstraint.Equality} instance between
  * bottom and anything else is false and makes the entire constraint false.
  *
- * @see org.kframework.backend.java.symbolic.SymbolicConstraint
+ * @see org.kframework.backend.java.symbolic.ActiveSymbolicConstraint
  * 
  * @author TraianSF
  */

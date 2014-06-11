@@ -45,7 +45,7 @@ public interface Visitor {
     public void visit(SetElementChoice setElementChoice);
     public void visit(SetLookup mapLookup);
     public void visit(SetUpdate mapUpdate);
-    public void visit(SymbolicConstraint node);
+    public void visit(ActiveSymbolicConstraint node);
     public void visit(Term node);
     public void visit(Token token);
     public void visit(UninterpretedConstraint uninterpretedConstraint);

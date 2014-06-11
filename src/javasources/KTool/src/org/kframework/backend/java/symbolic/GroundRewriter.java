@@ -152,7 +152,7 @@ public class GroundRewriter {
     // can't be unified with the pattern.
     private Map<Variable, Term> getSubstitutionMap(Term term, Rule pattern) {
         // Create the initial constraints based on the pattern
-        SymbolicConstraint termConstraint = new SymbolicConstraint(termContext);
+        ActiveSymbolicConstraint termConstraint = new ActiveSymbolicConstraint(termContext);
         termConstraint.addAll(pattern.requires());
         for (Variable var : pattern.freshVariables()) {
             termConstraint.add(var, FreshOperations.fresh(var.sort(), termContext));
@@ -170,7 +170,7 @@ public class GroundRewriter {
         lhs.accept(visitor);
 
         ConstrainedTerm cnstrTerm = new ConstrainedTerm(term, termContext);
-        Collection<SymbolicConstraint> constraints = cnstrTerm.unify(lhs);
+        Collection<ActiveSymbolicConstraint> constraints = cnstrTerm.unify(lhs);
         if (constraints.isEmpty()) {
             return null;
         }
@@ -178,7 +178,7 @@ public class GroundRewriter {
         // Build a substitution map containing the variables in the pattern from
         // the substitution constraints given by unification.
         Map<Variable, Term> map = new HashMap<Variable, Term>();
-        for (SymbolicConstraint constraint : constraints) {
+        for (ActiveSymbolicConstraint constraint : constraints) {
             if (!constraint.isSubstitution()) {
                 return null;
             }

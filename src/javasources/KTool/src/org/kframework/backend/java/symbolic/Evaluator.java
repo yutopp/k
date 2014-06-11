@@ -11,7 +11,7 @@ import org.kframework.backend.java.kil.TermContext;
  */
 public class Evaluator extends PrePostTransformer {
 
-    private Evaluator(SymbolicConstraint constraint, TermContext context) {
+    private Evaluator(ActiveSymbolicConstraint constraint, TermContext context) {
         super(context);
         this.getPostTransformer().addTransformer(new LocalEvaluator(constraint, context));
     }
@@ -20,7 +20,7 @@ public class Evaluator extends PrePostTransformer {
         return Evaluator.evaluate(term, null, context);
     }
 
-    public static Term evaluate(Term term, SymbolicConstraint constraint,
+    public static Term evaluate(Term term, ActiveSymbolicConstraint constraint,
             TermContext context) {
         Evaluator evaluator = new Evaluator(constraint, context);
         return (Term) term.accept(evaluator);
