@@ -10,6 +10,7 @@ import org.kframework.kil.CellDataStructure;
 import org.kframework.kil.DataStructureSort;
 import org.kframework.kil.KApp;
 import org.kframework.kil.KInjectedLabel;
+import org.kframework.kil.KSort;
 import org.kframework.kil.KSorts;
 import org.kframework.kil.Production;
 import org.kframework.kil.Sort;
@@ -227,6 +228,8 @@ public class Context implements Serializable {
         String sort = c.getCellAttributes().get(Cell.SORT_ATTRIBUTE);
         if (sort == null) {
             sort = c.getContents().getSort();
+            if (c.getContents() instanceof Cell)
+                sort = KSorts.BAG;
         }
         cellSorts.put(c.getLabel(), sort);
     }
