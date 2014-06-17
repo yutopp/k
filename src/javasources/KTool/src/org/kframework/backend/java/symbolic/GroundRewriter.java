@@ -28,7 +28,6 @@ import com.google.common.base.Stopwatch;
 // TODO(YilongL): extract common functionalities with SymbolicRewriter to superclass
 public class GroundRewriter {
     
-    private final TermContext termContext;
     private final TransitionCompositeStrategy strategy;
     private final Stopwatch stopwatch = new Stopwatch();
     private int step;
@@ -36,21 +35,22 @@ public class GroundRewriter {
     private boolean transition;
     private RuleIndex ruleIndex;
 
-    public GroundRewriter(Definition definition, TermContext termContext) {
+    public GroundRewriter(Definition definition) {
         ruleIndex = definition.getIndex();
-        this.termContext = termContext;
         this.strategy = new TransitionCompositeStrategy(definition.context().kompileOptions.transition);
     }
 
-    public Term rewrite(Term subject, int bound) {
+    public State<Term> rewrite(State<Term> initialState, int bound) {
         stopwatch.start();
+        
+        State<Term> intermediateState = initialState;
 
         for (step = 0; step != bound; ++step) {
             /* get the first solution */
-            computeRewriteStep(subject, 1);
-            Term result = getTransition(0);
+            computeRewriteStep(intermediateState, 1);
+            State<Term> result = getTransition(0);
             if (result != null) {
-                subject = result;
+                intermediateState = result;
             } else {
                 break;
             }
@@ -59,10 +59,10 @@ public class GroundRewriter {
         stopwatch.stop();
         System.err.println("[" + step + ", " + stopwatch + "]");
 
-        return subject;
+        return intermediateState;
     }
 
-    public Term rewrite(Term subject) {
+    public State<Term> rewrite(State<Term> subject) {
         return rewrite(subject, -1);
     }
 
@@ -78,11 +78,11 @@ public class GroundRewriter {
         return ruleIndex.getRules(term);
     }
 
-    private Term getTransition(int n) {
-        return n < results.size() ? results.get(n).topTerm : null;
+    private State<Term> getTransition(int n) {
+        return n < results.size() ? results.get(n) : null;
     }
 
-    private void computeRewriteStep(Term subject, int successorBound) {
+    private void computeRewriteStep(State<Term> subject, int successorBound) {
         results.clear();
 
         if (successorBound == 0) {
@@ -93,15 +93,16 @@ public class GroundRewriter {
         // equivalence classes of rules. We iterate through these equivalence
         // classes one at a time, seeing which one contains rules we can apply.
         //        System.out.println(LookupCell.find(constrainedTerm.term(),"k"));
-        strategy.reset(getRules(subject));
+        strategy.reset(getRules(subject.topTerm));
 
         while (strategy.hasNext()) {
             transition = strategy.nextIsTransition();
             ArrayList<Rule> rules = new ArrayList<Rule>(strategy.next());
 //            System.out.println("rules.size: "+rules.size());
             for (Rule rule : rules) {
-                for (Map<Variable, Term> subst : getMatchingResults(subject, rule)) {
-                    results.add(termContext.state().copy(constructNewSubjectTerm(rule, subst)));
+                TermContext termContext = TermContext.of(subject);
+                for (Map<Variable, Term> subst : getMatchingResults(subject.topTerm, rule, termContext)) {
+                    results.add(subject.copy(constructNewSubjectTerm(rule, subst, termContext)));
                     if (results.size() == successorBound) {
                         return;
                     }
@@ -116,7 +117,7 @@ public class GroundRewriter {
         }
     }
     
-    private void computeRewriteStep(Term subject) {
+    private void computeRewriteStep(State<Term> subject) {
         computeRewriteStep(subject, -1);
     }
 
@@ -129,9 +130,10 @@ public class GroundRewriter {
      * @param substitution
      *            a substitution map that maps variables in the left-hand side
      *            of the rewrite rule to sub-terms of the current subject term
+     * @param termContext 
      * @return the new subject term
      */
-    private Term constructNewSubjectTerm(Rule rule, Map<Variable, Term> substitution) {
+    private Term constructNewSubjectTerm(Rule rule, Map<Variable, Term> substitution, TermContext termContext) {
         return rule.rightHandSide().substituteAndEvaluate(substitution, termContext);
     }
 
@@ -141,8 +143,9 @@ public class GroundRewriter {
      * <p>
      * This method is extracted to simplify the profiling script.
      * </p>
+     * @param termContext 
      */
-    private List<Map<Variable,Term>> getMatchingResults(Term subject, Rule rule) {
+    private List<Map<Variable,Term>> getMatchingResults(Term subject, Rule rule, TermContext termContext) {
         return PatternMatcher.patternMatch(subject, rule, termContext);
     }
 
@@ -150,7 +153,7 @@ public class GroundRewriter {
     // Unifies the term with the pattern, and returns a map from variables in
     // the pattern to the terms they unify with. Returns null if the term
     // can't be unified with the pattern.
-    private Map<Variable, Term> getSubstitutionMap(Term term, Rule pattern) {
+    private Map<Variable, Term> getSubstitutionMap(Term term, Rule pattern, TermContext termContext) {
         // Create the initial constraints based on the pattern
         SymbolicConstraint termConstraint = new SymbolicConstraint(termContext);
         termConstraint.addAll(pattern.requires());
@@ -213,7 +216,7 @@ public class GroundRewriter {
             Rule pattern,
             int bound,
             int depth,
-            SearchType searchType) {
+            SearchType searchType, TermContext termContext) {
         stopwatch.start();
 
         List<Map<Variable,Term>> searchResults = new ArrayList<Map<Variable,Term>>();
@@ -225,7 +228,7 @@ public class GroundRewriter {
         // A more clean solution would require a bit of a rework to how patterns
         // are handled in krun.Main when not doing search.
         if (depth == 0) {
-            Map<Variable, Term> map = getSubstitutionMap(initialTerm, pattern);
+            Map<Variable, Term> map = getSubstitutionMap(initialTerm, pattern, termContext);
             if (map != null) {
                 searchResults.add(map);
             }
@@ -245,7 +248,7 @@ public class GroundRewriter {
             depth = 1;
         }
         if (searchType == SearchType.STAR) {
-            Map<Variable, Term> map = getSubstitutionMap(initialTerm, pattern);
+            Map<Variable, Term> map = getSubstitutionMap(initialTerm, pattern, termContext);
             if (map != null) {
                 searchResults.add(map);
             }
@@ -257,10 +260,11 @@ public class GroundRewriter {
                 State<Term> state = entry.getKey();
                 Term term = state.topTerm; 
                 Integer currentDepth = entry.getValue();
-                computeRewriteStep(term);
+                TermContext intermediateTermContext = TermContext.of(state);
+                computeRewriteStep(state);
 
                 if (results.isEmpty() && searchType == SearchType.FINAL) {
-                    Map<Variable, Term> map = getSubstitutionMap(term, pattern);
+                    Map<Variable, Term> map = getSubstitutionMap(term, pattern, intermediateTermContext);
                     if (map != null) {
                         searchResults.add(map);
                         if (searchResults.size() == bound) {
@@ -282,7 +286,7 @@ public class GroundRewriter {
                         // If we aren't searching for only final results, then
                         // also add this as a result if it matches the pattern.
                         if (searchType != SearchType.FINAL || currentDepth + 1 == depth) {
-                            Map<Variable, Term> map = getSubstitutionMap(result.topTerm, pattern);
+                            Map<Variable, Term> map = getSubstitutionMap(result.topTerm, pattern, TermContext.of(result));
                             if (map != null) {
                                 searchResults.add(map);
                                 if (searchResults.size() == bound) {

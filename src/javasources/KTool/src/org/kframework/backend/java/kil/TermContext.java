@@ -33,6 +33,10 @@ public class TermContext extends JavaSymbolicObject {
         this.state = state;
         this.global = state.global;
     }
+    
+    public static <T extends Term> TermContext of(State<T> state) {
+        return new TermContext(state);
+    }
 
     public static TermContext of(GlobalContext global, BigInteger counter) {
         return new TermContext(global, counter);
