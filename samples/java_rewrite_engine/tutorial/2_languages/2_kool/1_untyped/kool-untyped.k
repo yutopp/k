@@ -720,7 +720,7 @@ shortly).  The location where the object will be stored is also made
 available in the \textsf{crntObj} cell, so that method closures can
 refer to it (see rule above). */
 
-  syntax KItem ::= (Id,BagItem)
+  syntax KItem ::= (Id,Bag)
 
   rule <k> new Class:Id(Vs:Vals) ~> K
            => create(Class) ~> storeObj ~> Class(Vs); return this; </k>
@@ -835,7 +835,7 @@ invocations see the entire object, as needed for dynamic method dispatch. */
     [structural]*/
 
   rule objectClosure(<crntClass> Class:Id </crntClass>
-                     <envStack> ListItem((Class,EnvC:BagItem)) EStack </envStack>)
+                     <envStack> ListItem((Class,EnvC:Bag)) EStack </envStack>)
        . X:Id
     => lookupMember(<envStack> ListItem((Class,EnvC)) EStack </envStack>, X)
     [structural]
@@ -985,7 +985,7 @@ member's location based on the current class of the object. */
               => lookupMember(<envStack> (C,EnvC) EStack </envStack>,
                               X))  [structural]*/
   rule lvalue(objectClosure(<crntClass> Class </crntClass>
-                            <envStack> ListItem((Class,EnvC:BagItem)) EStack </envStack>)
+                            <envStack> ListItem((Class,EnvC:Bag)) EStack </envStack>)
               . X
               => lookupMember(<envStack> ListItem((Class,EnvC)) EStack </envStack>,
                               X))  [structural]
@@ -999,7 +999,7 @@ member's location based on the current class of the object. */
 It searches for the given member in the given environment stack,
 starting with the most concrete class and going up in the hierarchy. */
 
-  syntax KItem ::= lookupMember(BagItem,Id)  [function]
+  syntax KItem ::= lookupMember(Bag,Id)  [function]
 
 //  rule lookupMember(<envStack> (_, <env>... X|->L ...</env>) ...</envStack>, X)
 //    => lookup(L)

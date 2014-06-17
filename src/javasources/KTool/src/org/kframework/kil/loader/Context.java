@@ -158,7 +158,6 @@ public class Context implements Serializable {
         subsorts.addRelation(KSorts.KLIST, "KResult");
         subsorts.addRelation("K", "KResult");
         subsorts.addRelation("K", KSorts.KITEM);
-        subsorts.addRelation("Bag", "BagItem");
     }
 
     // TODO(dwightguth): remove these fields and replace with injected dependencies

@@ -715,7 +715,7 @@ shortly).  The location where the object will be stored is also made
 available in the \textsf{crntObj} cell, so that method closures can
 refer to it (see rule above). */
 
-  syntax ListItem ::= (Id,BagItem)
+  syntax ListItem ::= (Id,Bag)
 
   rule <k> new Class:Id(Vs:Vals) ~> K
            => create(Class) ~> storeObj ~> Class(Vs); return this; </k>
@@ -952,7 +952,7 @@ member's location based on the current class of the object. */
 It searches for the given member in the given environment stack,
 starting with the most concrete class and going up in the hierarchy. */
 
-  syntax K ::= lookupMember(BagItem,Id)  [function]
+  syntax K ::= lookupMember(Bag,Id)  [function]
 
   rule lookupMember(<envStack> (_, <env>... X|->L ...</env>) ...</envStack>, X)
     => lookup(L)

@@ -758,7 +758,7 @@ Like in untyped KOOL. */
 
 Like in untyped KOOL. */
 
-  syntax KItem ::= lookupMember(BagItem,Id)  [function]
+  syntax KItem ::= lookupMember(Bag,Id)  [function]
 
 //  rule lookupMember(<envStack> (_, <env>... X|->L ...</env>) ...</envStack>, X)
 //    => lookup(L)
