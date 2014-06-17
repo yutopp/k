@@ -16,6 +16,7 @@ import org.kframework.backend.java.kil.Cell;
 import org.kframework.backend.java.kil.ConstrainedTerm;
 import org.kframework.backend.java.kil.Definition;
 import org.kframework.backend.java.kil.Rule;
+import org.kframework.backend.java.kil.State;
 import org.kframework.backend.java.kil.Term;
 import org.kframework.backend.java.kil.TermContext;
 import org.kframework.backend.java.kil.Variable;
@@ -31,7 +32,7 @@ public class GroundRewriter {
     private final TransitionCompositeStrategy strategy;
     private final Stopwatch stopwatch = new Stopwatch();
     private int step;
-    private final List<Term> results = new ArrayList<>();
+    private final List <State<Term>> results = new ArrayList<>();
     private boolean transition;
     private RuleIndex ruleIndex;
 
@@ -78,7 +79,7 @@ public class GroundRewriter {
     }
 
     private Term getTransition(int n) {
-        return n < results.size() ? results.get(n) : null;
+        return n < results.size() ? results.get(n).topTerm : null;
     }
 
     private void computeRewriteStep(Term subject, int successorBound) {
@@ -100,7 +101,7 @@ public class GroundRewriter {
 //            System.out.println("rules.size: "+rules.size());
             for (Rule rule : rules) {
                 for (Map<Variable, Term> subst : getMatchingResults(subject, rule)) {
-                    results.add(constructNewSubjectTerm(rule, subst));
+                    results.add(termContext.state().copy(constructNewSubjectTerm(rule, subst)));
                     if (results.size() == successorBound) {
                         return;
                     }
@@ -216,7 +217,9 @@ public class GroundRewriter {
         stopwatch.start();
 
         List<Map<Variable,Term>> searchResults = new ArrayList<Map<Variable,Term>>();
-        Set<Term> visited = new HashSet<Term>();
+        Set<State<Term>> visited = new HashSet<>();
+        
+        State<Term> initialState = termContext.state().<Term>copy(initialTerm);
 
         // If depth is 0 then we are just trying to match the pattern.
         // A more clean solution would require a bit of a rework to how patterns
@@ -232,11 +235,11 @@ public class GroundRewriter {
         }
 
         // The search queues will map terms to their depth in terms of transitions.
-        Map<Term,Integer> queue = new LinkedHashMap<Term,Integer>();
-        Map<Term,Integer> nextQueue = new LinkedHashMap<Term,Integer>();
+        Map<State<Term>,Integer> queue = new LinkedHashMap<>();
+        Map<State<Term>,Integer> nextQueue = new LinkedHashMap<>();
 
-        visited.add(initialTerm);
-        queue.put(initialTerm, 0);
+        visited.add(initialState);
+        queue.put(initialState, 0);
 
         if (searchType == SearchType.ONE) {
             depth = 1;
@@ -250,8 +253,9 @@ public class GroundRewriter {
 
         label:
         for (step = 0; !queue.isEmpty(); ++step) {
-            for (Map.Entry<Term, Integer> entry : queue.entrySet()) {
-                Term term = entry.getKey();
+            for (Map.Entry<State<Term>, Integer> entry : queue.entrySet()) {
+                State<Term> state = entry.getKey();
+                Term term = state.topTerm; 
                 Integer currentDepth = entry.getValue();
                 computeRewriteStep(term);
 
@@ -265,7 +269,7 @@ public class GroundRewriter {
                     }
                 }
 
-                for (Term result : results) {
+                for (State<Term> result : results) {
                     if (!transition) {
                         nextQueue.put(result, currentDepth);
                         break;
@@ -278,7 +282,7 @@ public class GroundRewriter {
                         // If we aren't searching for only final results, then
                         // also add this as a result if it matches the pattern.
                         if (searchType != SearchType.FINAL || currentDepth + 1 == depth) {
-                            Map<Variable, Term> map = getSubstitutionMap(result, pattern);
+                            Map<Variable, Term> map = getSubstitutionMap(result.topTerm, pattern);
                             if (map != null) {
                                 searchResults.add(map);
                                 if (searchResults.size() == bound) {
@@ -292,7 +296,7 @@ public class GroundRewriter {
 //            System.out.println("+++++++++++++++++++++++");
 
             /* swap the queues */
-            Map<Term, Integer> temp;
+            Map<State<Term>, Integer> temp;
             temp = queue;
             queue = nextQueue;
             nextQueue = temp;

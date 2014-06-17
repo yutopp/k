@@ -22,7 +22,7 @@ import org.kframework.krun.api.io.FileSystem;
  * 
  */
 public class TermContext extends JavaSymbolicObject {
-    private State state;
+    private State<TermLike> state;
     public final GlobalContext global;
 
     private TermContext(GlobalContext global, BigInteger counter) {
@@ -65,7 +65,7 @@ public class TermContext extends JavaSymbolicObject {
     }
 
     public TermLike getConstrainedTermData() {
-        return state.topConstrainedTermData;
+        return state.topTerm;
     }
 
     public void setConstrainedTermData(TermLike constrainedTermData) {
