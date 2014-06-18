@@ -3,6 +3,7 @@ package org.kframework.backend.java.symbolic;
 
 import org.kframework.backend.java.kil.Definition;
 import org.kframework.backend.java.kil.GlobalContext;
+import org.kframework.backend.java.kil.State;
 import org.kframework.backend.java.kil.Term;
 import org.kframework.backend.java.kil.ConstrainedTerm;
 import org.kframework.backend.java.kil.Rule;
@@ -95,7 +96,7 @@ public class JavaSymbolicKRun implements KRun {
 
         Term term = Term.of(cfg, definition);
         GlobalContext globalContext = new GlobalContext(definition, new PortableFileSystem());
-        TermContext termContext = TermContext.of(globalContext);
+        TermContext termContext = TermContext.of(new State<Term>(term, globalContext));
         term = term.evaluate(termContext);
 
         if (K.pattern_matching) {

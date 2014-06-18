@@ -115,7 +115,7 @@ public class GroundRewriter {
                 return;
             }
         }
-        
+        System.err.println(subject.isStuck);
         // if we got here, it means we're stuck, i.e., no new rules can apply
         // in that case, if the current state is not already marked as stuck, mark it 
         // as such, and try rewriting again

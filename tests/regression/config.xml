@@ -420,6 +420,12 @@
            directory="user_substitution"
            programs="user_substitution/tests"
            results="user_substitution/tests" />
+           
+           
+  <include file="regression/strategy/config.xml"
+           directory="tests/regression/strategy"
+           programs="tests/regression/strategy"
+           results="tests/regression/strategy" />
 
 </tests>
 

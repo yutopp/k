@@ -24,6 +24,10 @@ public class State<T extends TermLike> {
         this.isStuck = isStuck;
     }
     
+    public State(T topTerm, GlobalContext global) {
+        this(topTerm, global, BigInteger.ZERO, false);
+    }
+    
     public State<T> incrementCounter() {
         return new State<T>(topTerm, global, counter.add(BigInteger.ONE), isStuck);
     }

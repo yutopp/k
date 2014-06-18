@@ -7,9 +7,9 @@ module STRATEGY-LANGUAGE
   
   // hooking into the stuck mechanism
   rule 
-    <s> X => false ... </s> <stuck> true </stuck>
-    when notBool(isBool(X,,.KList))
-  
+    <s> X => false ... </s> 
+    when #stuck andBool notBool(isBool(X,,.KList))
+
   // cooling rules
   rule 
     <s> true ~> S:Strategy => S[ true | SHOLE ] ...</s> 
@@ -18,7 +18,7 @@ module STRATEGY-LANGUAGE
   rule 
     <s> false ~> S:Strategy => S[ false | SHOLE ] ...</s> 
     <k> X ~> E => #visit(E, 'replaceHoleWithPrevious, 'ieMHole) ...</k>
-    
+
   // nicer way of saying the rules above
   // rule <s> true ~> S => S[true/SHOLE(_)] ...</s> <k> X ~> E => E[X/MHOLE(_)] ...</k>
   // rule <s> false ~> S => S[false/SHOLE(_)] ...</s> <k> _ ~> E => E[X/MHOLE(X)] ...</k>    
