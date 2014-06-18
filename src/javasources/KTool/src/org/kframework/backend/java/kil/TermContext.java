@@ -26,7 +26,7 @@ public class TermContext extends JavaSymbolicObject {
     public final GlobalContext global;
 
     private TermContext(GlobalContext global, BigInteger counter) {
-        this(new State(null, global, counter));
+        this(new State(null, global, counter, false));
     }
     
     private TermContext(State state) {
@@ -84,10 +84,6 @@ public class TermContext extends JavaSymbolicObject {
     @Override
     public void accept(Visitor visitor) {
         throw new UnsupportedOperationException();
-    }
-
-    public boolean isStuck() {
-        return false;
     }
 
     public State state() {

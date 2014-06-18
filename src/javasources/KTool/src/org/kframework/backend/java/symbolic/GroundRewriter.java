@@ -115,6 +115,13 @@ public class GroundRewriter {
                 return;
             }
         }
+        
+        // if we got here, it means we're stuck, i.e., no new rules can apply
+        // in that case, if the current state is not already marked as stuck, mark it 
+        // as such, and try rewriting again
+        // if it is already stuck, and no new rules could apply, then we're really stuck
+        if(!subject.isStuck)
+            results.add(subject.stuck());
     }
     
     private void computeRewriteStep(State<Term> subject) {
