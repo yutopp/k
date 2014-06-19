@@ -5,6 +5,7 @@
 *.pdf
 *.swp
 *.class
+*.cache
 .metadata
 .cache
 .idea
@@ -16,6 +17,7 @@ lib/version.txt
 lib/java/k3.jar
 lib/java/ktest.jar
 release/
+target/
 
 /editor-support/k-idea-plugin-src/src/ro/uaic/fmse/kplugin/KLexer.java
 /editor-support/k-idea-plugin-src/gen
