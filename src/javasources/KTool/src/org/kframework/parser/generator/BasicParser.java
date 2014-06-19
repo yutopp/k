@@ -119,6 +119,7 @@ public class BasicParser {
             }
 
             boolean predefined = file.getCanonicalPath().startsWith(KPaths.getKBase(false) + File.separator + "include");
+
             if (!predefined)
                 context.addFileRequirement(buildCanonicalPath("autoinclude.k", file).getCanonicalPath(), file.getCanonicalPath());
 
