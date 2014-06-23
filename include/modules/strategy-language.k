@@ -1,3 +1,5 @@
+// Copyright (c) 2014-2014 K Team. All Rights Reserved.
+
 require "strategy-core.k"
 
 module STRATEGY-LANGUAGE 
