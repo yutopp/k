@@ -422,7 +422,7 @@
            results="user_substitution/tests" />
            
            
-  <include file="regression/strategy/config.xml"
+  <include file="strategy/config.xml"
            directory="tests/regression/strategy"
            programs="tests/regression/strategy"
            results="tests/regression/strategy" />
