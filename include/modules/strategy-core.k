@@ -15,7 +15,7 @@ module STRATEGY-CORE
  imports K-FUNCTIONAL-VISITOR
  imports SUBSTITUTION
 
- syntax Bool ::= "#stuck"  [function, hook(#STUCK:stuck)]
+ syntax Bool ::= "#stuck"  [function, hook(#STUCK:#stuck)]
 
  // manhole... just kidding, hole with memoization
  syntax MHole ::= MHOLE(K)
