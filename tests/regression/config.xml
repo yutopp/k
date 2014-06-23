@@ -421,11 +421,12 @@
            programs="user_substitution/tests"
            results="user_substitution/tests" />
            
-           
+<!-- comment out strategy tests for now
   <include file="strategy/config.xml"
-           directory="tests/regression/strategy"
+           directory="strategy"
            programs="tests/regression/strategy"
            results="tests/regression/strategy" />
+ -->
 
 </tests>
 
