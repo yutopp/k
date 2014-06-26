@@ -1,12 +1,9 @@
 // Copyright (c) 2013-2014 K Team. All Rights Reserved.
 package org.kframework.backend.java.kil;
 
-import java.rmi.server.RemoteServer;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.function.BiConsumer;
 
@@ -17,6 +14,7 @@ import org.kframework.backend.java.symbolic.Visitor;
 import org.kframework.backend.java.util.Utils;
 import org.kframework.kil.ASTNode;
 
+import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ObjectArrays;
@@ -160,12 +158,12 @@ public class MapUpdate extends Term implements DataStructureUpdate {
         visitor.visit(this);
     }
 
-    private Optional<Term[]> elementsAsArray = Optional.empty();
+    private Optional<Term[]> elementsAsArray = Optional.absent();
     
     @Override
     public Term get(int index) {
         elementsAsArray = Optional.of(
-                elementsAsArray.orElseGet( () -> {
+                elementsAsArray.or( () -> {
                         Term[] arr = computeChildren();
                         return arr;
                 }));

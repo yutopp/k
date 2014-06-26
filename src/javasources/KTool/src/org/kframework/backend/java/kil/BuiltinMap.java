@@ -6,7 +6,6 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.apache.commons.collections15.map.UnmodifiableMap;
@@ -20,6 +19,7 @@ import org.kframework.kil.ASTNode;
 import org.kframework.kil.DataStructureSort;
 
 import com.google.common.base.Joiner;
+import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
 
 
@@ -239,8 +239,6 @@ public class BuiltinMap extends Collection {
         }
     }
 
-    private Optional<List<Term>> elementsAsArray = Optional.empty();
-    
     @Override
     protected Term[] computeChildren() {
         List<Term> allEntries = entries.entrySet().stream().map(

@@ -3,9 +3,7 @@ package org.kframework.backend.java.kil;
 
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.Optional;
 import java.util.Set;
-import java.util.function.BiConsumer;
 
 import org.kframework.backend.java.symbolic.Matcher;
 import org.kframework.backend.java.symbolic.Transformer;
@@ -14,8 +12,8 @@ import org.kframework.backend.java.symbolic.Visitor;
 import org.kframework.backend.java.util.Utils;
 import org.kframework.kil.ASTNode;
 
+import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.ObjectArrays;
 import com.google.common.collect.Sets;
 
 /**
@@ -133,7 +131,7 @@ public class SetUpdate extends Term implements DataStructureUpdate {
     }
 
     @Override
-    public ASTNode accept(Transformer transformer) {
+    public ASTNode<?> accept(Transformer transformer) {
         return transformer.transform(this);
     }
 
@@ -142,12 +140,12 @@ public class SetUpdate extends Term implements DataStructureUpdate {
         visitor.visit(this);
     }
     
-    private Optional<Term[]> elementsAsArray = Optional.empty();
+    private Optional<Term[]> elementsAsArray = Optional.absent();
     
     @Override
     public Term get(int index) {
         elementsAsArray = Optional.of(
-                elementsAsArray.orElseGet( () -> {
+                elementsAsArray.or( () -> {
                         Term[] arr = computeChildren();
                         return arr;
                 }));

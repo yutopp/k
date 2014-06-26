@@ -1,11 +1,11 @@
 // Copyright (c) 2013-2014 K Team. All Rights Reserved.
 package org.kframework.backend.java.kil;
 
-import java.util.Optional;
-
 import org.kframework.backend.java.symbolic.Transformer;
 import org.kframework.backend.java.symbolic.Visitor;
 import org.kframework.kil.ASTNode;
+
+import com.google.common.base.Optional;
 
 
 /**
@@ -103,12 +103,12 @@ public abstract class Collection extends Term {
         return transformer.transform(this);
     }
 
-    private Optional<Term[]> elementsAsArray = Optional.empty();
+    private Optional<Term[]> elementsAsArray = Optional.absent();
     
     @Override
     public Term get(int index) {
         elementsAsArray = Optional.of(
-                elementsAsArray.orElseGet( () -> {
+                elementsAsArray.or( () -> {
                         Term[] arr = computeChildren();
                         return arr;
                 }));
