@@ -144,11 +144,11 @@ public abstract class KCollection extends Collection implements Iterable<Term> {
 
         /* promote KItem to K, and then promote K to KList */
         if (term.kind() == Kind.KITEM && (kind == Kind.K || kind == Kind.KLIST)) {
-            term = new KSequence(Lists.newArrayList(term));
+            term = new KSequence(Lists.newArrayList(new Term[] {term}));
         }
 
         if (term.kind() == Kind.K && kind == Kind.KLIST) {
-            term = new KList(Lists.newArrayList(term));
+            term = new KList(Lists.newArrayList(new Term[] {term}));
         }
 
         return term;

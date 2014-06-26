@@ -162,6 +162,7 @@ public class SymbolicUnifier extends AbstractUnifier {
         if (term.kind().isComputational()) {
             assert otherTerm.kind().isComputational();
 
+            
             term = KCollection.upKind(term, otherTerm.kind());
             otherTerm = KCollection.upKind(otherTerm, term.kind());
         }
