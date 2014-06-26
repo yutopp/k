@@ -255,13 +255,40 @@ public abstract class ASTNode<T extends ASTNode<?>> extends AbstractList<T> impl
     
     protected abstract <P, R, E extends Throwable> R accept(Visitor<P, R, E> visitor, P p) throws E;
     
+    /**
+     * will be removed once the frontend side ASTNode descendants implement get and size(non-Javadoc)
+     */
     @Override
     public T get(int index) {
         throw new NotImplementedError(); 
     }
     
+    /**
+     * will be removed once the frontend side ASTNode descendants implement get and size(non-Javadoc)
+     */    
     @Override
     public int size() {
         throw new NotImplementedError(); 
+    }
+    
+    /**
+     * we replace the hashCode given by AbstractList with the original
+     * Object.hashCode (same as System.identityHashCode) because
+     * not all classes implement size() for now
+     * will be removed once the frontend side ASTNode descendants implement get and size
+     */
+    @Override
+    public int hashCode() {
+        return System.identityHashCode(this);
+    }
+    
+    /**
+     * we replace the equals given by AbstractList with the original
+     * Object.equals (same as ==) because not all classes implement size() for now
+     * will be removed once the frontend side ASTNode descendants implement get and size
+     */
+    @Override
+    public boolean equals(Object o) {
+        return this == o;
     }
 }
