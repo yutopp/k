@@ -77,7 +77,7 @@ public abstract class AbstractVisitor<P, R, E extends Throwable> implements Visi
     }
     
     @Override
-    public R visitNode(ASTNode node, P p) throws E {
+    public R visitNode(ASTNode<?> node, P p) throws E {
         if (cache() && cache.containsKey(node)) {
             return cache.get(node);
         }
@@ -85,7 +85,7 @@ public abstract class AbstractVisitor<P, R, E extends Throwable> implements Visi
     }
     
     @Override
-    public R visitNode(ASTNode node) throws E {
+    public R visitNode(ASTNode<?> node) throws E {
         if (cache() && cache.containsKey(node)) {
             return cache.get(node);
         }
@@ -156,7 +156,7 @@ public abstract class AbstractVisitor<P, R, E extends Throwable> implements Visi
         Parent extends ASTNode & Interfaces.Collection<Child, EnumType>> {
         
         public final Parent copy(Parent node, java.util.Collection<Child> items, EnumType type) {
-            if (changed(node.getChildren(type), items)) {
+            if (changedCollection(node.getChildren(type), items)) {
                 node = doCopy(node, items, type);
             }
             return node;
@@ -175,9 +175,9 @@ public abstract class AbstractVisitor<P, R, E extends Throwable> implements Visi
      * @param <EnumType> The enum used to identify which child term is being targeted.
      * @param <Parent> The type of the ASTNode being copied.
      */
-    private abstract class ChildASTNodeCopier<Child extends ASTNode, 
+    private abstract class ChildASTNodeCopier<Child extends ASTNode<?>, 
         EnumType extends Enum<?>,
-        Parent extends ASTNode & Interfaces.Parent<Child, EnumType>> {
+        Parent extends ASTNode<?> & Interfaces.Parent<Child, EnumType>> {
         
         public Parent copy(Parent node, Child child, EnumType type) {
             if (changed(node.getChild(type), child)) {
@@ -240,7 +240,7 @@ public abstract class AbstractVisitor<P, R, E extends Throwable> implements Visi
      * @param n
      * @return
      */
-    private final <T extends ASTNode> boolean changed(java.util.Collection<T> o,
+    private final <T extends ASTNode<?>> boolean changedCollection(java.util.Collection<T> o,
             java.util.Collection<T> n) {
         Iterator<T> iter1 = o.iterator();
         Iterator<T> iter2 = n.iterator();
@@ -257,7 +257,7 @@ public abstract class AbstractVisitor<P, R, E extends Throwable> implements Visi
      * @param n
      * @return
      */
-    private final <K extends ASTNode, V extends ASTNode> boolean changed(
+    private final <K extends ASTNode<?>, V extends ASTNode<?>> boolean changedMap(
             java.util.Map<K, V> o, java.util.Map<K, V> n) {
         Iterator<Map.Entry<K, V>> iter1 = o.entrySet().iterator();
         Iterator<Map.Entry<K, V>> iter2 = n.entrySet().iterator();
@@ -618,7 +618,7 @@ public abstract class AbstractVisitor<P, R, E extends Throwable> implements Visi
                     items.put(key, value);
                 }
             }
-            if (changed(node.elements(), items)) {
+            if (changedMap(node.elements(), items)) {
                 node = new MapBuiltin(node.sort(), node.baseTerms(), items);
             }
         }
@@ -663,8 +663,8 @@ public abstract class AbstractVisitor<P, R, E extends Throwable> implements Visi
                     updateEntries.put(key, value);
                 }
             }
-            if (changed(node.map(), map) || changed(node.removeEntries(), removeEntries) ||
-                    changed(node.updateEntries(), updateEntries)) {
+            if (changed(node.map(), map) || changedMap(node.removeEntries(), removeEntries) ||
+                    changedMap(node.updateEntries(), updateEntries)) {
                 node = new MapUpdate(map, removeEntries, updateEntries);
             }
         }
@@ -860,7 +860,7 @@ public abstract class AbstractVisitor<P, R, E extends Throwable> implements Visi
      * @param newObj The child node after having potentially been replaced.
      * @return
      */
-    public <T extends ASTNode> boolean changed(T oldObj, T newObj) {
+    public <T extends ASTNode<?>> boolean changed(T oldObj, T newObj) {
         return oldObj != newObj;
     }
     

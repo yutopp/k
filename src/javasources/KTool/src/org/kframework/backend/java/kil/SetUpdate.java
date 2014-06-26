@@ -3,7 +3,9 @@ package org.kframework.backend.java.kil;
 
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.Optional;
 import java.util.Set;
+import java.util.function.BiConsumer;
 
 import org.kframework.backend.java.symbolic.Matcher;
 import org.kframework.backend.java.symbolic.Transformer;
@@ -13,6 +15,7 @@ import org.kframework.backend.java.util.Utils;
 import org.kframework.kil.ASTNode;
 
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.ObjectArrays;
 import com.google.common.collect.Sets;
 
 /**
@@ -137,6 +140,29 @@ public class SetUpdate extends Term implements DataStructureUpdate {
     @Override
     public void accept(Visitor visitor) {
         visitor.visit(this);
+    }
+    
+    private Optional<Term[]> elementsAsArray = Optional.empty();
+    
+    @Override
+    public Term get(int index) {
+        elementsAsArray = Optional.of(
+                elementsAsArray.orElseGet( () -> {
+                        Term[] arr = computeChildren();
+                        return arr;
+                }));
+        return elementsAsArray.get()[index];
+    }
+    
+    public Term[] computeChildren() {
+        Term[] arr = removeSet.toArray(new Term[size()]);
+        arr[size() - 1] = set;
+        return arr;
+    }
+
+    @Override
+    public int size() {
+        return removeSet.size()  + 1;
     }
 
 }

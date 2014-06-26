@@ -2,18 +2,20 @@
 package org.kframework.kil;
 
 import java.io.Serializable;
+import java.util.AbstractList;
 import java.util.Set;
 
 import org.kframework.compile.utils.SyntaxByTag;
 import org.kframework.kil.loader.Constants;
 import org.kframework.kil.loader.Context;
 import org.kframework.kil.visitors.Visitor;
+import org.kframework.utils.NotImplementedError;
 import org.w3c.dom.Element;
 
 /**
  * Base class for K AST. Useful for Visitors and Transformers.
  */
-public abstract class ASTNode implements Serializable {
+public abstract class ASTNode<T extends ASTNode<?>> extends AbstractList<T> implements Serializable {
     /**
      * 
      */
@@ -252,4 +254,14 @@ public abstract class ASTNode implements Serializable {
     public abstract ASTNode shallowCopy();
     
     protected abstract <P, R, E extends Throwable> R accept(Visitor<P, R, E> visitor, P p) throws E;
+    
+    @Override
+    public T get(int index) {
+        throw new NotImplementedError(); 
+    }
+    
+    @Override
+    public int size() {
+        throw new NotImplementedError(); 
+    }
 }

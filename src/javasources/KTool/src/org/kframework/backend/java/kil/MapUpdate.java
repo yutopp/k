@@ -1,11 +1,14 @@
 // Copyright (c) 2013-2014 K Team. All Rights Reserved.
 package org.kframework.backend.java.kil;
 
+import java.rmi.server.RemoteServer;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
+import java.util.function.BiConsumer;
 
 import org.kframework.backend.java.symbolic.Matcher;
 import org.kframework.backend.java.symbolic.Transformer;
@@ -16,6 +19,7 @@ import org.kframework.kil.ASTNode;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.ObjectArrays;
 import com.google.common.collect.Sets;
 
 /**
@@ -154,6 +158,38 @@ public class MapUpdate extends Term implements DataStructureUpdate {
     @Override
     public void accept(Visitor visitor) {
         visitor.visit(this);
+    }
+
+    private Optional<Term[]> elementsAsArray = Optional.empty();
+    
+    @Override
+    public Term get(int index) {
+        elementsAsArray = Optional.of(
+                elementsAsArray.orElseGet( () -> {
+                        Term[] arr = computeChildren();
+                        return arr;
+                }));
+        return elementsAsArray.get()[index];
+    }
+    
+    public Term[] computeChildren() {
+        Term[] arrRemoveSet = removeSet.toArray(new Term[0]);
+        Set<Tuple2<Term, Term>> updateMapSet = new HashSet<>();
+        updateMap.forEach(new BiConsumer<Term, Term>() {
+            @Override
+            public void accept(Term t, Term u) {
+                updateMapSet.add(new Tuple2<Term, Term>(t, u));
+            }
+        });
+        Term[] arrUpdateMapSet = updateMapSet.toArray(new Term[updateMapSet.size() + 1]);
+        Term[] arr = ObjectArrays.concat(arrRemoveSet, arrUpdateMapSet, Term.class);
+        arr[size() - 1] = map;
+        return arr;
+    }
+
+    @Override
+    public int size() {
+        return removeSet.size() + updateMap.size() + 1;
     }
 
 }

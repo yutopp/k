@@ -94,4 +94,14 @@ public class BuiltinMgu extends Term {
         return Utils.HASH_PRIME + constraint.hashCode();
     }
 
+    @Override
+    public Term get(int index) {
+        throw new IndexOutOfBoundsException();
+    }
+
+    @Override
+    public int size() {
+        return 0;
+    }
+
 }

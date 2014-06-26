@@ -4,7 +4,10 @@ package org.kframework.backend.java.kil;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 import org.apache.commons.collections15.map.UnmodifiableMap;
 import org.kframework.backend.java.symbolic.Matcher;
@@ -27,7 +30,7 @@ import com.google.common.base.Preconditions;
  *
  * @author AndreiS
  */
-public class BuiltinMap extends Collection implements Iterable<Map.Entry<Term, Term>> {
+public class BuiltinMap extends Collection {
 
     public static final BuiltinMap EMPTY_MAP = new BuiltinMap();
     
@@ -47,12 +50,7 @@ public class BuiltinMap extends Collection implements Iterable<Map.Entry<Term, T
     }
 
     @Override
-    public Iterator<Map.Entry<Term, Term>> iterator() {
-        return entries.entrySet().iterator();
-    }
-
-    @Override
-    public int size() {
+    public int concreteSize() {
         return entries.size();
     }
 
@@ -239,5 +237,24 @@ public class BuiltinMap extends Collection implements Iterable<Map.Entry<Term, T
             // avoid creating nesting wrappers
             return new BuiltinMap((UnmodifiableMap<Term, Term>) UnmodifiableMap.decorate(entries), frame);
         }
+    }
+
+    private Optional<List<Term>> elementsAsArray = Optional.empty();
+    
+    @Override
+    protected Term[] computeChildren() {
+        List<Term> allEntries = entries.entrySet().stream().map(
+                e -> new Tuple2<Term, Term>(e.getKey(), e.getValue())).collect(Collectors.toList());
+        if(frame != null)
+            allEntries.add(frame);
+        return allEntries.toArray(new Term[size()]);
+    }
+
+    @Override
+    public int size() {
+        if(super.frame == null)
+            return entries.size() ;
+        else
+            return entries.size() + 1;
     }
 }
