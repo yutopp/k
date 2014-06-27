@@ -15,7 +15,7 @@ import org.w3c.dom.Element;
 /**
  * Base class for K AST. Useful for Visitors and Transformers.
  */
-public abstract class ASTNode<T extends ASTNode<?>> extends AbstractList<T> implements Serializable {
+public abstract class ASTNode<T> extends AbstractList<T> implements Serializable {
     /**
      * 
      */

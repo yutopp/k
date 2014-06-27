@@ -101,13 +101,13 @@ public abstract class AbstractVisitor<P, R, E extends Throwable> implements Visi
      * to see an example with multiple multiplicity 1 child nodes, or 
      * {@link #visit(Bracket, Object)} for an example with only one.
      */
-    private <Child extends ASTNode, EnumType extends Enum<?>,
-        Parent extends ASTNode & Interfaces.Parent<Child, EnumType>> 
+    private <Child extends ASTNode<?>, EnumType extends Enum<?>,
+        Parent extends ASTNode<?>> 
             Parent genericVisitChild(
                 Parent node, P p,
                 ChildASTNodeCopier<Child, EnumType, Parent> copier, EnumType type) throws E {
         if (visitChildren()) {
-            Child child = node.getChild(type);
+            Child child = ((Interfaces.Parent<Child, EnumType>)node).getChild(type);
             Child result = null;
             if (child != null) {
                 result = processChildTerm(child, this.visitNode(child, p));
@@ -125,13 +125,13 @@ public abstract class AbstractVisitor<P, R, E extends Throwable> implements Visi
      * {@link #visit(Definition, Object)} for an example with only one.
      */
     private <Child extends ASTNode, EnumType extends Enum<?>,
-        Parent extends ASTNode & Interfaces.Collection<Child, EnumType>> 
+        Parent extends ASTNode > 
             Parent genericVisitList(
                     Parent node, P p,
                     CollectionASTNodeCopier<Child, EnumType, Parent> copier, EnumType type) throws E {
         if(visitChildren()) {
             List<Child> items = new ArrayList<>();
-            for (Child item : node.getChildren(type)) {
+            for (Child item : ((Interfaces.List<Child, EnumType>)node).getChildren(type)) {
                 Child result = processChildTerm(item, this.visitNode(item, p));
                 if (result != null) {
                     items.add(result);
@@ -153,10 +153,10 @@ public abstract class AbstractVisitor<P, R, E extends Throwable> implements Visi
      */
     private abstract class CollectionASTNodeCopier<Child extends ASTNode, 
         EnumType extends Enum<?>,
-        Parent extends ASTNode & Interfaces.Collection<Child, EnumType>> {
+        Parent extends ASTNode > {
         
         public final Parent copy(Parent node, java.util.Collection<Child> items, EnumType type) {
-            if (changedCollection(node.getChildren(type), items)) {
+            if (changedCollection(((Interfaces.List<Child, EnumType>)node).getChildren(type), items)) {
                 node = doCopy(node, items, type);
             }
             return node;
@@ -177,10 +177,10 @@ public abstract class AbstractVisitor<P, R, E extends Throwable> implements Visi
      */
     private abstract class ChildASTNodeCopier<Child extends ASTNode<?>, 
         EnumType extends Enum<?>,
-        Parent extends ASTNode<?> & Interfaces.Parent<Child, EnumType>> {
+        Parent extends ASTNode<?> > {
         
         public Parent copy(Parent node, Child child, EnumType type) {
-            if (changed(node.getChild(type), child)) {
+            if (changed(((Interfaces.Parent<Child, EnumType>)node).getChild(type), child)) {
                 node = doCopy(node, child, type);
             }
             return node;
@@ -196,7 +196,7 @@ public abstract class AbstractVisitor<P, R, E extends Throwable> implements Visi
      * {@link AbstractVisitor#genericVisitList(ASTNode, Object, CollectionASTNodeCopier, Enum)}.
      */
     private <Child extends ASTNode, EnumType extends Enum<?>,
-        ParentType extends ASTNode & Interfaces.MutableList<Child, EnumType>> 
+        ParentType extends ASTNode> 
         CollectionASTNodeCopier<Child, EnumType, ParentType> mutableList(Class<ParentType> cls) {
         
         return new CollectionASTNodeCopier<Child, EnumType, ParentType>() {
@@ -205,7 +205,7 @@ public abstract class AbstractVisitor<P, R, E extends Throwable> implements Visi
             protected ParentType doCopy(ParentType node,
                     java.util.Collection<Child> items, EnumType type) {
                 node = AbstractVisitor.this.copy(node);
-                node.setChildren((java.util.List<Child>)items, type);
+                ((Interfaces.MutableList<Child, EnumType>)node).setChildren((java.util.List<Child>)items, type);
                 return node;
             }
         };        
@@ -217,8 +217,8 @@ public abstract class AbstractVisitor<P, R, E extends Throwable> implements Visi
      * @return A copier suitable for passing to 
      * {@link AbstractVisitor#genericVisitChild(ASTNode, Object, ChildASTNodeCopier, Enum)}.
      */
-    private <Child extends ASTNode, EnumType extends Enum<?>, 
-        ParentType extends ASTNode & Interfaces.MutableParent<Child, EnumType>> 
+    private <Child extends ASTNode<?>, EnumType extends Enum<?>, 
+        ParentType extends ASTNode<?>> 
         ChildASTNodeCopier<Child, EnumType, ParentType> mutableChild(Class<ParentType> cls) {
   
         return new ChildASTNodeCopier<Child, EnumType, ParentType>() {
@@ -227,7 +227,7 @@ public abstract class AbstractVisitor<P, R, E extends Throwable> implements Visi
             protected ParentType doCopy(ParentType node, Child child,
                     EnumType type) {
                 node = AbstractVisitor.this.copy(node);
-                node.setChild(child, type);
+                ((Interfaces.MutableParent<Child, EnumType>)node).setChild(child, type);
                 return node;
             }
             
@@ -274,7 +274,7 @@ public abstract class AbstractVisitor<P, R, E extends Throwable> implements Visi
     // END GENERIC MACHINERY
 
     @Override
-    public R visit(ASTNode node, P p) throws E {
+    public R visit(ASTNode<?> node, P p) throws E {
         R ret = defaultReturnValue(node, p);
         return ret;
     }
@@ -842,7 +842,7 @@ public abstract class AbstractVisitor<P, R, E extends Throwable> implements Visi
     }
     
     @Override
-    public R complete(ASTNode node, R r) {
+    public R complete(ASTNode<?> node, R r) {
         cache.put(node, r);
         return r;
     }
