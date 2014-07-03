@@ -101,6 +101,10 @@ public class CommandlineOptions {
         addOptionE(OptionBuilder.withLongOpt("trace").withDescription("Turn on maude trace.").create());
         addOptionE(OptionBuilder.withLongOpt("profile").withDescription("Turn on maude profiler.").create());
         addOptionE(OptionBuilder.withLongOpt("ltlmc").hasArg().withArgName("file/string").withDescription("Specify the formula for model checking through a file or at commandline.").create());
+        addOptionE(OptionBuilder.withLongOpt("pdmc").
+                withDescription("Use the PDMC backend.").
+//                hasArg().withArgName("file/string").withDescription("Specify the formula for model checking through a file or at commandline.").
+                create());
         addOptionE(OptionBuilder.withLongOpt("prove").hasArg().withArgName("file").withDescription("Prove a set of reachability rules.").create());
         addOptionE(OptionBuilder.withLongOpt("smt").hasArg().withArgName("solver").withDescription("SMT solver to use for checking constraints. <solver> is either [z3|gappa|none]. (Default: z3).").create());
         addOptionE(OptionBuilder.withLongOpt("generate-tests").withDescription("Test programs will be generated along with normal search.").create());

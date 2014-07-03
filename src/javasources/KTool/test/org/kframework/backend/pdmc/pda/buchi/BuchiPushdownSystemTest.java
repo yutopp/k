@@ -19,8 +19,11 @@ import java.io.ByteArrayInputStream;
  * TODO: Cycle rules
  * TODO: K integration: PDS
  *     - Testare cu Post*
- * TODO: Verificare Reguli K satisfac conditii PD
+ * TODO: argument la --pdmc fisier cu definitia Promela
+ * TODO: evaluare Atomi pentru LTL
+ * TODO: testare LTL model checking
  * TODO: K integration: LTL & Buchi/SPIN --- (suport din KRun pentru evaluare atomi/propozitii)
+ * TODO: Verificare Reguli K satisfac conditii PD
  */
 public class BuchiPushdownSystemTest {
 

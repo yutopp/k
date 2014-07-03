@@ -348,6 +348,8 @@ public class Main {
                                             K.term, context));
 
                     sw.printTotal("Model checking total");
+                } else if (K.pdmc) {
+                    result = krun.modelCheck(null, makeConfiguration(KAST, null, rp, K.term, context));
                 } else if (K.prove.length() > 0) {
                     File proofFile = new File(K.prove);
                     if (!proofFile.exists()) {
@@ -1190,6 +1192,10 @@ public class Main {
             }
             if (cmd.hasOption("ltlmc")) {
                 K.model_checking = cmd.getOptionValue("ltlmc");
+                K.io = false;
+            }
+            if (cmd.hasOption("pdmc")) {
+                K.pdmc = true;
                 K.io = false;
             }
             if (cmd.hasOption("prove")) {

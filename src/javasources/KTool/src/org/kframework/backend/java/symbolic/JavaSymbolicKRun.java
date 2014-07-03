@@ -1,19 +1,20 @@
 // Copyright (c) 2013-2014 K Team. All Rights Reserved.
 package org.kframework.backend.java.symbolic;
 
+import edu.uci.ics.jung.graph.DirectedSparseGraph;
+import org.kframework.backend.java.kil.*;
 import org.kframework.backend.java.kil.Definition;
-import org.kframework.backend.java.kil.Term;
-import org.kframework.backend.java.kil.ConstrainedTerm;
 import org.kframework.backend.java.kil.Rule;
-import org.kframework.backend.java.kil.TermContext;
+import org.kframework.backend.java.kil.Term;
 import org.kframework.backend.java.kil.Variable;
 import org.kframework.backend.java.util.TestCaseGenerationSettings;
 import org.kframework.backend.java.util.TestCaseGenerationUtil;
+import org.kframework.backend.pdmc.pda.*;
 import org.kframework.backend.unparser.UnparserFilter;
 import org.kframework.compile.transformers.DataStructureToLookupUpdate;
 import org.kframework.compile.utils.*;
 //import org.kframework.kil.*;
-import org.kframework.kil.Module;
+import org.kframework.kil.*;
 import org.kframework.kil.loader.Context;
 import org.kframework.krun.K;
 import org.kframework.krun.KRunExecutionException;
@@ -25,6 +26,9 @@ import org.kframework.utils.BinaryLoader;
 
 import java.io.File;
 import java.util.*;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import edu.uci.ics.jung.graph.DirectedGraph;
 import org.kframework.utils.general.IndexingStatistics;
@@ -395,8 +399,36 @@ public class JavaSymbolicKRun implements KRun {
     public KRunProofResult<DirectedGraph<KRunState, Transition>> modelCheck(
             org.kframework.kil.Term formula,
             org.kframework.kil.Term cfg) throws KRunExecutionException {
-        throw new UnsupportedBackendOptionException("--ltlmc");
+        if (!K.pdmc)
+            throw new UnsupportedBackendOptionException("--ltlmc");
+        return pdmc(cfg);
     }
+
+
+    public KRunProofResult<DirectedGraph<KRunState, Transition>> pdmc(
+            org.kframework.kil.Term cfg) throws KRunExecutionException {
+        Term term = Term.of(cfg, definition);
+        JavaKRunPushdownSystem pds = new JavaKRunPushdownSystem(this, term);
+        TrackingLabelFactory<Term, Term> factory = new TrackingLabelFactory<>();
+        PostStar<Term, Term> postStar = new PostStar<>(pds, factory);
+
+        for (ConfigurationHead<Term, Term> head : postStar.getReachableHeads()) {
+            Deque<org.kframework.backend.pdmc.pda.Rule<Term, Term>> path = postStar.getReachableConfiguration(head);
+            System.out.println(head.toString() + ":");
+            for (org.kframework.backend.pdmc.pda.Rule<Term, Term> rule : path) {
+                ConfigurationHead<Term, Term> head1 = rule.getHead();
+
+                Term kStartConfig = pds.getKConfig(head1.getState(), head1.getLetter());
+                Term kEndConfig = pds.getKConfig(rule.endConfiguration());
+                System.out.println(kStartConfig + " => " + kEndConfig);
+            }
+//            System.out.println("\t" + path);
+        }
+        DirectedGraph<KRunState, Transition> kRunStateTransitionDirectedSparseGraph = new DirectedSparseGraph<>();
+        return new KRunProofResult<>(false, kRunStateTransitionDirectedSparseGraph);
+
+    }
+
 
     @Override
     public KRunResult<KRunState> step(org.kframework.kil.Term cfg, int steps)

@@ -85,6 +85,7 @@ public class K {
     public static String simulationProgLeft = "";
     public static String simulationProgRight = "";
 
+    public static boolean pdmc = false;
 
     // variables to store if that specific option was set; also set default values for options
     public static boolean help = false;
