@@ -101,8 +101,8 @@ public class CommandlineOptions {
         addOptionE(OptionBuilder.withLongOpt("trace").withDescription("Turn on maude trace.").create());
         addOptionE(OptionBuilder.withLongOpt("profile").withDescription("Turn on maude profiler.").create());
         addOptionE(OptionBuilder.withLongOpt("ltlmc").hasArg().withArgName("file/string").withDescription("Specify the formula for model checking through a file or at commandline.").create());
-        addOptionE(OptionBuilder.withLongOpt("pdmc").
-                withDescription("Use the PDMC backend.").
+        addOptionE(OptionBuilder.withLongOpt("pdmc").hasArg().withArgName("file").
+                withDescription("Use the PDMC backend with specified file containing Promela SPIN never claim.").
 //                hasArg().withArgName("file/string").withDescription("Specify the formula for model checking through a file or at commandline.").
                 create());
         addOptionE(OptionBuilder.withLongOpt("prove").hasArg().withArgName("file").withDescription("Prove a set of reachability rules.").create());

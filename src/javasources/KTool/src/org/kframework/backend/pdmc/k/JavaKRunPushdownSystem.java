@@ -1,10 +1,12 @@
-package org.kframework.backend.pdmc.pda;
+package org.kframework.backend.pdmc.k;
 
 import com.google.common.collect.ImmutableList;
 import org.kframework.backend.java.kil.*;
+import org.kframework.backend.java.kil.Rule;
 import org.kframework.backend.java.symbolic.JavaSymbolicKRun;
 import org.kframework.backend.java.symbolic.LocalTransformer;
 import org.kframework.backend.java.symbolic.PrePostTransformer;
+import org.kframework.backend.pdmc.pda.*;
 import org.kframework.kil.ASTNode;
 import org.kframework.krun.KRunExecutionException;
 import org.kframework.krun.ioserver.filesystem.portable.PortableFileSystem;
@@ -54,15 +56,15 @@ public class JavaKRunPushdownSystem  implements PushdownSystemInterface<Term, Te
     }
 
     @Override
-    public Set<Rule<Term, Term>> getRules(ConfigurationHead<Term, Term> configurationHead) {
+    public Set<org.kframework.backend.pdmc.pda.Rule<Term, Term>> getRules(ConfigurationHead<Term, Term> configurationHead) {
         Term cfg = getKConfig(configurationHead.getState(), configurationHead.getLetter());
         ConstrainedTerm constrainedTerm = new ConstrainedTerm(cfg, termContext);
-        Set<Rule<Term, Term>> rules = new HashSet<>();
+        Set<org.kframework.backend.pdmc.pda.Rule<Term, Term>> rules = new HashSet<>();
         try {
             Collection<ConstrainedTerm> nextTerms = runner.steps(constrainedTerm);
             for (ConstrainedTerm nextTerm : nextTerms) {
                 Configuration<Term, Term> nextCfg = configurationSplit(nextTerm.term());
-                Rule<Term, Term> rule = new Rule<>(configurationHead, nextCfg, nextCfg.getHead().getLetter());
+                org.kframework.backend.pdmc.pda.Rule<Term, Term> rule = new org.kframework.backend.pdmc.pda.Rule<>(configurationHead, nextCfg, nextCfg.getHead().getLetter());
                 rules.add(rule);
             }
 

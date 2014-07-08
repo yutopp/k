@@ -14,7 +14,7 @@ import org.kframework.backend.pdmc.pda.pautomaton.PAutomatonState;
  * @param <Control>  specifies the control state of a pushdwown system
  * @param <Alphabet> specifies the alphabet of a pushdown system
  */
-class BuchiTrackingLabel<Control, Alphabet> extends TrackingLabel<Pair<Control, BuchiState>, Alphabet> {
+public class BuchiTrackingLabel<Control, Alphabet> extends TrackingLabel<Pair<Control, BuchiState>, Alphabet> {
 
     /**
      * whether this transition passes through an accepting state of the Buchi Automaton

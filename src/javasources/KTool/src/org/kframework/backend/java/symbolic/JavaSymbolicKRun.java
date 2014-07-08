@@ -2,6 +2,7 @@
 package org.kframework.backend.java.symbolic;
 
 import edu.uci.ics.jung.graph.DirectedSparseGraph;
+import org.apache.commons.lang3.tuple.Pair;
 import org.kframework.backend.java.kil.*;
 import org.kframework.backend.java.kil.Definition;
 import org.kframework.backend.java.kil.Rule;
@@ -9,7 +10,12 @@ import org.kframework.backend.java.kil.Term;
 import org.kframework.backend.java.kil.Variable;
 import org.kframework.backend.java.util.TestCaseGenerationSettings;
 import org.kframework.backend.java.util.TestCaseGenerationUtil;
+import org.kframework.backend.pdmc.k.JavaKRunPromelaEvaluator;
+import org.kframework.backend.pdmc.k.JavaKRunPushdownSystem;
+import org.kframework.backend.pdmc.k.PromelaTermAdaptor;
 import org.kframework.backend.pdmc.pda.*;
+import org.kframework.backend.pdmc.pda.buchi.*;
+import org.kframework.backend.pdmc.pda.graph.TarjanSCC;
 import org.kframework.backend.unparser.UnparserFilter;
 import org.kframework.compile.transformers.DataStructureToLookupUpdate;
 import org.kframework.compile.utils.*;
@@ -399,30 +405,50 @@ public class JavaSymbolicKRun implements KRun {
     public KRunProofResult<DirectedGraph<KRunState, Transition>> modelCheck(
             org.kframework.kil.Term formula,
             org.kframework.kil.Term cfg) throws KRunExecutionException {
-        if (!K.pdmc)
+        if (K.pdmc.isEmpty())
             throw new UnsupportedBackendOptionException("--ltlmc");
-        return pdmc(cfg);
+        assert formula instanceof PromelaTermAdaptor;
+        return pdmc(cfg, ((PromelaTermAdaptor) formula).getAutomaton());
     }
 
 
     public KRunProofResult<DirectedGraph<KRunState, Transition>> pdmc(
-            org.kframework.kil.Term cfg) throws KRunExecutionException {
+            org.kframework.kil.Term cfg, PromelaBuchi automaton) throws KRunExecutionException {
         Term term = Term.of(cfg, definition);
         JavaKRunPushdownSystem pds = new JavaKRunPushdownSystem(this, term);
-        TrackingLabelFactory<Term, Term> factory = new TrackingLabelFactory<>();
-        PostStar<Term, Term> postStar = new PostStar<>(pds, factory);
+        JavaKRunPromelaEvaluator evaluator = new JavaKRunPromelaEvaluator(pds);
+        BuchiPushdownSystem<Term, Term> buchiPushdownSystem = new BuchiPushdownSystem<>(pds, automaton, evaluator);
+        BuchiPushdownSystemTools<Term, Term> bpsTool = new BuchiPushdownSystemTools<>(buchiPushdownSystem);
 
-        for (ConfigurationHead<Term, Term> head : postStar.getReachableHeads()) {
-            Deque<org.kframework.backend.pdmc.pda.Rule<Term, Term>> path = postStar.getReachableConfiguration(head);
-            System.out.println(head.toString() + ":");
-            for (org.kframework.backend.pdmc.pda.Rule<Term, Term> rule : path) {
-                ConfigurationHead<Term, Term> head1 = rule.getHead();
+        TarjanSCC<ConfigurationHead<Pair<Term, BuchiState>, Term>, BuchiTrackingLabel<Term, Term>> counterExampleGraph
+                = bpsTool.getCounterExampleGraph();
+        if (counterExampleGraph == null) {
+            System.out.println("No counterexample found. Property holds.");
+        } else {
+            System.out.println("Counterexample found for the given property");
+            ConfigurationHead<Pair<Term, BuchiState>, Term> head = counterExampleGraph.getVertices().iterator().next();
+            System.out.println("\n\n\n--- Prefix path ---");
+            System.out.println(bpsTool.getReachableConfiguration(head).toString());
+            System.out.println("\n\n\n--- Cycle ---");
+            System.out.println(bpsTool.getRepeatingCycle(head).toString());
+        }
+        if (false) {
+            TrackingLabelFactory<Term, Term> factory = new TrackingLabelFactory<>();
+            PostStar<Term, Term> postStar = new PostStar<>(pds, factory);
 
-                Term kStartConfig = pds.getKConfig(head1.getState(), head1.getLetter());
-                Term kEndConfig = pds.getKConfig(rule.endConfiguration());
-                System.out.println(kStartConfig + " => " + kEndConfig);
-            }
+
+            for (ConfigurationHead<Term, Term> head : postStar.getReachableHeads()) {
+                Deque<org.kframework.backend.pdmc.pda.Rule<Term, Term>> path = postStar.getReachableConfiguration(head);
+                System.out.println(head.toString() + ":");
+                for (org.kframework.backend.pdmc.pda.Rule<Term, Term> rule : path) {
+                    ConfigurationHead<Term, Term> head1 = rule.getHead();
+
+                    Term kStartConfig = pds.getKConfig(head1.getState(), head1.getLetter());
+                    Term kEndConfig = pds.getKConfig(rule.endConfiguration());
+                    System.out.println(kStartConfig + " => " + kEndConfig);
+                }
 //            System.out.println("\t" + path);
+            }
         }
         DirectedGraph<KRunState, Transition> kRunStateTransitionDirectedSparseGraph = new DirectedSparseGraph<>();
         return new KRunProofResult<>(false, kRunStateTransitionDirectedSparseGraph);

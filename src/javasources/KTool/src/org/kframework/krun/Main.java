@@ -5,12 +5,7 @@ import static org.apache.commons.io.FileUtils.deleteDirectory;
 import static org.apache.commons.io.FileUtils.writeStringToFile;
 
 import java.awt.Color;
-import java.io.BufferedReader;
-import java.io.Console;
-import java.io.File;
-import java.io.FilenameFilter;
-import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.HashMap;
@@ -32,6 +27,10 @@ import org.apache.commons.io.FilenameUtils;
 import org.kframework.backend.java.ksimulation.Waitor;
 import org.kframework.backend.java.symbolic.JavaSymbolicKRun;
 import org.kframework.backend.maude.krun.MaudeKRun;
+import org.kframework.backend.pdmc.k.PromelaTermAdaptor;
+import org.kframework.backend.pdmc.pda.buchi.PromelaBuchi;
+import org.kframework.backend.pdmc.pda.buchi.parser.ParseException;
+import org.kframework.backend.pdmc.pda.buchi.parser.PromelaBuchiParser;
 import org.kframework.backend.unparser.UnparserFilterNew;
 import org.kframework.compile.ConfigurationCleaner;
 import org.kframework.compile.FlattenModules;
@@ -348,8 +347,14 @@ public class Main {
                                             K.term, context));
 
                     sw.printTotal("Model checking total");
-                } else if (K.pdmc) {
-                    result = krun.modelCheck(null, makeConfiguration(KAST, null, rp, K.term, context));
+                } else if (!K.pdmc.isEmpty()) {
+                    try {
+                        PromelaBuchi automaton = PromelaBuchiParser.parse(new FileInputStream(K.pdmc));
+                        result = krun.modelCheck(new PromelaTermAdaptor(automaton), makeConfiguration(KAST, null, rp, K.term, context));
+                    } catch (ParseException e) {
+                        org.kframework.utils.Error.report("Cannot parse SPIN never claim file: " + K.pdmc + "\n"
+                                + e.getMessage());
+                    }
                 } else if (K.prove.length() > 0) {
                     File proofFile = new File(K.prove);
                     if (!proofFile.exists()) {
@@ -1195,7 +1200,7 @@ public class Main {
                 K.io = false;
             }
             if (cmd.hasOption("pdmc")) {
-                K.pdmc = true;
+                K.pdmc = cmd.getOptionValue("pdmc");
                 K.io = false;
             }
             if (cmd.hasOption("prove")) {
