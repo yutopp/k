@@ -6,7 +6,7 @@ T0_init:
 	fi;
 accept_S2:
 	if
-	:: (!px1 && !px2) -> goto accept_all
+	:: (!px2 && !px1) -> goto accept_all
 	fi;
 accept_all:
 	skip

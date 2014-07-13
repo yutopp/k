@@ -28,4 +28,18 @@ module EXAMPLE
   rule <k> ret => .K ...</k> <state> x0 </state> [r8]
   rule <k> ret => .K ...</k> <state> x1 </state> [r8]
   rule <k> ret => .K ...</k> <state> x2 </state> [r8]
+
+  syntax Bool ::= Bag "||=" String [function]
+  rule <generatedTop>... <state> x0 </state> ...</generatedTop> ||= "px0"
+    => true
+  rule <generatedTop>... <state> x01 </state> ...</generatedTop> ||= "px0"
+    => true
+  rule <generatedTop>... <state> x1 </state> ...</generatedTop> ||= "px1"
+    => true
+  rule <generatedTop>... <state> x2 </state> ...</generatedTop> ||= "px2"
+    => true
+
+  syntax Bool ::= Bag "|=" String [function]
+  rule <generatedTop> B </generatedTop> |= S:String 
+    => (<generatedTop> B </generatedTop> ||= S) ==K true
 endmodule
