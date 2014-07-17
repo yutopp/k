@@ -1,0 +1,14 @@
+never { /* G(!p0 | Fp1) */
+accept_init:
+  if
+  :: ((p0) && (!(p1))) -> goto T0_S2
+  :: ((!(p0)) || (p1)) -> goto accept_init
+  fi;
+T0_S2:
+  if
+  :: ((!(p1))) -> goto T0_S2
+  :: ((p1)) -> goto accept_init
+  fi;
+T0_S4:
+  skip
+}

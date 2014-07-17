@@ -415,7 +415,7 @@ public class JavaSymbolicKRun implements KRun {
         JavaKRunPromelaEvaluator evaluator = new JavaKRunPromelaEvaluator(pds);
         BuchiPushdownSystem<Term, Term> buchiPushdownSystem = new BuchiPushdownSystem<>(pds, automaton, evaluator);
         System.err.println("\n----Buchi Pushdown System---");
-        System.err.print(buchiPushdownSystem.toString());
+//        System.err.print(buchiPushdownSystem.toString());
 
         BuchiPushdownSystemTools<Term, Term> bpsTool = new BuchiPushdownSystemTools<>(buchiPushdownSystem);
 
