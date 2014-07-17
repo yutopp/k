@@ -27,7 +27,8 @@ public class JavaKRunPushdownSystem  implements PushdownSystemInterface<Term, Te
 
         this.runner = runner;
         runner.initialSimulationRewriter();
-        termContext  = TermContext.of(runner.getDefinition(), new PortableFileSystem());
+        GlobalContext globalContext = new GlobalContext(runner.getDefinition(), new PortableFileSystem());
+        termContext = TermContext.of(globalContext);
         initial = configurationSplit(cfg);
     }
 
