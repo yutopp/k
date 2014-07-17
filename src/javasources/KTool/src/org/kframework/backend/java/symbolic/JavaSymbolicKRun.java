@@ -10,12 +10,14 @@ import org.kframework.backend.java.kil.Term;
 import org.kframework.backend.java.kil.Variable;
 import org.kframework.backend.java.util.TestCaseGenerationSettings;
 import org.kframework.backend.java.util.TestCaseGenerationUtil;
+import org.kframework.backend.pdmc.automaton.AutomatonInterface;
 import org.kframework.backend.pdmc.k.JavaKRunPromelaEvaluator;
 import org.kframework.backend.pdmc.k.JavaKRunPushdownSystem;
 import org.kframework.backend.pdmc.k.PromelaTermAdaptor;
 import org.kframework.backend.pdmc.pda.*;
 import org.kframework.backend.pdmc.pda.buchi.*;
 import org.kframework.backend.pdmc.pda.graph.TarjanSCC;
+import org.kframework.backend.pdmc.pda.pautomaton.PAutomatonState;
 import org.kframework.backend.unparser.UnparserFilter;
 import org.kframework.compile.transformers.DataStructureToLookupUpdate;
 import org.kframework.compile.utils.*;
@@ -418,7 +420,21 @@ public class JavaSymbolicKRun implements KRun {
         JavaKRunPushdownSystem pds = new JavaKRunPushdownSystem(this, term);
         JavaKRunPromelaEvaluator evaluator = new JavaKRunPromelaEvaluator(pds);
         BuchiPushdownSystem<Term, Term> buchiPushdownSystem = new BuchiPushdownSystem<>(pds, automaton, evaluator);
+        System.err.println("\n----Buchi Pushdown System---");
+        System.err.print(buchiPushdownSystem.toString());
+
         BuchiPushdownSystemTools<Term, Term> bpsTool = new BuchiPushdownSystemTools<>(buchiPushdownSystem);
+
+        AutomatonInterface<PAutomatonState<Pair<Term, BuchiState>, Term>, Term> post = bpsTool.getPostStar();
+        System.err.println("\n\n\n----Post Automaton----");
+        System.err.println(post.toString());
+
+        TarjanSCC repeatedHeads = bpsTool.getRepeatedHeadsGraph();
+        System.err.println("\n\n\n----Repeated Heads----");
+        System.err.println(repeatedHeads.toString());
+
+        System.err.println("\n\n\n----Strongly Connected Components----");
+        System.err.println(repeatedHeads.getSCCSString());
 
         TarjanSCC<ConfigurationHead<Pair<Term, BuchiState>, Term>, BuchiTrackingLabel<Term, Term>> counterExampleGraph
                 = bpsTool.getCounterExampleGraph();
