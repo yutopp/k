@@ -56,6 +56,17 @@ public class BuiltinMap extends Collection implements Iterable<Map.Entry<Term, T
         return entries.size();
     }
 
+    /**
+     * {@code BuiltinMap} is guaranteed to have only one frame; thus, they can
+     * always be used in the left-hand side of a rule.
+     */
+    @Override
+    public boolean isLHSView() {
+        // TODO(YilongL): allow BuiltinMap to have a list of Terms instead of
+        // just substitution entries; revise the javadoc
+        return true;
+    }
+
     @Override
     public boolean isExactSort() {
         return true;
@@ -83,11 +94,23 @@ public class BuiltinMap extends Collection implements Iterable<Map.Entry<Term, T
     }
 
     @Override
-    public int computeHash() {
+    protected int computeHash() {
         int hashCode = 1;
         hashCode = hashCode * Utils.HASH_PRIME + (frame == null ? 0 : frame.hashCode());
         hashCode = hashCode * Utils.HASH_PRIME + entries.hashCode();
         return hashCode;
+    }
+    
+    @Override
+    protected boolean computeHasCell() {
+        boolean hasCell = false;
+        for (Map.Entry<Term, Term> entry : entries.entrySet()) {
+            hasCell = hasCell || entry.getKey().hasCell() || entry.getValue().hasCell();
+            if (hasCell) {
+                return true;
+            }
+        }
+        return false;
     }
 
     @Override

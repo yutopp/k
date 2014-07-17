@@ -1,10 +1,8 @@
 // Copyright (c) 2013-2014 K Team. All Rights Reserved.
-require "builtins/bag.k"
 require "builtins/set.k"
 
 
 module MAP
-  imports BAG
   imports SET
 
   /*@\section{Description} The Map represents a generalized associative array;
@@ -18,7 +16,7 @@ module MAP
   syntax Map ::= ".Map"         [function, hook(Map:.Map)]
   /*@ This construct is used to refer to key-value pairs within a map, with the 
    key on the left and the value on the right: */
-  syntax Map ::= K "|->" K      [function, hook(Map:_|->_)]
+  syntax Map ::= K "|->" K      [function, hook(Map:_|->_), latex({#1}\mapsto{#2})]
                // breaks klabel uniqueness
                //| "."          [function, hook(Map:.Map)]
   syntax priorities '_|->_ > '_Map_ '.Map

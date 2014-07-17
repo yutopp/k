@@ -52,9 +52,9 @@ module AGENTS
        (. => <message> <from>N1</from> <to>SetItem(N2)</to> <body>V</body> 
              </message>)
   rule <me>N</me> <k>receive=>V:Val ...</k>
-       <message>...  <to>... SetItem(N)=>. ...</to> <body>V</body>  ...</message>
+       <message>...  <to>... SetItem(N) => .Set ...</to> <body>V</body>  ...</message>
     [transition]
-  rule <message> <from>N2</from> <to>... SetItem(N1) => . ...</to> <body>V</body> 
+  rule <message> <from>N2</from> <to>... SetItem(N1) => .Set ...</to> <body>V</body> 
        </message> <me>N1</me> <k>receiveFrom N2 => V ...</k>
     [transition]
   rule <me>N</me> <k>broadcast V => skip ...</k>
@@ -69,9 +69,9 @@ module AGENTS
     [transition]
   rule [start-waiting-at-barrier] : <me>N</me> <k>barrier ...</k>
        <barrier>true</barrier> <waiting>W (.Set => SetItem(N))</waiting> 
-    when notBool(SetItem(N) in W)
+    when notBool(N in W)
   rule [lifting-barrier] : <barrier>true=>false</barrier> <waiting>W</waiting> <world>W</world> 
-    when W =/=Set .Set
+    when W =/=K .Set
     [transition]
   rule [leave-barrier] : <me>N</me> <k>barrier => skip ...</k> <barrier>false</barrier>
        <waiting>... (SetItem(N) => .Set) ...</waiting>

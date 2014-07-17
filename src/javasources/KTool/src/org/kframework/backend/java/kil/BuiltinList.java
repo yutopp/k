@@ -85,6 +85,25 @@ public class BuiltinList extends Collection {
         return elementsLeft.size() + elementsRight.size();
     }
 
+    /**
+     * {@code BuiltinList} is guaranteed to have only one frame; thus, they can
+     * always be used in the left-hand side of a rule.
+     */
+    @Override
+    public boolean isLHSView() {
+        return true;
+    }
+    
+    /**
+     * Checks if this {@code BuiltinList} is actually a list update operation.
+     * 
+     * @return {@code true} if there is pending update operation on this
+     *         {@code BuiltinList}; otherwise, {@code false}
+     */
+    public boolean isUpdate() {
+        return removeLeft != 0 || removeRight != 0;
+    }
+
     @Override
     public boolean isExactSort() {
         return true;
@@ -114,7 +133,7 @@ public class BuiltinList extends Collection {
     }
 
     @Override
-    public int computeHash() {
+    protected int computeHash() {
         int hashCode = 1;
         hashCode = hashCode * Utils.HASH_PRIME + (frame == null ? 0 : frame.hashCode());
         hashCode = hashCode * Utils.HASH_PRIME + removeLeft;
@@ -122,6 +141,24 @@ public class BuiltinList extends Collection {
         hashCode = hashCode * Utils.HASH_PRIME + elementsLeft.hashCode();
         hashCode = hashCode * Utils.HASH_PRIME + elementsRight.hashCode();
         return hashCode;
+    }
+    
+    @Override
+    protected boolean computeHasCell() {
+        boolean hasCell = false;
+        for (Term term : elementsLeft) {
+            hasCell = hasCell || term.hasCell();
+            if (hasCell) {
+                return true;
+            }
+        }
+        for (Term term : elementsRight) {
+            hasCell = hasCell || term.hasCell();
+            if (hasCell) {
+                return true;
+            }
+        }
+        return false;
     }
 
     @Override
@@ -168,7 +205,7 @@ public class BuiltinList extends Collection {
             return iterator.next();
         }
         // TODO(AndreiS): use correct kind/sort
-        if (frame == null) return new Bottom(Kind.K);
+        if (frame == null) return Bottom.of(Kind.K);
         java.util.Collection<Term> left = elementsLeft;
         java.util.Collection<Term> right = elementsRight;
         if (onLeft) {

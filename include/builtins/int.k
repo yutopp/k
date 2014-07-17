@@ -2,7 +2,7 @@
 require "k-equal.k"
 module INT-SYNTAX-HOOKS
   imports #INT-INTERFACE
-  syntax #Int ::= Token{[\-\+]? [0-9]+} [regex("[\\+-]?\\d+")]
+  syntax #Int ::= Token{[\-\+]? [0-9]+} [regex("[\\+-]?\\d+"), prefer]
   syntax Int ::= #Int
 endmodule
 
@@ -74,6 +74,6 @@ module INT-HOOKS
   rule 0 *Int I:Int => 0 [anywhere]
 
   syntax Int ::= freshInt(Int)    [freshGenerator, function]
-  rule freshInt(I) => I
+  rule freshInt(I:Int) => I
 endmodule
 

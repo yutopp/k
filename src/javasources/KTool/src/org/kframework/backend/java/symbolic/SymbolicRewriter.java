@@ -21,8 +21,6 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import org.kframework.backend.java.builtins.FreshOperations;
-import org.kframework.backend.java.builtins.IntToken;
-import org.kframework.backend.java.builtins.StringToken;
 import org.kframework.backend.java.indexing.Index;
 import org.kframework.backend.java.indexing.IndexingPair;
 import org.kframework.backend.java.indexing.RuleIndex;
@@ -136,7 +134,7 @@ public class SymbolicRewriter {
      */
     private List<Rule> getSimulationRules(Term term) {
         List<Rule> rules = new ArrayList<Rule>();
-        for (IndexingPair pair : term.getIndexingPairs(definition)) {
+        for (IndexingPair pair : term.getKCellIndexingPairs(definition)) {
             if (((IndexingTable) ruleIndex).getSimulationRuleTable().get(pair.first) != null) {
                 rules.addAll(((IndexingTable) ruleIndex).getSimulationRuleTable().get(pair.first));
             }
@@ -880,7 +878,7 @@ public class SymbolicRewriter {
         return null;
     }
 
-    public List<ConstrainedTerm> prove(List<Rule> rules, FileSystem fs) {
+    public List<ConstrainedTerm> prove(List<Rule> rules, FileSystem fs, TermContext context) {
         stopwatch.start();
 
         List<ConstrainedTerm> proofResults = new ArrayList<ConstrainedTerm>();
@@ -888,7 +886,6 @@ public class SymbolicRewriter {
             /* rename rule variables */
             Map<Variable, Variable> freshSubstitution = Variable.getFreshSubstitution(rule.variableSet());
 
-            TermContext context = TermContext.of(definition, fs);
             SymbolicConstraint sideConstraint = new SymbolicConstraint(context);
             sideConstraint.addAll(rule.requires());
             ConstrainedTerm initialTerm = new ConstrainedTerm(

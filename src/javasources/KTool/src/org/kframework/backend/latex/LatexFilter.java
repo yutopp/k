@@ -197,14 +197,12 @@ public class LatexFilter extends BackendFilter {
             return null;
         }
         if (hasBR) {
-            if (parens) result.append("\\left(");
             result.append("\\begin{array}{@{}c@{}}");
         }
         List<Term> contents = col.getContents();
         printList(contents, "\\mathrel{}");
         if (hasBR) {
             result.append("\\end{array}");
-            if (parens) result.append("\\right)");
         }
         return null;
     }
@@ -387,14 +385,6 @@ public class LatexFilter extends BackendFilter {
     @Override
     public Void visit(Token t, Void _) {
         result.append("\\constant[" + StringUtil.latexify(t.tokenSort()) + "]{" + StringUtil.latexify(t.value()) + "}");
-        return null;
-    }
-
-    @Override
-    public Void visit(MapItem mi, Void _) {
-        this.visitNode(mi.getKey());
-        result.append("\\mapsto");
-        this.visitNode(mi.getItem());
         return null;
     }
 

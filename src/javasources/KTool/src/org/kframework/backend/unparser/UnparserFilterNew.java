@@ -1,6 +1,7 @@
 // Copyright (c) 2014 K Team. All Rights Reserved.
 package org.kframework.backend.unparser;
 
+import org.kframework.compile.utils.ConfigurationStructureMap;
 import org.kframework.compile.utils.MetaK;
 import org.kframework.kil.*;
 import org.kframework.kil.visitors.NonCachingVisitor;
@@ -8,7 +9,13 @@ import org.kframework.krun.ColorSetting;
 import org.kframework.krun.K;
 import org.kframework.utils.ColorUtil;
 
+import com.davekoelle.AlphanumComparator;
+
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map.Entry;
@@ -255,6 +262,41 @@ public class UnparserFilterNew extends NonCachingVisitor {
         return postpare();
     }
 
+    private class UnparserBagItemComparator implements Comparator<Term> {
+        
+        private java.util.Map<Term, String> unparsedResults;
+        
+        private AlphanumComparator comparator = new AlphanumComparator();
+        
+        public UnparserBagItemComparator(java.util.Map<Term, String> unparsedResults) {
+            this.unparsedResults = unparsedResults;
+        }
+
+        @Override
+        public int compare(Term o1, Term o2) {
+            // case 1: one of o1 and o2 is a cell
+            if ((o1 instanceof Cell) && !(o2 instanceof Cell)
+                    || !(o1 instanceof Cell) && (o2 instanceof Cell)) {
+                return o1 instanceof Cell ? -1 : 1;
+            }
+            
+            // case 2: o1 and o2 are cells with different labels
+            if (o1 instanceof Cell && o2 instanceof Cell
+                    && (!((Cell) o1).getLabel().equals(((Cell) o2).getLabel()))) {
+                Cell crntCell = (Cell) stack.peek();
+                ConfigurationStructureMap sons = context.getConfigurationStructureMap().get(crntCell.getLabel()).sons;
+                return sons.positionOf(((Cell) o1).getLabel()) < sons.positionOf(((Cell) o2).getLabel()) ? -1 : 1;
+            }
+            
+            // case 3: neither o1 nor o2 is a cell
+            // case 4: o1 and o2 are cells with the same label
+            String s1 = unparsedResults.get(o1);
+            String s2 = unparsedResults.get(o2);
+            return comparator.compare(s1, s2);
+        }
+        
+    };
+    
     @Override
     public Void visit(Cell cell, Void _) {
         prepare(cell);
@@ -288,7 +330,24 @@ public class UnparserFilterNew extends NonCachingVisitor {
         if (!colorCode.equals("")) {
             indenter.write(ColorUtil.ANSI_NORMAL);
         }
-        this.visitNode(cell.getContents());
+        
+        /* if the contents of this cell is a bag, sort them properly */
+        Term contents = cell.getContents();
+        if (contents instanceof Bag) {
+            Bag sortedBag = ((Bag) contents).shallowCopy();
+            sortedBag.setContents(new ArrayList<>(sortedBag.getContents()));
+            java.util.Map<Term, String> unparsedChildren = new HashMap<>();
+            for (Term child : sortedBag.getContents()) {
+                UnparserFilterNew unparser = new UnparserFilterNew(context);
+                unparser.visitNode(child);
+                unparsedChildren.put(child, unparser.getResult());
+            }  
+            Collections.sort(sortedBag.getContents(), new UnparserBagItemComparator(unparsedChildren));
+            this.visitNode(sortedBag);
+        } else {
+            this.visitNode(contents);
+        }
+        
         indenter.write(colorCode);
         if (inConfiguration && inTerm == 0) {
             indenter.endLine();
@@ -390,13 +449,21 @@ public class UnparserFilterNew extends NonCachingVisitor {
                 rawLabel = ((KLabelConstant) label).getLabel().replaceAll("`", "``").replaceAll("\\(", "`(").replaceAll("\\)", "`)").replaceAll("'", "");
             }
             if (child instanceof KList) {
-                java.util.List<Term> termList = ((KList)child).getContents();
+                java.util.List<Term> termList = new ArrayList<>(((KList) child).getContents());
 
                 if(termList.size()==0){
                     indenter.write(rawLabel);
                 } else{
                     int i = 0;
-                    String [] rawLabelList = rawLabel.split("_");
+                    String [] rawLabelList = rawLabel.split("_", -1);
+                    int lastIdx = termList.size() - 1;
+                    if (termList.get(lastIdx) instanceof ListTerminator) {
+                        termList.remove(lastIdx);
+                        if (termList.size() >= 1 && lastIdx + 1 < rawLabelList.length) {
+                            rawLabelList[lastIdx] = rawLabelList[lastIdx + 1];
+                        }
+                        rawLabelList = Arrays.copyOf(rawLabelList, rawLabelList.length - 1);
+                    }
                     for (i = 0; i < termList.size(); ++i) {
                         indenter.write(rawLabelList[i]);
                         if (i > 0) {
@@ -548,33 +615,6 @@ public class UnparserFilterNew extends NonCachingVisitor {
     }
 
     @Override
-    public Void visit(ListItem listItem, Void _) {
-        prepare(listItem);
-        indenter.write("ListItem(");
-        super.visit(listItem, _);
-        indenter.write(")");
-        return postpare();
-    }
-
-    @Override
-    public Void visit(SetItem setItem, Void _) {
-        prepare(setItem);
-        indenter.write("SetItem(");
-        super.visit(setItem, _);
-        indenter.write(")");
-        return postpare();
-    }
-
-    @Override
-    public Void visit(MapItem mapItem, Void _) {
-        prepare(mapItem);
-        this.visitNode(mapItem.getKey());
-        indenter.write(" |-> ");
-        this.visitNode(mapItem.getValue());
-        return postpare();
-    }
-
-    @Override
     public Void visit(Hole hole, Void _) {
         prepare(hole);
         indenter.write("HOLE");
@@ -628,30 +668,9 @@ public class UnparserFilterNew extends NonCachingVisitor {
     }
 
     @Override
-    public Void visit(org.kframework.kil.List list, Void _) {
-        prepare(list);
-        super.visit(list, _);
-        return postpare();
-    }
-
-    @Override
-    public Void visit(org.kframework.kil.Map map, Void _) {
-        prepare(map);
-        super.visit(map, _);
-        return postpare();
-    }
-
-    @Override
     public Void visit(Bag bag, Void _) {
         prepare(bag);
         super.visit(bag, _);
-        return postpare();
-    }
-
-    @Override
-    public Void visit(org.kframework.kil.Set set, Void _) {
-        prepare(set);
-        super.visit(set, _);
         return postpare();
     }
 

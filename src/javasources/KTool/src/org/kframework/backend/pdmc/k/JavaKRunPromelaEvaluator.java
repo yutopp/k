@@ -34,7 +34,7 @@ public class JavaKRunPromelaEvaluator implements Evaluator<ConfigurationHead<Ter
     @Override
     public boolean evaluate(Identifier id) {
         StringToken idString = StringToken.of(id.toString());
-        Term term = new KItem(KLabelConstant.of("'_|=_", definition),
+        Term term = KItem.of(KLabelConstant.of("'_|=_", definition),
                 new KList(ImmutableList.copyOf(new Term[]{KLabelInjection.injectionOf(state, termContext), idString})),
                 termContext);
 //        System.out.print(term.toString());

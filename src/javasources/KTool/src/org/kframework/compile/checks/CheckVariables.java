@@ -61,8 +61,20 @@ public class CheckVariables extends BasicVisitor {
 
     @Override
     public Void visit(Variable node, Void _) {
-        if (node.isFreshVariable() || node.isFreshConstant()) {
-             if (current == right  && !inCondition) {
+        boolean freshConstant = node.isFreshConstant();
+        if (node.isFreshVariable() || freshConstant) {
+            if (freshConstant && !context.freshFunctionNames.containsKey(node.getSort())) {
+                GlobalSettings.kem.register(new KException(
+                        KException.ExceptionType.ERROR,
+                        KException.KExceptionGroup.COMPILER,
+                        "Unsupported sort of fresh variable: " + node.getSort()
+                                + "\nOnly sorts "
+                                + context.freshFunctionNames.keySet()
+                                + " admit fresh variables.", getName(), node
+                                .getFilename(), node.getLocation()));
+            }
+            
+            if (current == right  && !inCondition) {
                  Integer i = fresh.get(node);
                  if (i == null) i = new Integer(1);
                  else i = new Integer(i.intValue());
@@ -70,7 +82,7 @@ public class CheckVariables extends BasicVisitor {
                  return null;
              }
              //nodes are ok to be found in rhs
-            GlobalSettings.kem.register(new KException(KException.ExceptionType.ERROR,
+             GlobalSettings.kem.register(new KException(KException.ExceptionType.ERROR,
                     KException.KExceptionGroup.COMPILER,
                     "Fresh variable \"" + node + "\" is bound in the " + "rule pattern.",
                     getName(), node.getFilename(), node.getLocation()
@@ -121,19 +133,10 @@ public class CheckVariables extends BasicVisitor {
             }
             if (!left.containsKey(v)) {
                 node.addAttribute(UNBOUND_VARS, "");
-                
-                /* matching logic relaxes this restriction */
-                if (!options.backend.java()) {
-                    GlobalSettings.kem.register(new KException(KException.ExceptionType.ERROR,
-                            KException.KExceptionGroup.COMPILER,
-                            "Unbounded Variable " + v.toString() + ".",
-                            getName(), v.getFilename(), v.getLocation()));
-                } else {
-                    GlobalSettings.kem.register(new KException(KException.ExceptionType.WARNING,
-                            KException.KExceptionGroup.COMPILER,
-                            "Unbounded Variable " + v.toString() + ".",
-                            getName(), v.getFilename(), v.getLocation()));
-                }
+                GlobalSettings.kem.register(new KException(KException.ExceptionType.ERROR,
+                        KException.KExceptionGroup.COMPILER,
+                        "Unbounded variable " + v.toString() + "should start with ? or !.",
+                        getName(), v.getFilename(), v.getLocation()));
             }
         }
         for (Map.Entry<Variable,Integer> e : left.entrySet()) {
@@ -142,8 +145,7 @@ public class CheckVariables extends BasicVisitor {
                 GlobalSettings.kem.register(new KException(KException
                         .ExceptionType.ERROR,
                         KException.KExceptionGroup.COMPILER,
-                        "Variable " + key + " has the same name as a fresh " +
-                                "variable.",
+                        "Variable " + key + " has the same name as a fresh variable.",
                         getName(), key.getFilename(), key.getLocation()));
             }
             if (MetaK.isAnonVar(key)) continue;
@@ -152,7 +154,7 @@ public class CheckVariables extends BasicVisitor {
                 GlobalSettings.kem.register(new KException(KException.ExceptionType.HIDDENWARNING,
                         KException.KExceptionGroup.COMPILER,
                         "Singleton variable " + key.toString() + ".\n" +
-                                "    If this is not a spelling mistake, please consider using anonymous variables.",
+                        "    If this is not a spelling mistake, please consider using anonymous variables.",
                         getName(), key.getFilename(), key.getLocation()));
             }
         }

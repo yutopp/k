@@ -138,12 +138,18 @@ public class RunProcess {
                 }
                 term = ProgramLoader.processPgm(content, value, K.definition, startSymbol, context, ParserType.RULES);
                 break;
+            case "kast --parser binary":
+                if (!isNotFile) {
+                    content = FileUtil.getFileContent(value);
+                }
+                term = ProgramLoader.processPgm(content, value, K.definition, startSymbol, context, ParserType.BINARY);
+                break;
             default: //external parser
                 List<String> tokens = new ArrayList<>(Arrays.asList(parser.split(" ")));
                 tokens.add(value);
                 Map<String, String> environment = new HashMap<>();
                 environment.put("KRUN_SORT", startSymbol);
-                environment.put("KRUN_COMPILED_DEF", context.kompiled.getAbsolutePath());
+                environment.put("KRUN_COMPILED_DEF", context.kompiled.getParentFile().getAbsolutePath());
                 if (isNotFile) {
                     environment.put("KRUN_IS_NOT_FILE", "true");
                 }

@@ -11,10 +11,8 @@ import org.kframework.backend.java.util.KSorts;
 import org.kframework.backend.java.util.Utils;
 import org.kframework.kil.ASTNode;
 
-import java.util.ArrayDeque;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.Queue;
 import java.util.Set;
 
 
@@ -113,6 +111,17 @@ public class BuiltinSet extends Collection {
     public int size() {
         return elements.size();
     }
+    
+    /**
+     * {@code BuiltinSet} is guaranteed to have only one frame; thus, they can
+     * always be used in the left-hand side of a rule.
+     */
+    @Override
+    public boolean isLHSView() {
+        // TODO(YilongL): allow BuiltinSet to have a list of Terms instead of
+        // just substitution entries; revise the javadoc
+        return true;
+    }
 
     @Override
     public boolean isExactSort() {
@@ -141,12 +150,24 @@ public class BuiltinSet extends Collection {
     }
 
     @Override
-    public int computeHash() {
+    protected int computeHash() {
         int hashCode = 1;
         hashCode = hashCode * Utils.HASH_PRIME + (frame == null ? 0 : frame.hashCode());
         hashCode = hashCode * Utils.HASH_PRIME + elements.hashCode();
         // hashCode = hashCode * Utils.HASH_PRIME + operations.hashCode();
         return hashCode;
+    }
+
+    @Override
+    protected boolean computeHasCell() {
+        boolean hasCell = false;
+        for (Term term : elements) {
+            hasCell = hasCell || term.hasCell();
+            if (hasCell) {
+                return true;
+            }
+        }
+        return false;
     }
 
     @Override
