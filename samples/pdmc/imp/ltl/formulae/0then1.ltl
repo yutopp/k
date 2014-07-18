@@ -1,0 +1,1 @@
+~Ltl []Ltl (~Ltl eqTo(X, 0) \/Ltl <>Ltl eqTo(x, 1))
