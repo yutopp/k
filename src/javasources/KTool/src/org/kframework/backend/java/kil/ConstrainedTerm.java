@@ -31,7 +31,11 @@ import org.kframework.krun.K;
  * @author AndreiS
  */
 public class ConstrainedTerm extends JavaSymbolicObject {
-    
+
+    public Rule getRule() {
+        return rule;
+    }
+
     public static class Data {
         public final Term term;
         /**
@@ -96,6 +100,8 @@ public class ConstrainedTerm extends JavaSymbolicObject {
     private final SymbolicConstraint lookups;
 
     private final SymbolicConstraint constraint;
+
+    private Rule rule;
     
     public ConstrainedTerm(Data data, TermContext context) {
         this.data = data;
@@ -111,6 +117,11 @@ public class ConstrainedTerm extends JavaSymbolicObject {
 
     public ConstrainedTerm(Term term, SymbolicConstraint constraint, TermContext context) {
         this(term, new SymbolicConstraint(context), constraint, context);
+    }
+
+    public ConstrainedTerm(Term term, SymbolicConstraint constraint, TermContext context, Rule rule) {
+        this(term, constraint, context);
+        this.rule = rule;
     }
 
     public ConstrainedTerm(Term term, TermContext context) {

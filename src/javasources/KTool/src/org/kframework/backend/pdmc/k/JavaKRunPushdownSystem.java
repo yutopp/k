@@ -65,7 +65,7 @@ public class JavaKRunPushdownSystem  implements PushdownSystemInterface<Term, Te
             Collection<ConstrainedTerm> nextTerms = runner.steps(constrainedTerm);
             for (ConstrainedTerm nextTerm : nextTerms) {
                 Configuration<Term, Term> nextCfg = configurationSplit(nextTerm.term());
-                org.kframework.backend.pdmc.pda.Rule<Term, Term> rule = new org.kframework.backend.pdmc.pda.Rule<>(configurationHead, nextCfg, nextCfg.getHead().getLetter());
+                org.kframework.backend.pdmc.pda.Rule<Term, Term> rule = new org.kframework.backend.pdmc.pda.Rule<>(configurationHead, nextCfg, nextTerm.getRule().label());
                 rules.add(rule);
             }
 

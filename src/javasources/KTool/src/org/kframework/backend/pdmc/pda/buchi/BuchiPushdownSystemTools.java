@@ -7,6 +7,7 @@ import org.kframework.backend.pdmc.automaton.Transition;
 import org.kframework.backend.pdmc.pda.ConfigurationHead;
 import org.kframework.backend.pdmc.pda.PostStar;
 import org.kframework.backend.pdmc.pda.Rule;
+import org.kframework.backend.pdmc.pda.TrackingLabel;
 import org.kframework.backend.pdmc.pda.graph.TarjanSCC;
 import org.kframework.backend.pdmc.pda.pautomaton.PAutomatonState;
 
@@ -29,9 +30,10 @@ public class BuchiPushdownSystemTools<Control, Alphabet> {
 
     private org.kframework.backend.pdmc.pda.PostStar<Pair<Control, BuchiState>, Alphabet> postStar = null;
     TarjanSCC<ConfigurationHead<Pair<Control, BuchiState>, Alphabet>,
-            BuchiTrackingLabel<Control, Alphabet>> repeatedHeadsGraph = null;
+            TrackingLabel<Pair<Control, BuchiState>, Alphabet>> repeatedHeadsGraph = null;
 
-    TarjanSCC<ConfigurationHead<Pair<Control, BuchiState>, Alphabet>, BuchiTrackingLabel<Control, Alphabet>> counterExample = null;
+    TarjanSCC<ConfigurationHead<Pair<Control, BuchiState>, Alphabet>, TrackingLabel<Pair<Control, BuchiState>, Alphabet>> counterExample = null;
+    public final static TarjanSCC NONE = new TarjanSCC();
 
     /**
      * Computes (if not already computed) and returns the <b>post</b> automaton corresponding to this BPDS.
@@ -59,16 +61,13 @@ public class BuchiPushdownSystemTools<Control, Alphabet> {
      *     <li> Edges indicate reachability (using rules of the BPDS) between configuration heads  </li>
      *     <li> Labels contain: <ul>
      *          <li> information about passing through final states of the Buchi Automaton</li>
-     *          <li> </li>
      *     </ul></li>
      * </ul>
-     * This is represented as a strongly connected component of the * (reachable) repeated heads graph
-     * containing at least one final buchi state.
-     * @return the value of the {@code counterExample} field after computing it.
+     * @return the value of the {@code repeatedHeadsGraph} field after computing it.
      */
-    public TarjanSCC<ConfigurationHead<Pair<Control, BuchiState>, Alphabet>, BuchiTrackingLabel<Control, Alphabet>> getRepeatedHeadsGraph() {
+    public TarjanSCC<ConfigurationHead<Pair<Control, BuchiState>, Alphabet>, TrackingLabel<Pair<Control, BuchiState>, Alphabet>> getRepeatedHeadsGraph() {
         if (repeatedHeadsGraph == null)
-            compute();
+            computeRepeatedHeadsGraph();
         return repeatedHeadsGraph;
     }
 
@@ -78,20 +77,27 @@ public class BuchiPushdownSystemTools<Control, Alphabet> {
      * containing at least one final buchi state.
      * @return the value of the {@code counterExample} field after computing it.
      */
-    public TarjanSCC<ConfigurationHead<Pair<Control, BuchiState>, Alphabet>, BuchiTrackingLabel<Control, Alphabet>> getCounterExampleGraph() {
-        if (repeatedHeadsGraph == null)
-            compute();
+    public TarjanSCC<ConfigurationHead<Pair<Control, BuchiState>, Alphabet>, TrackingLabel<Pair<Control, BuchiState>, Alphabet>> getCounterExampleGraph() {
+        if (counterExample == null)
+            computeCounterExample();
         return counterExample;
     }
 
-    /**
-     * Main method of the class. Implements the post* algorithm instrumented to also produce the repeated heads graph.
-     * The post* algorithm implemented is presented in Figure 3.4, Section 3.1.4 of S. Schwoon's PhD thesis (p. 48)
-     * The modification to compute the repeated heads graph is explained in Section 3.2.3 of Schwoon's thesis
-     * (see also Algorithm 4 in Figure 3.9, p. 81)
-     */
     private void compute() {
 
+        computeRepeatedHeadsGraph();
+
+        computeCounterExample();
+
+    }
+
+    /**
+     * Main method of the class. The post* algorithm {@link org.kframework.backend.pdmc.pda.PostStar} is instrumented
+     * using the {@link org.kframework.backend.pdmc.pda.buchi.BuchiTrackingLabelFactory} to provide labels
+     * to track information (passing through a final state) needed to produce the repeated heads graph.
+     * The modification to compute the repeated heads graph is explained in Section 3.2.3 of Schwoon's thesis.
+     */
+    private void computeRepeatedHeadsGraph() {
         labelFactory = new BuchiTrackingLabelFactory<>();
         postStar = new PostStar<>(bps, labelFactory);
 
@@ -114,20 +120,30 @@ public class BuchiPushdownSystemTools<Control, Alphabet> {
                             = PAutomatonState.of(endHead.getState(), gamma1);
                     for (Transition<PAutomatonState<Pair<Control, BuchiState>, Alphabet>, Alphabet> t
                             : postStar.getBackEpsilonTransitions(qPPrimeGamma1)) {
-                        BuchiTrackingLabel<Control, Alphabet> oldLabel = (BuchiTrackingLabel<Control, Alphabet>) labelFactory.get(t);
-                        BuchiTrackingLabel<Control, Alphabet> labelledLetter = new BuchiTrackingLabel<>(oldLabel.isRepeated());
-                        labelledLetter.setRule(rule);
-                        labelledLetter.setBackState(qPPrimeGamma1);
+                        TrackingLabel<Pair<Control, BuchiState>, Alphabet> tLabel = labelFactory.get(t);
+                        TrackingLabel<Pair<Control, BuchiState>, Alphabet> backEpsilonLabel = labelFactory.newLabel();
+                        backEpsilonLabel.update(tLabel);
+                        backEpsilonLabel.setRule(rule);
+                        backEpsilonLabel.update(bps, rule.getHead().getState());
+                        backEpsilonLabel.setBackState(qPPrimeGamma1);
                         ConfigurationHead<Pair<Control, BuchiState>, Alphabet> endV =
                                 ConfigurationHead.of(t.getStart().getState(), gamma2);
-                        repeatedHeadsGraph.addEdge(head, endV, labelledLetter);
+                        repeatedHeadsGraph.addEdge(head, endV, backEpsilonLabel);
+                        /*
+                                    // This block is line 18 of Algorithm 2 (plus tracking information in labels)
+                                    TrackingLabel<Control, Alphabet> tLabel = labelFactory.get(t);
+                                    TrackingLabel<Control, Alphabet> backEpsilonLabel = labelFactory.newLabel();
+                                    Transition<PAutomatonState<Control, Alphabet>, Alphabet> newBackEpsilonTransition =
+                                            Transition.of(t.getStart(), gamma2, q);
+                                    trans.add(newBackEpsilonTransition);
+                                    labelFactory.updateLabel(newBackEpsilonTransition, backEpsilonLabel);
+                                }
+                         */
+
                     }
                 }
             }
         }
-
-        computeCounterExample();
-
     }
 
     private Collection<ConfigurationHead<Pair<Control, BuchiState>, Alphabet>> getReachableHeads(AutomatonInterface<PAutomatonState<Pair<Control, BuchiState>, Alphabet>, Alphabet> postStar) {
@@ -142,97 +158,32 @@ public class BuchiPushdownSystemTools<Control, Alphabet> {
 
     }
 
+    @SuppressWarnings("unchecked")
     private void computeCounterExample() {
-        Collection<Collection<TarjanSCC<ConfigurationHead<Pair<Control, BuchiState>, Alphabet>, BuchiTrackingLabel<Control, Alphabet>>.TarjanSCCVertex>> sccs = repeatedHeadsGraph.getStronglyConnectedComponents();
-        for (Collection<TarjanSCC<ConfigurationHead<Pair<Control, BuchiState>, Alphabet>, BuchiTrackingLabel<Control, Alphabet>>.TarjanSCCVertex> scc : sccs) {
-            TarjanSCC<ConfigurationHead<Pair<Control, BuchiState>, Alphabet>, BuchiTrackingLabel<Control, Alphabet>> sccSubGraph = repeatedHeadsGraph.getSubgraph(scc);
-            for (Map<ConfigurationHead<Pair<Control, BuchiState>, Alphabet>, BuchiTrackingLabel<Control, Alphabet>> values : sccSubGraph.getEdgeSet().values()) {
-                for (BuchiTrackingLabel<Control, Alphabet> label: values.values()) {
-                    if (label.isRepeated()) {
+        TarjanSCC<ConfigurationHead<Pair<Control, BuchiState>, Alphabet>, TrackingLabel<Pair<Control, BuchiState>, Alphabet>> repeatedHeadsGraph = getRepeatedHeadsGraph();
+        Collection<Collection<TarjanSCC<ConfigurationHead<Pair<Control, BuchiState>, Alphabet>, TrackingLabel<Pair<Control, BuchiState>, Alphabet>>.TarjanSCCVertex>> sccs = repeatedHeadsGraph.getStronglyConnectedComponents();
+        for (Collection<TarjanSCC<ConfigurationHead<Pair<Control, BuchiState>, Alphabet>, TrackingLabel<Pair<Control, BuchiState>, Alphabet>>.TarjanSCCVertex> scc : sccs) {
+            TarjanSCC<ConfigurationHead<Pair<Control, BuchiState>, Alphabet>, TrackingLabel<Pair<Control, BuchiState>, Alphabet>> sccSubGraph = repeatedHeadsGraph.getSubgraph(scc);
+            for (Map<ConfigurationHead<Pair<Control, BuchiState>, Alphabet>, TrackingLabel<Pair<Control, BuchiState>, Alphabet>> values : sccSubGraph.getEdgeSet().values()) {
+                for (TrackingLabel<Pair<Control, BuchiState>, Alphabet> label: values.values()) {
+                    assert label instanceof BuchiTrackingLabel;
+                    if (((BuchiTrackingLabel<Control, Alphabet>) label).isRepeated()) {
                         counterExample = sccSubGraph;
                         return;
                     }
                 }
             }
         }
-    }
-
-    /**
-     * Implements Witness generation algorithm from Schwoon's thesis, Section 3.1.6
-     * @param head A reachable configuration head
-     * @return The path (of rules) from the initial configuration to {@code head}
-     */
-    public Deque<Rule<Pair<Control, BuchiState>, Alphabet>> getReachableConfiguration(
-           ConfigurationHead<Pair<Control, BuchiState>, Alphabet> head
-    ) {
-        Deque<Rule<Pair<Control, BuchiState>, Alphabet>> result = new ArrayDeque<>();
-        //Step 1
-        Deque<Transition<PAutomatonState<Pair<Control, BuchiState>, Alphabet>, Alphabet>> path = postStar.getPath(
-                PAutomatonState.<Pair<Control, BuchiState>, Alphabet>of(head.getState()),
-                head.getLetter(),
-                postStar.getFinalStates().iterator().next());
-        //Step 2
-        Transition<PAutomatonState<Pair<Control, BuchiState>, Alphabet>, Alphabet> transition = getUncompressedTransition(path);
-        BuchiTrackingLabel<Control, Alphabet> label = (BuchiTrackingLabel<Control, Alphabet>) labelFactory.get(transition);
-        Rule<Pair<Control, BuchiState>, Alphabet> rule = label.getRule();
-        assert label.getBackState() == null;
-        while (rule != null) {
-            if (rule.endStack().size() == 2) {
-                // First transitions: p -a-> q<p,a> -b-> q            [...  -w->* fin  ]
-                // labeling rule: <p',c>  => <p, a b>
-                // then add  p' -c-> q              [... -w->* fin
-                // reduce step 3.2 to step 3.1 by shifting transition
-                assert transition.getLetter()!=null;
-                assert transition.getEnd().getLetter()!= null; // this is an intermediate stare
-                transition = getUncompressedTransition(path);
-
-            } else {
-                // First transition: p -w-> q
-                // labeling rule: <p',c> => <p,w>
-                // then add p' -c-> q
-            }
-            head = rule.getHead();
-            transition = Transition.of(
-                    PAutomatonState.<Pair<Control, BuchiState>, Alphabet>of(head.getState()),
-                    head.getLetter(),
-                    transition.getEnd()
-            );
-            assert transition.getLetter()!=null;
-            path.addFirst(transition);
-            // Add rule to list of rules
-            result.addFirst(rule);
-            transition = getUncompressedTransition(path);
-            assert labelFactory.get(transition) != null;
-            label = (BuchiTrackingLabel<Control, Alphabet>) labelFactory.get(transition);
-            rule = label.getRule();
-            assert label.getBackState() == null;
-        }
-        return result;
-    }
-
-    private Transition<PAutomatonState<Pair<Control, BuchiState>, Alphabet>, Alphabet> getUncompressedTransition(Deque<Transition<PAutomatonState<Pair<Control, BuchiState>, Alphabet>, Alphabet>> path) {
-        Transition<PAutomatonState<Pair<Control, BuchiState>, Alphabet>, Alphabet> transition = path.removeFirst();
-        BuchiTrackingLabel<Control, Alphabet> label;
-        PAutomatonState<Pair<Control, BuchiState>, Alphabet> backState;
-        label = (BuchiTrackingLabel<Control, Alphabet>) labelFactory.get(transition);
-        backState = label.getBackState();
-        if (backState != null) {
-            Transition<PAutomatonState<Pair<Control, BuchiState>, Alphabet>, Alphabet> transition2 =
-                    Transition.of(backState, transition.getLetter(), transition.getEnd());
-            assert labelFactory.get(transition2) != null;
-            path.addFirst(transition2);
-            transition = Transition.of(transition.getStart(), null, backState);
-            assert labelFactory.get(transition) != null;
-        }
-        return transition;
+        counterExample = NONE;
     }
 
     public Deque<Rule<Pair<Control, BuchiState>, Alphabet>> getRepeatingCycle(ConfigurationHead<Pair<Control, BuchiState>, Alphabet> head) {
-        TarjanSCC<ConfigurationHead<Pair<Control, BuchiState>, Alphabet>, BuchiTrackingLabel<Control, Alphabet>>
+        TarjanSCC<ConfigurationHead<Pair<Control, BuchiState>, Alphabet>, TrackingLabel<Pair<Control, BuchiState>, Alphabet>>
                 counter = getCounterExampleGraph();
+        if (counter == NONE) return null;
         Deque<DFSFrame> stack = new ArrayDeque<>();
         Set<ConfigurationHead<Pair<Control, BuchiState>, Alphabet>> visited = new HashSet<>();
-        Map<ConfigurationHead<Pair<Control, BuchiState>, Alphabet>, Map<ConfigurationHead<Pair<Control, BuchiState>, Alphabet>, BuchiTrackingLabel<Control, Alphabet>>> edgeSet = counter.getEdgeSet();
+        Map<ConfigurationHead<Pair<Control, BuchiState>, Alphabet>, Map<ConfigurationHead<Pair<Control, BuchiState>, Alphabet>, TrackingLabel<Pair<Control, BuchiState>, Alphabet>>> edgeSet = counter.getEdgeSet();
         stack.add(new DFSFrame(head, null, edgeSet.get(head).entrySet().iterator(), false));
         visited.add(head);
         while (!stack.isEmpty()) {
@@ -241,9 +192,9 @@ public class BuchiPushdownSystemTools<Control, Alphabet> {
                 stack.pop(); visited.remove(head);
             } else {
                 Map.Entry<ConfigurationHead<Pair<Control, BuchiState>, Alphabet>,
-                BuchiTrackingLabel<Control, Alphabet>> nextEntry = top.nextEntry.next();
+                TrackingLabel<Pair<Control, BuchiState>, Alphabet>> nextEntry = top.nextEntry.next();
                 ConfigurationHead<Pair<Control, BuchiState>, Alphabet> nextHead = nextEntry.getKey();
-                boolean repeated = nextEntry.getValue().isRepeated();
+                boolean repeated = ((BuchiTrackingLabel<Control,Alphabet>) nextEntry.getValue()).isRepeated();
                 if (!visited.contains(nextHead)) {
                     stack.add(new DFSFrame(nextHead, nextEntry.getValue(), edgeSet.get(nextHead).entrySet().iterator(), repeated));
                     visited.add(nextHead);
@@ -267,17 +218,21 @@ public class BuchiPushdownSystemTools<Control, Alphabet> {
         return null;
     }
 
+    public Deque<Rule<Pair<Control, BuchiState>, Alphabet>> getReachableConfiguration(ConfigurationHead<Pair<Control, BuchiState>, Alphabet> head) {
+        return postStar.getReachableConfiguration(head);
+    }
+
     public class DFSFrame {
         ConfigurationHead<Pair<Control, BuchiState>, Alphabet> data;
-        BuchiTrackingLabel<Control, Alphabet> label;
+        TrackingLabel<Pair<Control, BuchiState>, Alphabet> label;
         Iterator<Map.Entry<ConfigurationHead<Pair<Control, BuchiState>, Alphabet>,
-                BuchiTrackingLabel<Control, Alphabet>>> nextEntry;
+                TrackingLabel<Pair<Control, BuchiState>, Alphabet>>> nextEntry;
         boolean repeating;
 
         public DFSFrame(ConfigurationHead<Pair<Control, BuchiState>, Alphabet> data,
-                        BuchiTrackingLabel<Control, Alphabet> label,
+                        TrackingLabel<Pair<Control, BuchiState>, Alphabet> label,
                         Iterator<Map.Entry<ConfigurationHead<Pair<Control, BuchiState>, Alphabet>,
-                                BuchiTrackingLabel<Control, Alphabet>>> nextEntry,
+                                TrackingLabel<Pair<Control, BuchiState>, Alphabet>>> nextEntry,
                         boolean repeating) {
             this.data = data;
             this.label = label;

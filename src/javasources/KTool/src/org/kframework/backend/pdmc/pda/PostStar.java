@@ -43,8 +43,6 @@ public class PostStar<Control, Alphabet> extends BasicAutomaton<PAutomatonState<
     /**
      * Main method of the class. Implements the post* algorithm
      * The post* algorithm implemented is presented in Figure 3.4, Section 3.1.4 of S. Schwoon's PhD thesis (p. 48)
-     * The modification to compute the repeated heads graph is explained in Section 3.2.3 of Schwoon's thesis
-     * (see also Algorithm 4 in Figure 3.9, p. 81)
      */
     private void compute() {
         if (automaton != null) return;
@@ -188,7 +186,7 @@ public class PostStar<Control, Alphabet> extends BasicAutomaton<PAutomatonState<
 
     }
 
-   /**
+    /**
      * Implements Witness generation algorithm from Schwoon's thesis, Section 3.1.6
      * @param head A reachable configuration head
      * @return The path (of rules) from the initial configuration to {@code head}
@@ -198,53 +196,64 @@ public class PostStar<Control, Alphabet> extends BasicAutomaton<PAutomatonState<
     ) {
         Deque<Rule<Control, Alphabet>> result = new ArrayDeque<>();
         //Step 1
-        Deque<Transition<PAutomatonState<Control, Alphabet>, Alphabet>> path = automaton.getPath(
+        Deque<Transition<PAutomatonState<Control, Alphabet>, Alphabet>> path = getPath(
                 PAutomatonState.<Control, Alphabet>of(head.getState()),
                 head.getLetter(),
-                automaton.getFinalStates().iterator().next());
+                getFinalStates().iterator().next());
         //Step 2
-        Transition<PAutomatonState<Control, Alphabet>, Alphabet> transition = path.removeFirst();
+        Transition<PAutomatonState<Control, Alphabet>, Alphabet> transition = getUncompressedTransition(path);
         TrackingLabel<Control, Alphabet> label = labelFactory.get(transition);
         Rule<Control, Alphabet> rule = label.getRule();
-        PAutomatonState<Control, Alphabet> backState;
+        assert label.getBackState() == null;
         while (rule != null) {
-            if (rule.endStack().size() == 2) { // reduce step 3.2 to step 3.1 by shifting transition & rules
-                transition = path.removeFirst();
-                label = labelFactory.get(transition);
-                rule = label.getRule();
-                assert rule != null && rule.endStack().size() == 2;
-            }
-            // Step 3.1
-            result.addFirst(rule);
-            head = rule.getHead();
-            backState = label.getBackState();
-            if (backState == null) {
-                transition = Transition.of(
-                        PAutomatonState.<Control, Alphabet>of(head.getState()),
-                        head.getLetter(),
-                        transition.getEnd()
-                );
-                assert labelFactory.get(transition) != null : "Each transition must have a label";
-            } else {
-                transition = Transition.of(
-                        backState,
-                        head.getLetter(),
-                        transition.getEnd()
-                );
-                assert labelFactory.get(transition) != null : "Each transition must have a label";
-                path.addFirst(transition);
-                transition = Transition.of(
-                        PAutomatonState.<Control, Alphabet>of(head.getState()),
-                        null,
-                        backState
-                );
-                assert labelFactory.get(transition) != null : "Each transition must have a label";
-            }
+            if (rule.endStack().size() == 2) {
+                // First transitions: p -a-> q<p,a> -b-> q            [...  -w->* fin  ]
+                // labeling rule: <p',c>  => <p, a b>
+                // then add  p' -c-> q              [... -w->* fin
+                // reduce step 3.2 to step 3.1 by shifting transition
+                assert transition.getLetter()!=null;
+                assert transition.getEnd().getLetter()!= null; // this is an intermediate stare
+                transition = getUncompressedTransition(path);
 
+            } else {
+                // First transition: p -w-> q
+                // labeling rule: <p',c> => <p,w>
+                // then add p' -c-> q
+            }
+            head = rule.getHead();
+            transition = Transition.of(
+                    PAutomatonState.<Control, Alphabet>of(head.getState()),
+                    head.getLetter(),
+                    transition.getEnd()
+            );
+            assert transition.getLetter()!=null;
+            path.addFirst(transition);
+            // Add rule to list of rules
+            result.addFirst(rule);
+            transition = getUncompressedTransition(path);
+            assert labelFactory.get(transition) != null;
             label = labelFactory.get(transition);
             rule = label.getRule();
+            assert label.getBackState() == null;
         }
         return result;
+    }
+
+    private Transition<PAutomatonState<Control, Alphabet>, Alphabet> getUncompressedTransition(Deque<Transition<PAutomatonState<Control, Alphabet>, Alphabet>> path) {
+        Transition<PAutomatonState<Control, Alphabet>, Alphabet> transition = path.removeFirst();
+        TrackingLabel<Control, Alphabet> label;
+        PAutomatonState<Control, Alphabet> backState;
+        label = labelFactory.get(transition);
+        backState = label.getBackState();
+        if (backState != null) {
+            Transition<PAutomatonState<Control, Alphabet>, Alphabet> transition2 =
+                    Transition.of(backState, transition.getLetter(), transition.getEnd());
+            assert labelFactory.get(transition2) != null;
+            path.addFirst(transition2);
+            transition = Transition.of(transition.getStart(), null, backState);
+            assert labelFactory.get(transition) != null;
+        }
+        return transition;
     }
 
     @Override

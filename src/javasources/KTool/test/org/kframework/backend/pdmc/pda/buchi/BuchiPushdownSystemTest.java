@@ -7,6 +7,7 @@ import org.junit.Test;
 import org.kframework.backend.pdmc.automaton.AutomatonInterface;
 import org.kframework.backend.pdmc.pda.ConfigurationHead;
 import org.kframework.backend.pdmc.pda.PushdownSystem;
+import org.kframework.backend.pdmc.pda.TrackingLabel;
 import org.kframework.backend.pdmc.pda.buchi.parser.PromelaBuchiParser;
 import org.kframework.backend.pdmc.pda.graph.TarjanSCC;
 import org.kframework.backend.pdmc.pda.pautomaton.PAutomatonState;
@@ -17,13 +18,16 @@ import java.io.ByteArrayInputStream;
 /**
  * @author TraianSF
  * TODO: Cycle rules
- * TODO: K integration: PDS
- *     - Testare cu Post*
- * TODO: argument la --pdmc fisier cu definitia Promela
- * TODO: evaluare Atomi pentru LTL
- * TODO: testare LTL model checking
- * TODO: K integration: LTL & Buchi/SPIN --- (suport din KRun pentru evaluare atomi/propozitii)
- * TODO: Verificare Reguli K satisfac conditii PD
+ * TODO: Strictness for PDMC
+ * TODO: non-constant LTL atoms
+ * TODO: An API and krun library for transition systems.
+ * TODO: Check whether a K spec is usable for PDMC
+ * DONE: K integration: PDS
+ *     - Test using Post*
+ * DONE: --pdmc to take a Promela file as argument
+ * DONE: evaluating LTL atoms in K
+ * DONE: testing LTL model checking
+ * DONE: K integration: LTL & Buchi/SPIN --- (KRun support for atom evaluation)
  */
 public class BuchiPushdownSystemTest {
 
@@ -107,7 +111,7 @@ public class BuchiPushdownSystemTest {
         System.err.println(post.toString());
 
         TarjanSCC counterExampleGraph = bpsTool.getCounterExampleGraph();
-        Assert.assertNull("Property must hold => no counterexample", counterExampleGraph);
+        Assert.assertEquals("Property must hold => no counterexample", counterExampleGraph, BuchiPushdownSystemTools.NONE);
     }
 
     @Test
@@ -158,8 +162,8 @@ public class BuchiPushdownSystemTest {
         System.err.println("\n\n\n----Strongly Connected Components----");
         System.err.println(repeatedHeads.getSCCSString());
 
-        TarjanSCC<ConfigurationHead<Pair<String, BuchiState>, String>, BuchiTrackingLabel<String, String>> counterExampleGraph = bpsTool.getCounterExampleGraph();
-        Assert.assertNotNull("Property is false => counterexample exists", counterExampleGraph);
+        TarjanSCC<ConfigurationHead<Pair<String, BuchiState>, String>, TrackingLabel<Pair<String, BuchiState>, String>> counterExampleGraph = bpsTool.getCounterExampleGraph();
+        Assert.assertNotEquals("Property is false => counterexample exists", counterExampleGraph, BuchiPushdownSystemTools.NONE);
         System.err.println("\n\n\n----CounterExample Graph----");
         System.err.println(counterExampleGraph.toString());
         System.err.println("\n\n\n----Reachability paths for vertices in the CounterExample Graph----");
@@ -238,12 +242,11 @@ public class BuchiPushdownSystemTest {
         System.err.println(repeatedHeads.getSCCSString());
 
         TarjanSCC counterExampleGraph = bpsTool.getCounterExampleGraph();
-        Assert.assertNull("Property must hold => no counterexample", counterExampleGraph);
+        Assert.assertEquals("Property must hold => no counterexample", counterExampleGraph, BuchiPushdownSystemTools.NONE);
     }
 
     @Test
     public void testMarcelloFalse() throws Exception {
-        //TODO:  Rewrite this to actually be false (i.e., generating a counterexample
         String promelaString = "never { /* ! [](px1 -> X px0) */\n" +
                 "T0_init:\n" +
                 " if\n" +
@@ -312,8 +315,8 @@ public class BuchiPushdownSystemTest {
         System.err.println("\n\n\n----Strongly Connected Components----");
         System.err.println(repeatedHeads.getSCCSString());
 
-        TarjanSCC<ConfigurationHead<Pair<String, BuchiState>, String>, BuchiTrackingLabel<String, String>> counterExampleGraph = bpsTool.getCounterExampleGraph();
-        Assert.assertNotNull("Property is false => counterexample exists", counterExampleGraph);
+        TarjanSCC<ConfigurationHead<Pair<String, BuchiState>, String>, TrackingLabel<Pair<String, BuchiState>, String>> counterExampleGraph = bpsTool.getCounterExampleGraph();
+        Assert.assertNotEquals("Property is false => counterexample exists", counterExampleGraph, BuchiPushdownSystemTools.NONE);
         System.err.println("\n\n\n----CounterExample Graph----");
         System.err.println(counterExampleGraph.toString());
         System.err.println("\n\n\n----Reachability paths for vertices in the CounterExample Graph----");

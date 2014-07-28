@@ -33,65 +33,65 @@ module IMP
                 </T>
 
 // AExp
-  rule <k> X:Id => I ...</k> <state>... X |-> I ...</state>
+  rule [lookup] : <k> X:Id => I ...</k> <state>... X |-> I ...</state>
 
-  rule <k> V:KResult => .K ...</k> <strict> .K => V </strict>
+  rule [value] : <k> V:KResult => .K ...</k> <strict> .K => V </strict>
 
-  rule E1 / E2 => E1 ~> HOLE / E2 requires isKResult(E1) =/=K true
-  rule <k> HOLE / E2 => V / E2 ...</k> <strict> V:KResult => .K </strict>
-  rule E1 / E2 => E2 ~> E1 / HOLE requires isKResult(E2) =/=K true
-  rule <k> E1 / HOLE => E1 / V ...</k> <strict> V:KResult => .K </strict>
+  rule [div-heatl] : E1 / E2 => E1 ~> HOLE / E2 requires isKResult(E1) =/=K true
+  rule [div-cooll] : <k> HOLE / E2 => V / E2 ...</k> <strict> V:KResult => .K </strict>
+  rule [div-heatr] : E1 / E2 => E2 ~> E1 / HOLE requires isKResult(E2) =/=K true
+  rule [div-coolr] : <k> E1 / HOLE => E1 / V ...</k> <strict> V:KResult => .K </strict>
 
-  rule I1 / I2 => I1 /Int I2  when I2 =/=Int 0
+  rule [div] : I1 / I2 => I1 /Int I2  when I2 =/=Int 0
 
-  rule E1 + E2 => E1 ~> HOLE + E2 requires isKResult(E1) =/=K true
-  rule <k> HOLE + E2 => V + E2 ...</k> <strict> V:KResult => .K </strict>
-  rule E1 + E2 => E2 ~> E1 + HOLE requires isKResult(E2) =/=K true
-  rule <k> E1 + HOLE => E1 + V ...</k> <strict> V:KResult => .K </strict>
+  rule [add-heatl] : E1 + E2 => E1 ~> HOLE + E2 requires isKResult(E1) =/=K true
+  rule [add-cooll] : <k> HOLE + E2 => V + E2 ...</k> <strict> V:KResult => .K </strict>
+  rule [add-heatr] : E1 + E2 => E2 ~> E1 + HOLE requires isKResult(E2) =/=K true
+  rule [add-coolr] : <k> E1 + HOLE => E1 + V ...</k> <strict> V:KResult => .K </strict>
 
-  rule I1 + I2 => I1 +Int I2
+  rule [add] : I1 + I2 => I1 +Int I2
 // BExp
 
 
-  rule E1 <= E2 => E1 ~> HOLE <= E2 requires isKResult(E1) =/=K true
-  rule <k> HOLE <= E2 => V <= E2 ...</k> <strict> V:KResult => .K </strict>
-  rule E1:KResult <= E2 => E2 ~> E1 <= HOLE requires isKResult(E2) =/=K true
-  rule <k> E1 <= HOLE => E1 <= V ...</k> <strict> V:KResult => .K </strict>
+  rule [leq-heatl] : E1 <= E2 => E1 ~> HOLE <= E2 requires isKResult(E1) =/=K true
+  rule [leq-cooll] : <k> HOLE <= E2 => V <= E2 ...</k> <strict> V:KResult => .K </strict>
+  rule [leq-heatr] : E1:KResult <= E2 => E2 ~> E1 <= HOLE requires isKResult(E2) =/=K true
+  rule [leq-coolr] : <k> E1 <= HOLE => E1 <= V ...</k> <strict> V:KResult => .K </strict>
 
-  rule I1 <= I2 => I1 <=Int I2
+  rule [leq] : I1 <= I2 => I1 <=Int I2
 
-  rule ! E1 => E1 ~> ! HOLE requires isKResult(E1) =/=K true
-  rule <k> ! HOLE => ! V ...</k> <strict> V:KResult => .K </strict>
+  rule [not-heat] : ! E1 => E1 ~> ! HOLE requires isKResult(E1) =/=K true
+  rule [not-cool] : <k> ! HOLE => ! V ...</k> <strict> V:KResult => .K </strict>
 
-  rule ! T => notBool T
+  rule [not] : ! T => notBool T
 
-  rule E1 && E2 => E1 ~> HOLE && E2 requires isKResult(E1) =/=K true
-  rule <k> HOLE && E2 => V && E2 ...</k> <strict> V:KResult => .K </strict>
+  rule [and-heat] : E1 && E2 => E1 ~> HOLE && E2 requires isKResult(E1) =/=K true
+  rule [and-cool] : <k> HOLE && E2 => V && E2 ...</k> <strict> V:KResult => .K </strict>
 
-  rule true && B => B
-  rule false && _ => false
+  rule [and-true] : true && B => B
+  rule [and-false] : false && _ => false
 // Block
-  rule {} => .   [structural]
-  rule {S} => S  [structural]
+  rule [empty-block] : {} => .   [structural]
+  rule [block] : {S} => S  [structural]
 // Stmt
-  rule X = E2; => E2 ~> X = HOLE; requires isKResult(E2) =/=K true
-  rule <k> X = HOLE; => X = V; ...</k> <strict> V:KResult => .K </strict>
+  rule [asgn-heat] : X = E2; => E2 ~> X = HOLE; requires isKResult(E2) =/=K true
+  rule [asgn-cool] : <k> X = HOLE; => X = V; ...</k> <strict> V:KResult => .K </strict>
 
-  rule <k> X = I:Int; => . ...</k> <state>... X |-> (_ => I) ...</state>
-  rule S1:Stmt S2:Stmt => S1 ~> S2  [structural]
+  rule [asgn] : <k> X = I:Int; => . ...</k> <state>... X |-> (_ => I) ...</state>
+  rule [seq] : S1:Stmt S2:Stmt => S1 ~> S2  [structural]
 
-  rule if (E2) S1 else S2 => E2 ~> if (HOLE) S1 else S2 
+  rule [if-heat] : if (E2) S1 else S2 => E2 ~> if (HOLE) S1 else S2
     requires isKResult(E2) =/=K true
-  rule <k> if (HOLE) S1 else S2 => if (V) S1 else S2 ...</k> 
+  rule [if-cool] : <k> if (HOLE) S1 else S2 => if (V) S1 else S2 ...</k>
        <strict> V:KResult => .K </strict>
 
-  rule if (true)  S else _ => S
-  rule if (false) _ else S => S
-  rule while (B) S => if (B) {S while (B) S} else {}  [while]
+  rule [if-true] : if (true)  S else _ => S
+  rule [if-false] : if (false) _ else S => S
+  rule [while] : while (B) S => if (B) {S while (B) S} else {}  [while]
 // Pgm
-  rule <k> int (X,Xs => Xs);_ </k> <state> Rho:Map (.Map => X|->0) </state>
+  rule [decl] : <k> int (X,Xs => Xs);_ </k> <state> Rho:Map (.Map => X|->0) </state>
     when notBool (X in keys(Rho))
-  rule int .Ids; S => S  [structural]
+  rule [start] : int .Ids; S => S  [structural]
 
   syntax Bool ::= Bag "||=" String [function]
   syntax Id ::= Token{"x"}
@@ -99,7 +99,7 @@ module IMP
     => ("p" +String Int2String(I)) ==String S
 
   syntax Bool ::= Bag "|=" String [function]
-  rule <generatedTop> B </generatedTop> |= S:String 
+  rule <generatedTop> B </generatedTop> |= S:String
     => (<generatedTop> B </generatedTop> ||= S) ==K true
 
 endmodule

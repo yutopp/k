@@ -392,7 +392,7 @@ public class SymbolicRewriter {
         System.err.println("result constraint\n\t" + constraint1);
         System.err.println("============================================================");
          */
-        return new ConstrainedTerm(result, constraint, constraint.termContext());
+        return new ConstrainedTerm(result, constraint, constraint.termContext(), rule);
     }
 
     /**

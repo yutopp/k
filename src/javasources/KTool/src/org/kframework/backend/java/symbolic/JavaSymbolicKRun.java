@@ -430,17 +430,24 @@ public class JavaSymbolicKRun implements KRun {
         System.err.println("\n\n\n----Strongly Connected Components----");
         System.err.println(repeatedHeads.getSCCSString());
 
-        TarjanSCC<ConfigurationHead<Pair<Term, BuchiState>, Term>, BuchiTrackingLabel<Term, Term>> counterExampleGraph
+        TarjanSCC<ConfigurationHead<Pair<Term, BuchiState>, Term>, TrackingLabel<Pair<Term, BuchiState>, Term>> counterExampleGraph
                 = bpsTool.getCounterExampleGraph();
-        if (counterExampleGraph == null) {
+        if (counterExampleGraph == BuchiPushdownSystemTools.NONE) {
             System.out.println("No counterexample found. Property holds.");
         } else {
             System.out.println("Counterexample found for the given property");
             ConfigurationHead<Pair<Term, BuchiState>, Term> head = counterExampleGraph.getVertices().iterator().next();
             System.out.println("\n\n\n--- Prefix path ---");
-            System.out.println(bpsTool.getReachableConfiguration(head).toString());
-            System.out.println("\n\n\n--- Cycle ---");
-            System.out.println(bpsTool.getRepeatingCycle(head).toString());
+            Deque<org.kframework.backend.pdmc.pda.Rule<Pair<Term, BuchiState>, Term>> reachableConfigurationPath = bpsTool.getReachableConfiguration(head);
+            for(org.kframework.backend.pdmc.pda.Rule<Pair<Term, BuchiState>, Term> rule : reachableConfigurationPath) {
+                System.out.print(rule.getLabel().toString() + ";");
+            }
+            System.out.print("[");
+            Deque<org.kframework.backend.pdmc.pda.Rule<Pair<Term, BuchiState>, Term>> repeatingCycle = bpsTool.getRepeatingCycle(head);
+            for (org.kframework.backend.pdmc.pda.Rule<Pair<Term, BuchiState>, Term> rule : repeatingCycle) {
+                System.out.print(rule.getLabel().toString() + ";");
+            }
+            System.out.println("]");
         }
         if (false) {
             TrackingLabelFactory<Term, Term> factory = new TrackingLabelFactory<>();
