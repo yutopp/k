@@ -131,7 +131,7 @@ public abstract class AbstractVisitor<P, R, E extends Throwable> implements Visi
                     CollectionASTNodeCopier<Child, EnumType, Parent> copier, EnumType type) throws E {
         if(visitChildren()) {
             List<Child> items = new ArrayList<>();
-            for (Child item : ((Interfaces.List<Child, EnumType>)node).getChildren(type)) {
+            for (Child item : ((Interfaces.Collection<Child, EnumType>)node).getChildren(type)) {
                 Child result = processChildTerm(item, this.visitNode(item, p));
                 if (result != null) {
                     items.add(result);
@@ -156,7 +156,7 @@ public abstract class AbstractVisitor<P, R, E extends Throwable> implements Visi
         Parent extends ASTNode > {
         
         public final Parent copy(Parent node, java.util.Collection<Child> items, EnumType type) {
-            if (changedCollection(((Interfaces.List<Child, EnumType>)node).getChildren(type), items)) {
+            if (changedCollection(((Interfaces.Collection<Child, EnumType>)node).getChildren(type), items)) {
                 node = doCopy(node, items, type);
             }
             return node;
