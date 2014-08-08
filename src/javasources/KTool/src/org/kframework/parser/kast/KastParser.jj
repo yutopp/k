@@ -312,7 +312,7 @@ Term parseKApp(Context context)
 | a=parseKToken()
     {return a;}
 | "#klabel" < LPR > n=< LABELCONSTANT > < RPR >
-{return new KApp(KLabelConstant.of("#klabel"),
+{return new KApp(KLabelConstant.KLABEL_KLABEL,
         KLabelConstant.of(n.image.substring(1,n.image.length()-1)));}
 | n=< ALL_ID > ":" m=< ALL_ID > (< LPR > a=parseKList(context) < RPR >)?
 {if(a!=null)
