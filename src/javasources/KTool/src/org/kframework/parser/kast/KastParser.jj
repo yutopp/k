@@ -314,6 +314,14 @@ Term parseKApp(Context context)
 | "#klabel" < LPR > n=< LABELCONSTANT > < RPR >
 {return new KApp(KLabelConstant.of("#klabel"),
         KLabelConstant.of(n.image.substring(1,n.image.length()-1)));}
+| n=< ALL_ID > ":" m=< ALL_ID > (< LPR > a=parseKList(context) < RPR >)?
+{if(a!=null)
+   return new KApp(new Variable(n.image,Sort.of(m.image)),b);
+ else if(Sort.of(m.image).equals(Sort.KLABEL))
+   return new Variable(n.image,Sort.of(m.image));
+ else
+   throw new ParseException("Variable in KLabel position must have sort KLabel");
+}
 }
 
 /*the function will parse different kinds of tokens.
