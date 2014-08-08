@@ -2,13 +2,12 @@
 
 module OUTER-SYNTAX
 
-  syntax Keyword ::= "rule" | "syntax" | ...
-
-  syntax BubbleItem ::= Token{[^`\s]\S+} \ Keyword
+  syntax BubbleItem ::= Token{[^`\s]\S+} \ #ALLTERMINALS
                       | Token{`[^`]+`}
                       | Token{``([^`]([^`]|`[^`])*)``}
                       | Token{```([^`]([^`]|`[^`]|``[^`])*)```}
                       // can add more if we want to
+  syntax Bubble ::= NeList{BubbleItem}{""}
 
   syntax Sentence ::= Keyword Bubble
 endmodule
