@@ -45,7 +45,7 @@ This is the grammar of the parser:
 
 Top = Cells | Cells requires Cells | Cells ensures Cells
         | Cells requires Cells ensures Cells
-	    | Cells ensures Cells requires Cells
+        | Cells ensures Cells requires Cells
 
 Cells = CellList | CellList => CellList
 
@@ -75,15 +75,12 @@ Bool = true | false
 */
 public class KastParser {
   private String filename;
-  
   /** Parses a given string that was read from 'stringSentence'. */
   public static Sentence parse(String filename, String string, Context context) {
     KastParser parser = new KastParser(new StringReader(string));
     try {
       return parser.parseTopLevel(context);
     } catch (ParseException e) {
-      // TODO: report location
-      System.out.println(e.toString());
       GlobalSettings.kem.register(new KException(
         ExceptionType.ERROR, KExceptionGroup.INNER_PARSER, e.toString(), filename, null));
       return null;
@@ -93,7 +90,6 @@ public class KastParser {
       return null;
     }
   }
-
 }
 PARSER_END(KastParser)
 
@@ -139,39 +135,42 @@ TOKEN : /* klabels */
 | < BackTick: "`" >
 | <LCURLY: "{">
 | <RCURLY: "}">
-| < ALL_ID: ("#")?["A"-"Z","a"-"z","$","_","'","#"](~["~","/","<",">","=","]",
-		"[","}","{",".",":",",","\""," ",")","(","\r","\t", "\\", "\n"]
-		| "`)" | "`(" | "\\n" | "\\r" | "\\t" | "\\\\")*>
+| < ALL_ID: ("#")?["A"-"Z","a"-"z","$","_","'","#"]
+		(~["~","/","<",">","=","]","[","}",
+		"{",".",":",",","\""," ",")","(","\r","\t", "\\", "\n"]
+        | "`)" | "`(" | "\\n" | "\\r" | "\\t" | "\\\\")*>
 | < LABELCONSTANT : ("`")(~["\r","\t", "\\","`","\n"]
-		| "\\n" | "\\r" | "\\t" | "\\\\")+("`") >
+        | "\\n" | "\\r" | "\\t" | "\\\\")+("`") >
 }
 
 /*
 Top level parser to parse the sentence.
 We allow only one requires term and one ensures term.
 */
-Sentence parseTopLevel(Context context) : {Term col;Term req=null;Term ens=null;}
+Sentence parseTopLevel(Context context)
+: {Term col;Term req=null;Term ens=null;}
 { col=parsePreCollection(context)
-	("requires" req=parseKApp(context) ("ensures" ens=parseKApp(context))?
+    ("requires" req=parseKApp(context) ("ensures" ens=parseKApp(context))?
      | "ensures" ens=parseKApp(context) ("requires" req=parseKApp(context))?)?
-	 < EOF >
+     < EOF >
 {Sentence result = new Sentence(); result.setBody(col);
-	if (req!=null)
-		result.setRequires(req);
-	if (ens!=null)
-		result.setEnsures(ens);
-	return result; } }
+    if (req!=null)
+        result.setRequires(req);
+    if (ens!=null)
+        result.setEnsures(ens);
+    return result; } }
 
 Term parsePreCollection(Context context): {Term a=null;Term b=null;}
 { a=parseCollection(context) (< REWRITE > b=parseCollection(context))?
-	{if(b==null)
-	    return a;
-	 else
-	    return new Rewrite(a, b, context);}
+    {if(b==null)
+        return a;
+     else
+        return new Rewrite(a, b, context);}
 }
 
 //a function to parse a cell list
-Term parseCollection(Context context) : {ArrayList<Term> result = new ArrayList<Term>();Term a;}
+Term parseCollection(Context context)
+: {ArrayList<Term> result = new ArrayList<Term>();Term a;}
 {".Bag" {return Bag.EMPTY;}
 | a = parseKSeq(context) {return a;}
 |  (a=parseCellItem(context) {result.add(a);})+
@@ -182,9 +181,14 @@ Term parseCollection(Context context) : {ArrayList<Term> result = new ArrayList<
 }
 
 //a function to parse a signle cell
-Term parseCellItem(Context context) : {Term left;Term right;;Token label;Token endLabel;Term cellContents;
-        boolean leftEclipse;boolean rightEclipse;HashMap<String,String> attributes=null;}
-{ < LCELLPR > label=< ALL_ID > attributes=parseAttributes() leftEclipse=parseLeftEclipse()
+Term parseCellItem(Context context)
+: {Term left;Term right;
+	    Token label; Token endLabel;Term cellContents;
+        boolean leftEclipse;
+        boolean rightEclipse;
+        HashMap<String,String> attributes=null;}
+{ < LCELLPR > label=< ALL_ID > attributes=parseAttributes()
+	leftEclipse=parseLeftEclipse()
      cellContents=parsePreCollection(context)
        rightEclipse=parseRightEclipse() endLabel=< ALL_ID > < RCELLPR >
      {if(label.image.equals(endLabel.image))
@@ -215,8 +219,8 @@ boolean parseRightEclipse() : {}
 }
 
 //a function to parse all attributes in cells
-HashMap<String,String> parseAttributes() :
-    {HashMap<String,String > temp = new HashMap<String,String >();Token a;Token b;}
+HashMap<String,String> parseAttributes()
+: {HashMap<String,String > temp = new HashMap<String,String >();Token a;Token b;}
 { (a="color" < EQUAL > b=< STRING > | a="multiplicity" < EQUAL > b=< STRING >
     | a="stream" < EQUAL > b=< STRING > {
       if(a.image.equals("color"))
@@ -228,10 +232,12 @@ HashMap<String,String> parseAttributes() :
       })* {return temp;}  }
 
 /*
-a function to parse KList. Currently, we don't allow users to write KList in the top level.
+a function to parse KList. Currently, we don't allow users to
+write KList in the top level.
 every format must be K ~> K, KLabel(KList) or <abc>Bag</abc>
 */
-Term parseKList(Context context) : {ArrayList<Term> temp = new ArrayList<Term>();Term a;Term e;}
+Term parseKList(Context context)
+: {ArrayList<Term> temp = new ArrayList<Term>();Term a;Term e;}
 { ".KList"
 {return KList.EMPTY;}
 | (a=parseKSeq(context)
@@ -247,7 +253,8 @@ Term parseKList(Context context) : {ArrayList<Term> temp = new ArrayList<Term>()
 /*
 parse K term as K ~> K
 */
-Term parseKSeq(Context context) :{ArrayList<Term> temp = new ArrayList<Term>();Term a;Term e;}
+Term parseKSeq(Context context)
+: {ArrayList<Term> temp = new ArrayList<Term>();Term a;Term e;}
 { (a=parseKApp(context)
 {temp.add(a);})
  ("~>" e=parseKApp(context)
@@ -261,7 +268,8 @@ Term parseKSeq(Context context) :{ArrayList<Term> temp = new ArrayList<Term>();T
 /*
 parse KItem including KLabel, KToken and backtick blocks
 */
-Term parseKApp(Context context):{Term a=null; Term b=null;Token n=null;Token m=null;}
+Term parseKApp(Context context)
+: {Term a=null; Term b=null;Token n=null;Token m=null;}
 {".K" {return KSequence.EMPTY;}
 | "HOLE" {return Hole.KITEM_HOLE;}
 | n= < LABELCONSTANT >

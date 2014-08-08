@@ -23,30 +23,24 @@ public class KastParserTest {
         final Context context = new Context();
         //test input the .Bag
         assertTrue(KastParser.parse("output.txt", ".Bag", context).getBody().equals(Bag.EMPTY));
-        
         //test input the number 0 and the number with ktoken format
         assertTrue(KastParser.parse("output.txt", "0", context).getBody()
                         .equals(KastParser.parse("output.txt", "`0::Int`", context).getBody()));
-        
         //test input the number 0 and the number with ktoken format without sort
         assertTrue(KastParser.parse("output.txt", "0", context).getBody()
                 .equals(KastParser.parse("output.txt", "`0`", context).getBody()));
-        
         //test input the string "0" and the number with ktoken format
         assertTrue(KastParser.parse("output.txt", "`\"0\"`", context).getBody()
                 .equals(KastParser.parse("output.txt", "\"0\"", context).getBody()));
-        
         //test input boolean format
         assertTrue(KastParser.parse("output.txt", "true", context).getBody()
                 .equals(KastParser.parse("output.txt", "`true::Bool`", context).getBody()));
         assertTrue(KastParser.parse("output.txt", "false", context).getBody()
                 .equals(KastParser.parse("output.txt", "`false::Bool`", context).getBody()));
-        
         //test parsing klabel and cells
         Cell testCell = new Cell("abc",Bag.EMPTY);
         assertTrue(KastParser.parse("output.txt", "<abc> .Bag </abc>", context)
                     .getBody().equals(testCell));
-        
         //test parsing a KItem
         List<Term> testKList = new ArrayList<Term>();
         testKList.add(IntBuiltin.of(0));
