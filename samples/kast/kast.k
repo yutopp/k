@@ -1,6 +1,49 @@
 // Copyright (c) 2014 K Team. All Rights Reserved.
 
+module INNER-SYNTAX
+/*
+  syntax Bubble ::= List{BubbleItem,""}
+  syntax BubbleItem ::= Token{"dummy"} [regex([^`\s]\S*)]
+                      | Token{"dummy"} [regex([\`]{1}([^\`])+[\`]{1})]
+                      | Token{"dummy"} [regex([\`]{2}([^\`]|[\`][^\`])+[\`]{2})]
+                      | Token{"dummy"} [regex([\`]{3}([^\`]|[\`][^\`]|[\`][\`][^\`])+[\`]{3})]
+                      // can add more if we want to
+					  | "true"
+					  | "false"
+*/
+
+  syntax Bubble ::= MetaK
+
+  syntax MetaKLabel ::= Token{"dummy"}  [regex(`[^`\s]+`)]
+  syntax MetaKToken ::= Token{"dummy"}  [regex(`[^`\s]+`)]
+                      | #klabel(MetaKLabel)
+  syntax MetaKItem  ::= MetaKToken
+                      | MetaKLabel "(" MetaKList ")"
+  syntax MetaKList  ::= List{MetaK,","}        // we need to say List{MetaK}{","}{".KList"}
+  syntax MetaK      ::= List{MetaKItem,"~>"}   // we need to say List{MetaKItem}{"~>"}{".K"}
+
+  syntax Variable ::= Token{"dummy"} [notInRules, regex(\$?[A-Z][A-Za-z0-9]*)]
+//  syntax MetaKLabel ::= Variable ":" MetaKLabel
+  syntax MetaKItem  ::= Variable
+                      | MetaKItem ":" SORTID  // KItem must obey its sort at runtime
+                                              // sorting arbitrary KItems; Sort can also be
+                                              // K, KItem, KToken, but not KList
+
+  syntax MetaK ::= Cells
+  syntax Cells ::= NeList{Cell,""}   // non-empty list
+  syntax Cell ::= "<" CellNAME CellAttributes ">" MetaK "</" CellNAME ">"
+                // the two NAMEs should be the same
+  syntax CellAttributes ::= List{CellAttribute,""}
+  syntax CellAttribute  ::= CellTag "=" STRING
+  syntax CellTag  ::= Token{"dummy"} [regex([a-z][A-Za-z0-9]*)]
+  syntax CellNAME ::= Token{"dummy"} [regex([A-Za-z][A-Za-z0-9]*)]
+
+  syntax SORTID     ::= Token{"dummy"} [regex([#]?[A-Z][A-Za-z0-9]*)]
+  syntax STRING     ::= Token{"dummy"} [regex("[\\\"](([^\\\"\\n\\r\\\\])|([\\\\][nrtf\\\"\\\\])|)*[\\\"]")]
+endmodule
+
 module OUTER-SYNTAX
+  imports INNER-SYNTAX
 
   // Top level module stuff
   syntax Definition ::= Requires Modules
@@ -19,13 +62,6 @@ module OUTER-SYNTAX
                    | "configuration"
                    | "endmodule"
                    | "context"
-
-  syntax Bubble ::= List{BubbleItem,""}
-  syntax BubbleItem ::= Token{"dummy"} [regex([^`\s]\S*)] //\ Keyword
-                      | Token{"dummy"} [regex([\`]{1}([^\`])+[\`]{1})]
-                      | Token{"dummy"} [regex([\`]{2}([^\`]|[\`][^\`])+[\`]{2})]
-                      | Token{"dummy"} [regex([\`]{3}([^\`]|[\`][^\`]|[\`][\`][^\`])+[\`]{3})]
-                      // can add more if we want to
 
   syntax Sentence ::= "rule"          Bubble
                     | "configuration" Bubble
@@ -61,9 +97,9 @@ module OUTER-SYNTAX
   syntax TAGCONTENT ::= List{TAGC,""}  // anything with balanced parenthesis. Will have to get original string.
   syntax TAGC       ::= Token{"dummy"} [regex("[^\\n\\r\\(\\)\\\"]+")]
   syntax TAGC       ::= "(" TAGCONTENT ")"
-  syntax STRING     ::= Token{"dummy"} [regex("[\\\"](([^\\\"\\n\\r\\\\])|([\\\\][nrtf\\\"\\\\]))*[\\\"]")]
+//  syntax STRING     ::= Token{"dummy"} [regex("[\\\"](([^\\\"\\n\\r\\\\])|([\\\\][nrtf\\\"\\\\])|)*[\\\"]")]
   syntax TOKEN      ::= Token{"dummy"} [regex(([^\}\n\r]|[\\][\}])+)]
-  syntax SORTID     ::= Token{"dummy"} [regex([#]?[A-Z][A-Za-z0-9]*)]
+//  syntax SORTID     ::= Token{"dummy"} [regex([#]?[A-Z][A-Za-z0-9]*)]
   syntax SORTIDs    ::= NeList{SORTID,","}
 
 endmodule
