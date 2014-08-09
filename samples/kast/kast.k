@@ -20,14 +20,12 @@ module OUTER-SYNTAX
                    | "endmodule"
                    | "context"
 
-  syntax Bubble ::= BubbleHead BubbleTail
-                  | Token{"dummy"} [regex([\`]{1}([^\`])+[\`]{1})]
-                  | Token{"dummy"} [regex([\`]{2}([^\`]|[\`][^\`])+[\`]{2})]
-                  | Token{"dummy"} [regex([\`]{3}([^\`]|[\`][^\`]|[\`][\`][^\`])+[\`]{3})]
-                  // can add more if we want to
-  syntax BubbleHead     ::= Token{"dummy"} [regex([^`\s]\S*)] //\ Keyword
-  syntax BubbleTail     ::= List{BubbleTailItem,""}
-  syntax BubbleTailItem ::= Token{"dummy"} [regex(\S+)]//\ Keyword
+  syntax Bubble ::= List{BubbleItem,""}
+  syntax BubbleItem ::= Token{"dummy"} [regex([^`\s]\S*)] //\ Keyword
+                      | Token{"dummy"} [regex([\`]{1}([^\`])+[\`]{1})]
+                      | Token{"dummy"} [regex([\`]{2}([^\`]|[\`][^\`])+[\`]{2})]
+                      | Token{"dummy"} [regex([\`]{3}([^\`]|[\`][^\`]|[\`][\`][^\`])+[\`]{3})]
+                      // can add more if we want to
 
   syntax Sentence ::= "rule"          Bubble
                     | "configuration" Bubble
@@ -43,17 +41,16 @@ module OUTER-SYNTAX
                          | "left:"      ProductionList
                          | "right:"     ProductionList
                          | "non-assoc:" ProductionList
-  syntax ProductionList ::= NeList{Production,"|"}
-  syntax Production     ::= NoAnnoProd | AnnotatedProd
-  syntax NoAnnoProd     ::= NeList{ProductionItem,""}
-                          | TAG "(" SortIdList ")"
-  syntax AnnotatedProd  ::= NoAnnoProd "[" AnnotationList "]"
-  syntax SortIdList     ::= NeList{SORTID,","}
+  syntax ProductionList   ::= NeList{Production,"|"}
+  syntax Production       ::= SimpleProduction | AnnotatedProduction
+  syntax SimpleProduction ::= NeList{ProductionItem,""}
+                            | TAG "(" SORTIDs ")"
+  syntax AnnotatedProduction ::= SimpleProduction "[" AnnotationList "]"
 
   syntax ProductionItem ::= SORTID  // non-terminal
                           | STRING  // terminals
                           | "Token{" TOKEN "}" // will see
-                          |   "List{" SORTID "," STRING "}"
+                          | "List{" SORTID "," STRING "}"
                           | "NeList{" SORTID "," STRING "}"
 
   syntax AnnotationList ::= NeList{Annotation,","}
@@ -64,9 +61,10 @@ module OUTER-SYNTAX
   syntax TAGCONTENT ::= List{TAGC,""}  // anything with balanced parenthesis. Will have to get original string.
   syntax TAGC       ::= Token{"dummy"} [regex("[^\\n\\r\\(\\)\\\"]+")]
   syntax TAGC       ::= "(" TAGCONTENT ")"
-  syntax STRING     ::= Token{"dummy"} [regex("[\\\"](([^\\\"\\n\\r\\\\])|([\\\\][nrtf\\\"\\\\])|)*[\\\"]")]
+  syntax STRING     ::= Token{"dummy"} [regex("[\\\"](([^\\\"\\n\\r\\\\])|([\\\\][nrtf\\\"\\\\]))*[\\\"]")]
   syntax TOKEN      ::= Token{"dummy"} [regex(([^\}\n\r]|[\\][\}])+)]
   syntax SORTID     ::= Token{"dummy"} [regex([#]?[A-Z][A-Za-z0-9]*)]
+  syntax SORTIDs    ::= NeList{SORTID,","}
 
 endmodule
 
