@@ -3,15 +3,15 @@
 module OUTER-SYNTAX
 
   // Top level module stuff
-  syntax Start        ::= RequireList ModuleList
-  syntax RequireList  ::= List{Require,""}
-  syntax Require      ::= "require" STRING
-  syntax ModuleList   ::= List{Module,""}
-  syntax Module       ::= "module" MODULENAME ImportList SentenceList "endmodule"
-  syntax ImportList   ::= List{Import,""}
-  syntax Import       ::= "imports" MODULENAME
-  syntax MODULENAME   ::= Token{"dummy"} [regex("[A-Z\\-]+")]
-  syntax SentenceList ::= List{Sentence,""}
+  syntax Definition ::= Requires Modules
+  syntax Requires   ::= List{Require,""}
+  syntax Require    ::= "require" STRING
+  syntax Modules    ::= List{Module,""}
+  syntax Module     ::= "module" MODULENAME Imports Sentences "endmodule"
+  syntax Imports    ::= List{Import,""}
+  syntax Import     ::= "imports" MODULENAME
+  syntax MODULENAME ::= Token{"dummy"} [regex("[A-Z\\-]+")]
+  syntax Sentences  ::= List{Sentence,""}
 
   // Bubbles (rule, context, configuration)
   syntax Keyword ::= "rule"
@@ -76,5 +76,5 @@ endmodule
 
 module KAST
   imports KAST-SYNTAX
-  configuration <k> $PGM:Start </k>
+  configuration <k> $PGM:Definition </k>
 endmodule
