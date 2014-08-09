@@ -8,55 +8,65 @@ module OUTER-SYNTAX
   syntax Require      ::= "require" STRING
   syntax ModuleList   ::= List{Module,""}
   syntax Module       ::= "module" MODULENAME ImportList SentenceList "endmodule"
-  syntax ImportList   ::= "import" MODULENAME
-  syntax MODULENAME   ::= Token{[A-Z\-]+}
+  syntax ImportList   ::= List{Import,""}
+  syntax Import       ::= "imports" MODULENAME
+  syntax MODULENAME   ::= Token{"dummy"} [regex("[A-Z\\-]+")]
   syntax SentenceList ::= List{Sentence,""}
-  
+
   // Bubbles (rule, context, configuration)
   syntax Keyword ::= "rule"
                    | "syntax"
-				   | "configuration"
-				   | "endmodule"
-				   | "context"
+                   | "configuration"
+                   | "endmodule"
+                   | "context"
 
   syntax Bubble ::= BubbleHead BubbleTail
-                  | Token{`[^`]+`}
-                  | Token{``([^`]([^`]|`[^`])*)``}
-                  | Token{```([^`]([^`]|`[^`]|``[^`])*)```}
+                  | Token{"dummy"} [regex([\`]{1}([^\`])+[\`]{1})]
+                  | Token{"dummy"} [regex([\`]{2}([^\`]|[\`][^\`])+[\`]{2})]
+                  | Token{"dummy"} [regex([\`]{3}([^\`]|[\`][^\`]|[\`][\`][^\`])+[\`]{3})]
                   // can add more if we want to
-  syntax BubbleHead     ::= Token{[^`\s]\S*} \ Keyword
+  syntax BubbleHead     ::= Token{"dummy"} [regex([^`\s]\S*)] //\ Keyword
   syntax BubbleTail     ::= List{BubbleTailItem,""}
-  syntax BubbleTailItem ::= Token{\S+} \ Keyword
+  syntax BubbleTailItem ::= Token{"dummy"} [regex(\S+)]//\ Keyword
 
   syntax Sentence ::= "rule"          Bubble
                     | "configuration" Bubble
-					| "context"       Bubble
-					
+                    | "context"       Bubble
+					| Syntax
+
   // Syntax declarations
   syntax Syntax ::= "syntax" SORTID "::=" PriorityBlockList
   syntax Syntax ::= "syntax" SORTID
-  syntax Syntax ::= "syntax" SORTID "[" AnnotationList "]
+  syntax Syntax ::= "syntax" SORTID "[" AnnotationList "]"
   syntax PriorityBlockList ::= NeList{PriorityBlock,">"}
   syntax PriorityBlock ::=              ProductionList
                          | "left:"      ProductionList
-						 | "right:"     ProductionList
-						 | "non-assoc:" ProductionList
+                         | "right:"     ProductionList
+                         | "non-assoc:" ProductionList
   syntax ProductionList ::= NeList{Production,"|"}
-  syntax Production     ::= NeList{ProductionItem,""}
+  syntax Production     ::= NoAnnoProd | AnnotatedProd
+  syntax NoAnnoProd     ::= NeList{ProductionItem,""}
+                          | TAG "(" SortIdList ")"
+  syntax AnnotatedProd  ::= NoAnnoProd "[" AnnotationList "]"
+  syntax SortIdList     ::= NeList{SORTID,","}
 
   syntax ProductionItem ::= SORTID  // non-terminal
                           | STRING  // terminals
-						  | "Token{" ... "}" // will see
-						  |   "List{" SORTID "," STRING "}"
-						  | "NeList{" SORTID "," STRING "}"
-  
+                          | "Token{" TOKEN "}" // will see
+                          |   "List{" SORTID "," STRING "}"
+                          | "NeList{" SORTID "," STRING "}"
+
   syntax AnnotationList ::= NeList{Annotation,","}
   syntax Annotation ::= TAG
                       | TAG "(" TAGCONTENT ")"
                       | TAG "(" STRING ")"
-  syntax TAG ::= Token{[a-z][A-Za-z\-0-9]*}
-  syntax TAGCONTENT ::= Token{...} // anything with balanced parenthesis
-  syntax STRING ::= Token{[\"](([^\"\n\r\\])|([\\][nrtf\"\\])|)*[\"]}
+  syntax TAG        ::= Token{"dummy"} [regex([a-z][A-Za-z\-0-9]*)]
+  syntax TAGCONTENT ::= List{TAGC,""}  // anything with balanced parenthesis. Will have to get original string.
+  syntax TAGC       ::= Token{"dummy"} [regex("[^\\n\\r\\(\\)\\\"]+")]
+  syntax TAGC       ::= "(" TAGCONTENT ")"
+  syntax STRING     ::= Token{"dummy"} [regex("[\\\"](([^\\\"\\n\\r\\\\])|([\\\\][nrtf\\\"\\\\])|)*[\\\"]")]
+  syntax TOKEN      ::= Token{"dummy"} [regex(([^\}\n\r]|[\\][\}])+)]
+  syntax SORTID     ::= Token{"dummy"} [regex([#]?[A-Z][A-Za-z0-9]*)]
 
 endmodule
 
@@ -66,4 +76,5 @@ endmodule
 
 module KAST
   imports KAST-SYNTAX
+  configuration <k> $PGM:Start </k>
 endmodule
