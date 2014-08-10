@@ -19,6 +19,8 @@ import org.kframework.backend.java.ksimulation.Waitor;
 import org.kframework.backend.java.symbolic.JavaExecutionOptions;
 import org.kframework.backend.pdmc.k.PromelaTermAdaptor;
 import org.kframework.backend.pdmc.pda.buchi.PromelaBuchi;
+import org.kframework.backend.pdmc.pda.buchi.parser.ParseException;
+import org.kframework.backend.pdmc.pda.buchi.parser.PromelaBuchiParser;
 import org.kframework.compile.utils.CompilerStepDone;
 import org.kframework.compile.utils.RuleCompilerSteps;
 import org.kframework.kil.ASTNode;
@@ -123,7 +125,7 @@ public class KRunFrontEnd extends FrontEnd {
                 } else  if (!context.javaExecutionOptions.pdmc.isEmpty()) {
                     try {
                         PromelaBuchi automaton = PromelaBuchiParser.parse(new FileInputStream(context.javaExecutionOptions.pdmc));
-                        result = krun.modelCheck(new PromelaTermAdaptor(automaton), makeConfiguration(KAST, null, rp, K.term, context));
+                        result = krun.modelCheck(new PromelaTermAdaptor(automaton), initialConfiguration);
                     } catch (ParseException e) {
                         org.kframework.utils.Error.report("Cannot parse SPIN never claim file: " + context.javaExecutionOptions.pdmc + "\n"
                                 + e.getMessage());
