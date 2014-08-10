@@ -15,24 +15,32 @@ module INNER-SYNTAX
   syntax Bubble ::= MetaK
 
   syntax MetaKLabel ::= Token{"dummy"}  [regex(`[^`\s]+`)]
-  syntax MetaKToken ::= Token{"dummy"}  [regex(`[^`\s]+`)]
+  syntax MetaKToken ::= #token(STRING,STRING) // Token{"dummy"}  [regex(`[^`\s]+`)]
                       | #klabel(MetaKLabel)
   syntax MetaKItem  ::= MetaKToken
                       | MetaKLabel "(" MetaKList ")"
-  syntax MetaKList  ::= List{MetaK,","}        // we need to say List{MetaK}{","}{".KList"}
-  syntax MetaK      ::= List{MetaKItem,"~>"}   // we need to say List{MetaKItem}{"~>"}{".K"}
+  syntax MetaKList  ::= NeList{MetaK,","}        // we need to say List{MetaK}{","}{"."}
+                      | ".KList"                 // we'll refer to it as . in the frontend
+  syntax MetaK      ::= NeList{MetaKItem,"~>"}   // we need to say List{MetaKItem}{"~>"}{"."}
+                      | ".K"                     // we'll refer to it as . in the frontend
 
-  syntax Variable ::= Token{"dummy"} [notInRules, regex(\$?[A-Z][A-Za-z0-9]*)]
+  syntax Variable ::= Token{"dummy"} [notInRules, regex(\$?[A-Z_][A-Za-z0-9]*)]
 //  syntax MetaKLabel ::= Variable ":" MetaKLabel
   syntax MetaKItem  ::= Variable
                       | MetaKItem ":" SORTID  // KItem must obey its sort at runtime
                                               // sorting arbitrary KItems; Sort can also be
                                               // K, KItem, KToken, but not KList
-
+  syntax MetaK ::= MetaK "=>" MetaK
+                 | "`" MetaK "`"  [bracket]
+  
   syntax MetaK ::= Cells
   syntax Cells ::= NeList{Cell,""}   // non-empty list
   syntax Cell ::= "<" CellNAME CellAttributes ">" MetaK "</" CellNAME ">"
                 // the two NAMEs should be the same
+				| "<" CellNAME CellAttributes ">" MetaK "...</" CellNAME ">"
+				| "<" CellNAME CellAttributes ">..." MetaK "</" CellNAME ">"
+				| "<" CellNAME CellAttributes ">..." MetaK "...</" CellNAME ">"
+
   syntax CellAttributes ::= List{CellAttribute,""}
   syntax CellAttribute  ::= CellTag "=" STRING
   syntax CellTag  ::= Token{"dummy"} [regex([a-z][A-Za-z0-9]*)]
@@ -63,7 +71,8 @@ module OUTER-SYNTAX
                    | "endmodule"
                    | "context"
 
-  syntax Sentence ::= "rule"          Bubble
+  syntax Sentence ::= "rule"          Bubble                   Attributes
+                    | "rule"          Bubble "requires" Bubble Attributes
                     | "configuration" Bubble
                     | "context"       Bubble
 					| Syntax
@@ -78,10 +87,11 @@ module OUTER-SYNTAX
                          | "right:"     ProductionList
                          | "non-assoc:" ProductionList
   syntax ProductionList   ::= NeList{Production,"|"}
-  syntax Production       ::= SimpleProduction | AnnotatedProduction
+  syntax Production       ::= SimpleProduction Attributes
   syntax SimpleProduction ::= NeList{ProductionItem,""}
                             | TAG "(" SORTIDs ")"
-  syntax AnnotatedProduction ::= SimpleProduction "[" AnnotationList "]"
+  syntax Attributes ::= "" [onlyLabel]    // [notInRules] does not work
+                      | "[" AnnotationList "]"
 
   syntax ProductionItem ::= SORTID  // non-terminal
                           | STRING  // terminals
