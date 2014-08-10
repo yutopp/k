@@ -566,17 +566,15 @@ precise location; we prefer to do it this way to avoid locking the store.
 The semantics of the auxiliary \texttt{lookup} operation is straightforward,
 and is defined at the end of the file. */
 
-// The following 4 rules could be replaced with only 2 rules, if we
-// had [anywhere] attributes.  On the other hand, the [anywhere] feature
-// would be underused, because it would only be used at the top of the
-// computation or inside the lvalue wrapper.  So it may not be worth,
-// or we may need to come up with a special notation allowing us to
-// enumerate contexts for [anywhere] rules.
-  rule V:Val[N1:Int, N2:Int, Vs:Vals] => V[N1][N2, Vs]            [structural]
-  rule lvalue(V:Val[N1:Int, N2:Int, Vs:Vals] => V[N1][N2, Vs])    [structural]
+// The [anywhere] feature is underused, because it would only be used
+// at the top of the computation or inside the lvalue wrapper. So it
+// may not be worth, or we may need to come up with a special notation
+// allowing us to enumerate contexts for [anywhere] rules.
+  rule V:Val[N1:Int, N2:Int, Vs:Vals] => V[N1][N2, Vs]
+    [structural, anywhere]
 
-  rule array(L,_)[N:Int] => lookup(L +Int N)            [structural]
-  rule lvalue(array(L,_)[N:Int] => lookup(L +Int N))    [structural]
+  rule array(L,_)[N:Int] => lookup(L +Int N)
+    [structural, anywhere]
 
 /*@ \subsection{Size of an array}
 The size of the array is stored in the array reference value, and the
@@ -955,7 +953,7 @@ The \texttt{mkDecls} auxiliary construct turns a list of identifiers
 and a list of values in a sequence of corresponding variable
 declarations. */
 
-  syntax Decl ::= mkDecls(Ids,Vals)  [function]
+  syntax Stmts ::= mkDecls(Ids,Vals)  [function]
   rule mkDecls((X:Id, Xs:Ids), (V:Val, Vs:Vals)) => var X=V; mkDecls(Xs,Vs)
   rule mkDecls(.Ids,.Vals) => {}
 
@@ -1031,8 +1029,8 @@ corresponding store lookup operation. */
 // Array element: evaluate the array and its index;
 // then the array lookup rule above applies.
 
-  context lvalue(_::Exp[HOLE::Exps])
-  context lvalue(HOLE::Exp[_::Exps])
+  context lvalue(_:>Exp[HOLE:>Exps])
+  context lvalue(HOLE:>Exp[_:>Exps])
 
 // Finally, return the address of the desired object member
 
@@ -1054,4 +1052,4 @@ No kompile options are needed if you only only want to execute the definition
 program behaviors then you need to kompile with the transition option
 including rule tags such as lookup, increment, acquire, etc.  See the
 IMP++ tutorial for what the transition option means how to use it. */
-endmodule 
+endmodule

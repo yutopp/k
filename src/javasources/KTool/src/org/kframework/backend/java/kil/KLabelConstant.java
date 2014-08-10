@@ -1,10 +1,10 @@
 // Copyright (c) 2013-2014 K Team. All Rights Reserved.
 package org.kframework.backend.java.kil;
 
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 
+import org.apache.commons.collections4.trie.PatriciaTrie;
 import org.kframework.backend.java.symbolic.Matcher;
 import org.kframework.backend.java.symbolic.Transformer;
 import org.kframework.backend.java.symbolic.Unifier;
@@ -25,11 +25,11 @@ import com.google.common.collect.Multimap;
 public class KLabelConstant extends KLabel implements MaximalSharing {
 
     /* KLabelConstant cache */
-    private static final HashMap<String, KLabelConstant> cache = new HashMap<String, KLabelConstant>();
+    private static final PatriciaTrie<KLabelConstant> cache = new PatriciaTrie<>();
 
     /* un-escaped label */
     private final String label;
-    
+
     /* unmodifiable view of a list of productions generating this {@code KLabelConstant} */
     private final ImmutableList<Production> productions;
 
@@ -38,31 +38,50 @@ public class KLabelConstant extends KLabel implements MaximalSharing {
      * generates this {@code KLabelConstant}
      */
     private final boolean isFunction;
-    
+
+    /*
+     * boolean flag set iff a production tagged with "pattern" generates
+     * this {@code KLabelConstant}
+     */
+    private final boolean isPattern;
+
     private final boolean isSortPredicate;
-    
-    private final String predicateSort;
-    
+
+    private final Sort predicateSort;
+
+    /**
+     * Specifies if this {@code KLabelConstant} is a list label,
+     * e.g. {@code '.List{","}}.
+     */
+    private final boolean isListLabel;
+
+    /**
+     * Stores the associated list terminator if this {@code KLabelConstant} is a
+     * list label.
+     */
+    private final KItem listTerminator;
+
     private KLabelConstant(String label, Definition definition) {
         this.label = label;
         productions = definition != null ?
-                ImmutableList.<Production>copyOf(definition.context().productionsOf(label)) : 
+                ImmutableList.<Production>copyOf(definition.context().productionsOf(label)) :
                 ImmutableList.<Production>of();
-        
+
         // TODO(YilongL): urgent; how to detect KLabel clash?
 
         boolean isFunction = false;
+        boolean isPattern = false;
         if (!label.startsWith("is")) {
-            isSortPredicate = false;
             predicateSort = null;
-            
+
             Iterator<Production> iterator = productions.iterator();
             if (iterator.hasNext()) {
                 Production fstProd = iterator.next();
                 isFunction = fstProd.containsAttribute(Attribute.FUNCTION.getKey())
                         || fstProd.containsAttribute(Attribute.PREDICATE.getKey());
+                isPattern = fstProd.containsAttribute(Attribute.PATTERN_KEY);
             }
-            
+
             while (iterator.hasNext()) {
                 Production production = iterator.next();
                 /*
@@ -76,14 +95,31 @@ public class KLabelConstant extends KLabel implements MaximalSharing {
                         + label
                         + " is a function symbol because there are multiple productions associated with this KLabel: "
                         + productions;
+                assert isPattern == production.containsAttribute(Attribute.PATTERN_KEY) :
+                        "Cannot determine if the KLabel " + label
+                        + " is a pattern symbol because there are multiple productions associated with this KLabel: "
+                        + productions;
             }
         } else {
             /* a KLabel beginning with "is" represents a sort membership predicate */
             isFunction = true;
-            isSortPredicate = true;
-            predicateSort = label.substring("is".length());
+            predicateSort = Sort.of(label.substring("is".length()));
         }
+        this.isSortPredicate = predicateSort != null;
         this.isFunction = isFunction;
+        this.isPattern = isPattern;
+
+        this.listTerminator = buildListTerminator(definition);
+        this.isListLabel = listTerminator != null;
+    }
+
+    private KItem buildListTerminator(Definition definition) {
+        if (!definition.context().listKLabels.get(label).isEmpty()) {
+            Production production = definition.context().listKLabels.get(label).iterator().next();
+            String separator = production.getListDecl().getSeparator();
+            return new KItem(this, KList.EMPTY, Sort.SHARP_BOT.getUserListSort(separator), true);
+        }
+        return null;
     }
 
     /**
@@ -106,8 +142,8 @@ public class KLabelConstant extends KLabel implements MaximalSharing {
     }
 
     /**
-     * Returns true iff no production tagged with "function" or "predicate" generates this {@code
-     * KLabelConstant}.
+     * Returns true iff no production tagged with "function" or "predicate" or "pattern"
+     * generates this {@code KLabelConstant}.
      */
     @Override
     public boolean isConstructor() {
@@ -122,7 +158,16 @@ public class KLabelConstant extends KLabel implements MaximalSharing {
     public boolean isFunction() {
         return isFunction;
     }
-    
+
+    /**
+     * Returns true iff a production tagged with "pattern" generates
+     * this {@code KLabelConstant}.
+     */
+    @Override
+    public boolean isPattern() {
+        return isPattern;
+    }
+
     /**
      * Returns true if this {@code KLabelConstant} is a sort membership
      * predicate; otherwise, false.
@@ -130,14 +175,26 @@ public class KLabelConstant extends KLabel implements MaximalSharing {
     public boolean isSortPredicate() {
         return isSortPredicate;
     }
-    
+
     /**
      * Returns the predicate sort if this {@code KLabelConstant} represents a
      * sort membership predicate; otherwise, {@code null}.
      */
-    public String getPredicateSort() {
+    public Sort getPredicateSort() {
         assert isSortPredicate();
         return predicateSort;
+    }
+
+    public boolean isListLabel() {
+        return isListLabel;
+    }
+
+    /**
+     * Returns the associated list terminator if this {@code KLabelConstant} is
+     * a list label; otherwise, {@code null}.
+     */
+    public KItem getListTerminator() {
+        return listTerminator;
     }
 
     public String label() {
@@ -150,7 +207,7 @@ public class KLabelConstant extends KLabel implements MaximalSharing {
     public List<Production> productions() {
         return productions;
     }
-    
+
     @Override
     public boolean equals(Object object) {
         /* {@code KLabelConstant} objects are cached to ensure uniqueness */
@@ -161,7 +218,7 @@ public class KLabelConstant extends KLabel implements MaximalSharing {
     protected int computeHash() {
         return label.hashCode();
     }
-    
+
     @Override
     protected boolean computeHasCell() {
         return false;

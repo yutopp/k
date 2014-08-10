@@ -6,7 +6,6 @@ import java.util.List;
 import java.util.Map.Entry;
 
 import org.apache.commons.lang3.StringEscapeUtils;
-import org.kframework.compile.utils.MetaK;
 import org.kframework.kil.ASTNode;
 import org.kframework.kil.Attribute;
 import org.kframework.kil.Attributes;
@@ -39,7 +38,7 @@ import org.kframework.kil.ProductionItem;
 import org.kframework.kil.Require;
 import org.kframework.kil.Rewrite;
 import org.kframework.kil.Rule;
-import org.kframework.kil.Sort;
+import org.kframework.kil.NonTerminal;
 import org.kframework.kil.Syntax;
 import org.kframework.kil.Term;
 import org.kframework.kil.TermComment;
@@ -127,7 +126,7 @@ public class XmlUnparseFilter extends BasicVisitor {
         prepare(syn);
         firstPriorityBlock = true;
         buffer.append("syntax "
-                + StringEscapeUtils.escapeXml(syn.getSort().getName()));
+                + StringEscapeUtils.escapeXml(syn.getDeclaredSort().getName()));
         if (syn.getPriorityBlocks() != null)
             for (PriorityBlock pb : syn.getPriorityBlocks()) {
                 this.visitNode(pb);
@@ -174,7 +173,7 @@ public class XmlUnparseFilter extends BasicVisitor {
     }
 
     @Override
-    public Void visit(Sort sort, Void _) {
+    public Void visit(NonTerminal sort, Void _) {
 
         prepare(sort);
         buffer.append(StringEscapeUtils.escapeXml(sort.getName()));
@@ -224,7 +223,6 @@ public class XmlUnparseFilter extends BasicVisitor {
 
         prepare(attributes);
         java.util.List<String> reject = new LinkedList<String>();
-        reject.add("cons");
         reject.add("kgeneratedlabel");
         reject.add("prefixlabel");
         reject.add("filename");
@@ -327,7 +325,7 @@ public class XmlUnparseFilter extends BasicVisitor {
             buffer.append("!");
         buffer.append(StringEscapeUtils.escapeXml(variable.getName()));
         if (!variableList.contains(variable.getName())) {
-            buffer.append(":" + StringEscapeUtils.escapeXml(variable.getSort()));
+            buffer.append(":" + StringEscapeUtils.escapeXml(variable.getSort().getName()));
             variableList.add(variable.getName());
         }
         return postpare();
@@ -472,7 +470,7 @@ public class XmlUnparseFilter extends BasicVisitor {
         }
         if (contents.size() == 0) {
             buffer.append("."
-                    + StringEscapeUtils.escapeXml(collection.getSort()));
+                    + StringEscapeUtils.escapeXml(collection.getSort().getName()));
         }
         return postpare();
     }
@@ -523,9 +521,9 @@ public class XmlUnparseFilter extends BasicVisitor {
 
         prepare(kInjectedLabel);
         Term term = kInjectedLabel.getTerm();
-        if (MetaK.isKSort(term.getSort())) {
+        if (term.getSort().isKSort()) {
             buffer.append(StringEscapeUtils.escapeXml(KInjectedLabel
-                    .getInjectedSort(term.getSort())));
+                    .getInjectedSort(term.getSort()).getName()));
             buffer.append("2KLabel ");
         } else {
             buffer.append("# ");
@@ -651,7 +649,7 @@ public class XmlUnparseFilter extends BasicVisitor {
         if (c.isSyntactic()) {
             buffer.append(":");
         }
-        buffer.append(StringEscapeUtils.escapeXml(c.getSort()));
+        buffer.append(StringEscapeUtils.escapeXml(c.getSort().getName()));
         return postpare();
     }
 

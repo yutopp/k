@@ -17,18 +17,18 @@ public class ResolveListOfK extends CopyOnWriteTransformer {
     public ResolveListOfK(org.kframework.kil.loader.Context context) {
         super("Resolve KList", context);
     }
-    
-    
+
+
     @Override
     public ASTNode visit(Syntax node, Void _)  {
         return node;
     }
-    
+
     @Override
     public ASTNode visit(TermCons node, Void _)  {
         boolean change = false;
         ArrayList<Term> terms = new ArrayList<Term>();
-        Production prod = context.conses.get(node.getCons());
+        Production prod = node.getProduction();
         Iterator<Term> termIt = node.getContents().iterator();
         Term t;
         for (ProductionItem pitem : prod.getItems()) {
@@ -38,20 +38,20 @@ public class ResolveListOfK extends CopyOnWriteTransformer {
             if (resultAST != t) change = true;
             if (resultAST != null) {
                 if (!(resultAST instanceof Term)) {
-                    GlobalSettings.kem.register(new KException(ExceptionType.ERROR, 
-                            KExceptionGroup.INTERNAL, 
-                            "Expecting Term, but got " + resultAST.getClass() + ".", 
-                            getName(), t.getFilename(), t.getLocation()));                    
+                    GlobalSettings.kem.register(new KException(ExceptionType.ERROR,
+                            KExceptionGroup.INTERNAL,
+                            "Expecting Term, but got " + resultAST.getClass() + ".",
+                            getName(), t.getFilename(), t.getLocation()));
                 }
                 Term result = (Term) resultAST;
-                if (pitem instanceof Sort 
-                        && ((Sort)pitem).getName().equals(KSorts.KLIST)
-                        && !t.getSort().equals(KSorts.KLIST)) {
+                if (pitem instanceof NonTerminal
+                        && ((NonTerminal)pitem).getSort().equals(Sort.KLIST)
+                        && !t.getSort().equals(Sort.KLIST)) {
                     KList list = new KList();
                     list.getContents().add(result);
                     result = list;
                     change = true;
-                } 
+                }
                 terms.add(result);
             }
         }

@@ -8,7 +8,7 @@ import org.kframework.kil.ASTNode;
 
 /**
  * A collection of {@link Term}s.
- * 
+ *
  * @author AndreiS
  */
 @SuppressWarnings("serial")
@@ -25,7 +25,7 @@ public abstract class Collection extends Term {
      * Creates an instance of class {@code Collection} given its kind and a
      * frame variable. If the given frame is non-null, the kind of the frame
      * must be equal to the kind of the instance.
-     * 
+     *
      * @param frame
      *            the frame variable
      * @param kind
@@ -59,9 +59,13 @@ public abstract class Collection extends Term {
     }
 
     /**
-     * Returns true if this {@code Collection} does not have any contents and does not have a frame.
+     * Returns true if this {@code Collection} does not contain any content.
      */
     public boolean isEmpty() {
+        /*
+         * TODO(YilongL): I think this method should be made abstract; this
+         * frame stuff becomes out-dated now
+         */
         return size() == 0 && !hasFrame();
     }
 
@@ -71,17 +75,17 @@ public abstract class Collection extends Term {
      * @return the size of the contents
      */
     public abstract int size();
-    
+
     /**
      * Checks if this {@code Collection} term is a proper left-hand side view.
-     * 
+     *
      * @return {@code true} if this {@code Collection} term can be used as a
      *         pattern on the left-hand side of a rule; otherwise, {@code false}
      */
     public abstract boolean isLHSView();
 
     @Override
-    public final boolean isSymbolic() {
+    public boolean isSymbolic() {
         return false;
     }
 

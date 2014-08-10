@@ -16,9 +16,9 @@ import org.kframework.backend.java.kil.TermContext;
 /**
  * Expands the macros in each rule of a definition and those in the initial
  * configuration.
- * 
+ *
  * @author AndreiS
- * 
+ *
  */
 public class MacroExpander extends TermTransformer {
 
@@ -39,6 +39,12 @@ public class MacroExpander extends TermTransformer {
         for (Rule rule : definition.functionRules().values()) {
             processedDefinition.addRule(processRule(rule));
         }
+        for (Rule rule : definition.anywhereRules().values()) {
+            processedDefinition.addRule(processRule(rule));
+        }
+        for (Rule rule : definition.patternRules().values()) {
+            processedDefinition.addRule(processRule(rule));
+        }
         processedDefinition.addRuleCollection(definition.macros());
         return processedDefinition;
     }
@@ -56,7 +62,7 @@ public class MacroExpander extends TermTransformer {
         }
         UninterpretedConstraint processedLookups
             = (UninterpretedConstraint) expandMacro(rule.lookups());
- 
+
         Map<String, Term> processedLhsOfReadCell = null;
         Map<String, Term> processedRhsOfWriteCell = null;
         if (rule.isCompiledForFastRewriting()) {
@@ -90,11 +96,11 @@ public class MacroExpander extends TermTransformer {
     public Term processTerm(Term term) {
         return (Term) expandMacro(term);
     }
-    
+
     /**
      * Private helper method that keeps expanding macros in a specified node
      * until no macro is found.
-     * 
+     *
      * @param node
      *            the specified node
      * @return the expanded node

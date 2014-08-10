@@ -1,7 +1,7 @@
 // Copyright (c) 2012-2014 K Team. All Rights Reserved.
 /*!
 \title{SIMPLE --- Typed --- Static}
-\author{Grigore Ro\c{s}u and 
+\author{Grigore Ro\c{s}u and
         Traian Florin \c{S}erb\u{a}nu\c{t}\u{a}
         (\texttt{\{grosu,tserban2\}@illinois.edu})}
 \organization{University of Illinois at Urbana-Champaign} */
@@ -98,7 +98,7 @@ reject programs which throw uncaught exceptions.
 \end{itemize}
 Like in untyped SIMPLE, some constructs can be desugared into a
 smaller set of basic constructs.  In general, it should be clear why a
-program does not type by looking at the top of the textsf{k} cells in
+program does not type by looking at the top of the \textsf{k} cells in
 its stuck configuration. */
 
 
@@ -184,7 +184,7 @@ such programs. */
 /*@ We still need lists of expressions, defined below, but note that we do
 not need lists of identifiers anymore.  They have been replaced by the lists
 of parameters. */
- 
+
   syntax Exps ::= List{Exp,","}          [strict]
 
 
@@ -304,7 +304,7 @@ holding various typing \textsf{task} cells, and a global type environment.
 Each task includes a \textsf{k} cell holding the code to type, a \textsf{tenv}
 cell holding the local type environment, and a \textsf{return} cell holding
 the return type of the currently checked function.  The latter is needed in
-order to check whether return statements return values of the expected type. 
+order to check whether return statements return values of the expected type.
 Initially, the program is placed in a \textsf{k} cell inside a
 \textsf{task} cell.  Since the cells with multiplicity ``?'' are not
 included in the initial configuration, the \textsf{task} cell holding
@@ -347,7 +347,7 @@ variable. */
     when notBool(X in keys(Rho))
   rule <k> T:Type X:Id; => stmt ...</k> <tenv> Rho => Rho[X <- T] </tenv>
 
-  context _:Type _::Exp[HOLE::Exps];
+  context _:Type _:>Exp[HOLE:>Exps];
 // The rule below may need to sort E to Exp in the future, if the
 // parser gets stricter; without that information, it may not be able
 // to complete the LHS into T E[int,Ts],.Exps; (and similarly for the RHS)
@@ -365,7 +365,7 @@ to its declared function type), but also adds a task into the
 \textsf{tasks} cell.  The task consists of a typing of the statement
 declaring all the function parameters followed by the function body,
 together with the expected return type of the function.  The
-\texttt{types} and \texttt{mkDecls} functions, defined at the end of
+\texttt{getTypes} and \texttt{mkDecls} functions, defined at the end of
 the file in the section on auxiliary operations, extracts the list of
 types and makes a sequence of variable declarations from a list of
 function parameters, respectively.  Note that, although in the dynamic
@@ -582,7 +582,7 @@ exceptions which are not caught. */
 /*@ The function \texttt{mkDecls} turns a list of parameters into a
 list of variable declarations. */
 
-  syntax Decl ::= mkDecls(Params)  [function]
+  syntax Stmts ::= mkDecls(Params)  [function]
   rule mkDecls(T:Type X:Id, Ps:Params) => T X; mkDecls(Ps)
   rule mkDecls(.Params) => {}
 
@@ -595,12 +595,12 @@ list of variable declarations. */
   syntax LValue ::= Id
   rule isLValue(_:Exp[_:Exps]) => true
 
-  syntax Exp ::= ltype(Exp) 
+  syntax Exp ::= ltype(Exp)
 // We would like to say:
 //  context ltype(HOLE:LValue)
 // but we currently cannot type the HOLE
   context ltype(HOLE) when isLValue(HOLE)
-  
+
 
 //@ The function \texttt{getTypes} is the same as in SIMPLE typed dynamic.
 

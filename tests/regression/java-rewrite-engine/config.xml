@@ -3,32 +3,33 @@
 
 <tests>
 <!-- begin Java Rewrite Engine tests -->
-<!--
+
   <test
       definition="io/test1/test.k"
-      extensions="test"
+      extension="test"
       programs="io/test1/programs"
       results="io/test1/tests"
       posixInitScript="io/test1/prepare.sh"
       >
-    <kompile-option name="-backend" value="java" />
+    <kompile-option name="--backend" value="java" />
     <all-programs>
-      <krun-option name="-smt" value="none" />
-      <krun-option name="-parser" value="kast -parser ground" />
+      <krun-option name="--smt" value="none" />
+      <krun-option name="--parser" value="kast --parser ground" />
     </all-programs>
   </test>
+
   <test
       definition="io/test2/test.k"
-      extensions="test"
+      extension="test"
       programs="io/test2/programs"
       results="io/test2/tests"
       >
-    <kompile-option name="-backend" value="java" />
+    <kompile-option name="--backend" value="java" />
     <all-programs>
-      <krun-option name="-smt" value="none" />
+      <krun-option name="--smt" value="none" />
     </all-programs>
   </test>
--->
+
 
   <test
       definition="strings/test.k"
@@ -68,7 +69,7 @@
       <krun-option name="--output" value="pretty" />
     </all-programs>
   </test>
-  
+
   <test
       definition="list/issue146/test.k"
       programs="list/issue146/programs"
@@ -81,7 +82,7 @@
       <krun-option name="--output" value="pretty" />
     </all-programs>
   </test>
-  
+
   <test
       definition="list/issue709/test.k"
       programs="list/issue709/programs"
@@ -300,14 +301,26 @@
       extension="test"
       >
     <kompile-option name="--backend" value="java" />
-    <all-programs>
+    <all-programs regex="true">
       <krun-option name="--smt" value="none" />
+      <krun-option name="--pattern" value="&lt;k&gt; V:K &lt;/k&gt;" />
     </all-programs>
   </test>
 
   <include file="user_substitution/tests/config.xml" directory="user_substitution" />
 
+  <test
+      definition="anywhere/test1/test.k"
+      programs="anywhere/test1/programs"
+      results="anywhere/test1/tests"
+      extension="test"
+      >
+    <kompile-option name="--backend" value="java" />
+    <all-programs>
+      <krun-option name="--smt" value="none" />
+      <krun-option name="--output" value="pretty" />
+    </all-programs>
+  </test>
 
 <!-- end Java Rewrite Engine tests -->
 </tests>
-

@@ -3,6 +3,7 @@
 package org.kframework.backend.symbolic;
 
 import junit.framework.Assert;
+
 import org.junit.Before;
 import org.junit.Test;
 import org.kframework.kil.Attributes;
@@ -11,14 +12,15 @@ import org.kframework.kil.KApp;
 import org.kframework.kil.KInjectedLabel;
 import org.kframework.kil.KLabelConstant;
 import org.kframework.kil.KList;
-import org.kframework.kil.KSorts;
 import org.kframework.kil.Production;
 import org.kframework.kil.Rule;
+import org.kframework.kil.Sort;
 import org.kframework.kil.Term;
 import org.kframework.kil.Variable;
 import org.kframework.kil.loader.Context;
-import org.kframework.kil.visitors.exceptions.ParseFailedException;
 import org.mockito.Mockito;
+
+import com.google.common.collect.HashMultimap;
 
 import java.util.Map;
 import java.util.Set;
@@ -34,10 +36,7 @@ public class LTLModelCheckerTest {
     @Before
     public void setUp() {
         context = Mockito.mock(Context.class);
-        context.productions = Mockito.mock(Map.class);
-
-        Mockito.when(context.productions.get(KLabelConstant.of("'|=LTL"))).thenReturn(null);
-        Mockito.when(context.productions.get(KLabelConstant.of("val"))).thenReturn(null);
+        context.klabels = HashMultimap.create();
     }
 
     @Test
@@ -45,10 +44,10 @@ public class LTLModelCheckerTest {
 
         // create the input rule
         // LHS
-        Variable inputLTLState = new Variable("B", KSorts.BAG);
+        Variable inputLTLState = new Variable("B", Sort.BAG);
         KApp inputLTLStateKApp = KApp.of(new KInjectedLabel(inputLTLState), KList.EMPTY);
-        Variable X = new Variable("X", "Id");
-        Variable I = new Variable("I", "Int");
+        Variable X = new Variable("X", Sort.ID);
+        Variable I = new Variable("I", Sort.INT);
         KApp predicate = KApp.of(KLabelConstant.of("eq"), X, I);
         Term inputLhs = KApp.of(KLabelConstant.of(ResolveLtlAttributes.LTL_SAT), inputLTLStateKApp, predicate);
 
@@ -73,7 +72,7 @@ public class LTLModelCheckerTest {
 
         // create the output rule
         // LHS
-        Variable phi = new Variable("GeneratedFreshVar0", "K");
+        Variable phi = new Variable("GeneratedFreshVar0", Sort.K);
         Term outputLTLState = WrapVariableWithTopCell.wrapPCAndVarWithGeneratedTop(phi, inputLTLState.shallowCopy());
         KApp outputLTLStateKApp = KApp.of(new KInjectedLabel(outputLTLState), KList.EMPTY);
         Term outpuLhs = KApp.of(KLabelConstant.of(ResolveLtlAttributes.LTL_SAT), outputLTLStateKApp, predicate.shallowCopy());

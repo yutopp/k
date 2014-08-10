@@ -94,12 +94,12 @@ constructs. */
                 | "if" "(" Exp ")" Block "else" Block   [avoid, strict(1)]
                 | "if" "(" Exp ")" Block
                 | "while" "(" Exp ")" Block
-        	| "for" "(" Stmts Exp ";" Exp ")" Block
+            | "for" "(" Stmts Exp ";" Exp ")" Block
                 | "print" "(" Exps ")" ";"              [strict]
                 | "return" Exp ";"                      [strict]
                 | "return" ";"
                 | "try" Block "catch" "(" Param ")" Block
-        	| "throw" Exp ";"                       [strict]
+            | "throw" Exp ";"                       [strict]
                 | "join" Exp ";"                        [strict]
                 | "acquire" Exp ";"                     [strict]
                 | "release" Exp ";"                     [strict]
@@ -208,7 +208,7 @@ right type to the allocated locations. */
        <nextLoc> L:Int => L +Int 1 +Int N </nextLoc>
     when N >=Int 0
 
-  context _:Type _::Exp[HOLE::Exps];
+  context _:Type _:>Exp[HOLE:>Exps];
 
 /*@ The desugaring of multi-dimensional arrays into unidimensional
 ones is also similar to that in untyped SIMPLE, although we have to
@@ -289,15 +289,11 @@ Check array bounds, as part of the dynamic typing policy. */
 
 // Same comment as for simple untyped regarding [anywhere]
   rule V:Val[N1:Int, N2:Int, Vs:Vals] => V[N1][N2, Vs]
-    [structural]
-  rule lvalue(V:Val[N1:Int, N2:Int, Vs:Vals]) => lvalue(V[N1][N2, Vs])
-    [structural]
+    [structural, anywhere]
 
 // Same comment as for simple untyped regarding [anywhere]
   rule array(_:Type, L:Int, M:Int)[N:Int] => lookup(L +Int N)
-    when N >=Int 0 andBool N <Int M  [structural]
-  rule lvalue(array(_:Type, L:Int, M:Int)[N:Int]) => lvalue(lookup(L +Int N))
-    when N >=Int 0 andBool N <Int M  [structural]
+    when N >=Int 0 andBool N <Int M  [structural, anywhere]
 
 //@ \subsubsection{Size of an array}
 
@@ -465,7 +461,7 @@ values, in which case our semantics below works fine: */
 
 /*@ Turns a list of parameters and a list of instance values for them
 into a list of variable declarations. */
-  syntax Decl ::= mkDecls(Params,Vals)  [function]
+  syntax Stmts ::= mkDecls(Params,Vals)  [function]
   rule mkDecls((T:Type X:Id, Ps:Params), (V:Val, Vs:Vals))
     => T X=V; mkDecls(Ps,Vs)
   rule mkDecls(.Params,.Vals) => {}
@@ -492,8 +488,8 @@ into a list of variable declarations. */
 
   //context lvalue(_[HOLE])
   //context lvalue(HOLE[_])
-  context lvalue(_::Exp[HOLE::Exps])
-  context lvalue(HOLE::Exp[_::Exps])
+  context lvalue(_:>Exp[HOLE:>Exps])
+  context lvalue(HOLE:>Exp[_:>Exps])
 
   rule lvalue(lookup(L:Int) => loc(L))  [structural]
 

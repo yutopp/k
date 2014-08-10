@@ -2,7 +2,6 @@
 package org.kframework.krun;
 
 import org.kframework.backend.kore.ToKAppTransformer;
-import org.kframework.backend.unparser.UnparserFilterNew;
 import org.kframework.compile.transformers.AddEmptyLists;
 import org.kframework.compile.transformers.Cell2DataStructure;
 import org.kframework.kil.*;
@@ -12,7 +11,6 @@ import org.kframework.kil.visitors.exceptions.ParseFailedException;
 import org.kframework.parser.concrete.disambiguate.TypeSystemFilter;
 
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
 
@@ -56,7 +54,7 @@ public class ConcretizeSyntax extends CopyOnWriteTransformer {
                 TermCons termCons = (TermCons) child;
                 if (termCons.getProduction().isListDecl()) {
                     if (new AddEmptyLists(context).isAddEmptyList(tcParent.getProduction().getChildSort(i), termCons.getContents().get(0).getSort()) && termCons.getContents().get(1) instanceof ListTerminator) {
-                        
+
                         tcParent.getContents().set(i, termCons.getContents().get(0));
                     }
                 }
@@ -82,22 +80,21 @@ public class ConcretizeSyntax extends CopyOnWriteTransformer {
             }
             Term injected = ((KInjectedLabel)label).getTerm();
 //            if (injected instanceof Token) {
-                return (Term) this.visitNode(injected);
+                return this.visitNode(injected);
 //            }
         } else if (label instanceof KLabelConstant) {
             String klabel = ((KLabelConstant) label).getLabel();
-            Set<String> conses = context.labels.get(klabel);
+            Set<Production> prods = context.klabels.get(klabel);
             List<Term> contents = new ArrayList<Term>();
             possibleTerms = new ArrayList<Term>();
             if (child instanceof KList) {
                 contents = ((KList)child).getContents();
             }
-            if (conses != null) {    
+            if (prods.size() > 0) {
                 for (int i = 0; i < contents.size(); i++) {
                     contents.set(i, (Term) this.visitNode(contents.get(i)));
                 }
-                for (String cons : conses) {
-                    Production p = context.conses.get(cons);
+                for (Production p : prods) {
                     List<Term> newContents = new ArrayList<Term>(contents);
                     if (p.getAttribute("reject") != null)
                         continue;
@@ -113,7 +110,7 @@ public class ConcretizeSyntax extends CopyOnWriteTransformer {
                             newContents.set(i, newContents.get(i).shallowCopy());
                         }
                     }
-                    possibleTerms.add(new TermCons(p.getSort(), cons, newContents, context));
+                    possibleTerms.add(new TermCons(p.getSort(), newContents, p));
                 }
                 if (possibleTerms.size() == 0) {
                     return super.visit(kapp, null);
@@ -121,15 +118,15 @@ public class ConcretizeSyntax extends CopyOnWriteTransformer {
                 if (possibleTerms.size() == 1) {
                     return possibleTerms.get(0);
                 } else {
-                    return new Ambiguity("K", possibleTerms);
+                    return new Ambiguity(Sort.K, possibleTerms);
                 }
             } else if (child.equals(KList.EMPTY)) {
                 //could be a list terminator, which don't have conses
-                Set<String> sorts = context.listLabels.get(klabel);
+                Set<Production> listProds = context.listKLabels.get(klabel);
                 possibleTerms = new ArrayList<Term>();
-                if (sorts != null) {
-                    for (String sort : sorts) {
-                            possibleTerms.add(new ListTerminator(sort, null));
+                if (listProds != null) {
+                    for (Production prod : listProds) {
+                            possibleTerms.add(new ListTerminator(prod.getSort(), null));
                     }
                     if (possibleTerms.size() == 0) {
                         return super.visit(kapp, null);
@@ -137,8 +134,8 @@ public class ConcretizeSyntax extends CopyOnWriteTransformer {
                     if (possibleTerms.size() == 1) {
                         return possibleTerms.get(0);
                     } else {
-                        
-                        return new Ambiguity("K", possibleTerms);
+
+                        return new Ambiguity(Sort.K, possibleTerms);
                     }
                 }
             }
@@ -167,7 +164,7 @@ public class ConcretizeSyntax extends CopyOnWriteTransformer {
             Term accept = (Term) this.visitNode(child);
             if (accept instanceof ListTerminator) {
                 ListTerminator empty = (ListTerminator) accept;
-                if (!empty.getSort().equals("Bag")) {
+                if (!empty.getSort().equals(Sort.BAG)) {
                     contents.add(accept);
                 }
             } else {
@@ -175,26 +172,26 @@ public class ConcretizeSyntax extends CopyOnWriteTransformer {
             }
         }
         if (contents.size() == 0) {
-            return new ListTerminator("Bag", null);
+            return new ListTerminator(Sort.BAG, null);
         }
         if (contents.size() == 1) {
             return contents.get(0);
         }
         return new Bag(contents);
     }
-    
+
     @Override
     public ASTNode visit(MapBuiltin map, Void _) {
         Term kapp = (Term) toKApp.visitNode(super.visit(map, _));
         return this.visitNode(kapp);
     }
-    
+
     @Override
     public ASTNode visit(ListBuiltin list, Void _) {
         Term kapp = (Term) toKApp.visitNode(super.visit(list, _));
         return this.visitNode(kapp);
     }
-    
+
     @Override
     public ASTNode visit(SetBuiltin set, Void _) {
         Term kapp = (Term) toKApp.visitNode(super.visit(set, _));

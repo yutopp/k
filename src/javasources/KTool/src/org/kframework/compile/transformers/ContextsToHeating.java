@@ -22,7 +22,7 @@ import java.util.List;
  */
 public class ContextsToHeating extends CopyOnWriteTransformer {
     private List<ModuleItem> rules = new ArrayList<ModuleItem>();
-    
+
     public ContextsToHeating(Context context) {
            super("Contexts to Heating Rules", context);
     }
@@ -31,36 +31,17 @@ public class ContextsToHeating extends CopyOnWriteTransformer {
     public ASTNode visit(Module node, Void _)  {
         return ((Module)super.visit(node, _)).addModuleItems(rules);
     }
-    
-    /* assumes term has exactly one rewrite and returns the list 
+
+    /* assumes term has exactly one rewrite and returns the list
      * C[v], v, t1, t2 such that
      * v is a fresh variable and term = C[t1 => t2] */
     private List<Term> splitRewrite(Term term)  {
         final Variable v;
         if (kompileOptions.backend.java()) {
             /* the java rewrite engine only supports heating/cooling on KItem */
-            if(kompileOptions.experimental.testGen){
-                if(term instanceof TermCons){
-                    TermCons termCons = (TermCons)term;
-                    int index = 0;
-                    //TODO(OwolabiL): what if there is more than 1 KItem?
-                    for (int i = 0; i < termCons.arity(); i++) {
-                        if (termCons.getContents().get(i).getSort().equals("KItem")){
-                            index = i;
-                            break;
-                        }
-                    }
-                    v = Variable.getFreshVar(termCons.getProduction().getChildSort(index));
-                }else{
-                    //TODO(OwolabiL): Remove if this is never used
-                    v = Variable.getFreshVar(term.getSort());
-                }
-
-            } else{
-                v = Variable.getFreshVar(KSorts.KITEM);
-            }
+            v = Variable.getFreshVar(Sort.KITEM);
         } else {
-            v = Variable.getFreshVar(KSorts.K);
+            v = Variable.getFreshVar(Sort.K);
         }
         final List<Term> list = new ArrayList<Term>();
         CopyOnWriteTransformer transformer = new CopyOnWriteTransformer("splitter", context) {
@@ -75,7 +56,7 @@ public class ContextsToHeating extends CopyOnWriteTransformer {
         list.add(0, result);
         return list;
     }
-    
+
     private Term substituteHole(Term term, Term replacement)  {
         return substituteSubstitutable(term, Hole.KITEM_HOLE, replacement);
     }
@@ -147,37 +128,13 @@ public class ContextsToHeating extends CopyOnWriteTransformer {
         heatingRule.setEnsures(substituteHole(node.getEnsures(), freshVariable));
         heatingRule.getAttributes().getContents().addAll(node.getAttributes().getContents());
         heatingRule.putAttribute(MetaK.Constants.heatingTag,"");
-        if (kompileOptions.experimental.testGen) {
-            // TODO(YilongL): 1) is the body always a TermCons? 2) the following
-            // naming convention may not guarantee a unique label for each
-            // generated heating rule; need to be revised later
-            for (int i = 0; i < ((TermCons) body).getContents().size(); i++) {
-                if (((TermCons) body).getContents().get(i) instanceof Rewrite) {
-                    heatingRule.setLabel(MetaK.Constants.heatingTag + "("
-                            + node.getAttribute("klabel") + "," + i + ")");
-                    break;
-                }
-            }
-        }
         rules.add(heatingRule);
 
         Rule coolingRule = new Rule(rhsHeat, lhsHeat, context);
         coolingRule.getAttributes().getContents().addAll(node.getAttributes().getContents());
         coolingRule.putAttribute(MetaK.Constants.coolingTag,"");
-        if (kompileOptions.experimental.testGen) {
-            // TODO(YilongL): the following naming convention may not guarantee
-            // a unique label for each generated cooling rule; need to be
-            // revised later
-            for (int i = 0; i < ((TermCons) body).getContents().size(); i++) {
-                if (((TermCons) body).getContents().get(i) instanceof Rewrite) {
-                    coolingRule.setLabel(MetaK.Constants.coolingTag + "("
-                            + node.getAttribute("klabel") + "," + i + ")");
-                    break;
-                }
-            }
-        }        
         rules.add(coolingRule);
-        
+
         return null;
     }
 

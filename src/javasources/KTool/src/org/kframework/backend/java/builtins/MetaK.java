@@ -21,14 +21,14 @@ import java.util.Set;
 
 /**
  * Table of {@code public static} methods for builtin meta K operations.
- * 
+ *
  * @author AndreiS
  */
 public class MetaK {
 
     /**
      * Checks if two given {@link Term}s can be unified.
-     * 
+     *
      * @param term1
      *            the first term
      * @param term2
@@ -48,12 +48,20 @@ public class MetaK {
         } catch (UnificationFailure e) {
             return BoolToken.FALSE;
         }
-        return BoolToken.TRUE;
+
+        constraint.simplify();
+        if (constraint.isSubstitution()) {
+            return BoolToken.TRUE;
+        } else if (constraint.isFalse()) {
+            return BoolToken.FALSE;
+        } else {
+            return null;
+        }
     }
 
     /**
      * Checks if the subject term matches the pattern.
-     * 
+     *
      * @param subject
      *            the subject term
      * @param pattern
@@ -67,12 +75,12 @@ public class MetaK {
         return PatternMatcher.matchable(subject, pattern, context) ? BoolToken.TRUE
                 : BoolToken.FALSE;
     }
-    
+
     /**
      * Renames {@link Variable}s of a given {@link Term} if they appear also in
      * a given {@link BuiltinSet} of {@link MetaVariable}s.
-     * 
-     * 
+     *
+     *
      * @param term
      *            the given term
      * @param builtinSet
@@ -102,7 +110,7 @@ public class MetaK {
 
     /**
      * Renames all {@link Variable}s inside a given {@link Term} to unique fresh names.
-     * 
+     *
      * @param term
      *            the given term
      * @param context
@@ -117,41 +125,28 @@ public class MetaK {
     /**
      * Returns all {@link Variable}s inside a given {@link Term} as a
      * {@link BuiltinSet} of {@link MetaVariable}s.
-     * 
-     * @param term
-     *            the given term
-     * @param context
-     *            the term context
-     * @return a {@code BuiltinSet} of {@code MetaVariable}s
      */
     public static BuiltinSet variables(Term term, TermContext context) {
-        Set<Term> metaVariables = new HashSet<Term>();
+        BuiltinSet.Builder builder = BuiltinSet.builder();
         for (Variable variable : term.variableSet()) {
-            metaVariables.add(new MetaVariable(variable));
+            builder.add(new MetaVariable(variable));
         }
-        return new BuiltinSet(metaVariables);
+        return (BuiltinSet) builder.build();
     }
-    
+
     /**
      * Returns all {@link Variable}s inside a given {@link Term} as a
      * {@link BuiltinSet}.
-     * 
-     * @param term
-     *            the given term
-     * @param context
-     *            the term context
-     * @return a {@code BuiltinSet} of {@code Variable}s
      */
     public static BuiltinSet trueVariables(Term term, TermContext context) {
-        Set<Variable> trueVariables = term.variableSet();
-        return new BuiltinSet(trueVariables);
+        BuiltinSet.Builder builder = BuiltinSet.builder();
+        builder.addAll(term.variableSet());
+        return (BuiltinSet) builder.build();
     }
 
-    public static BuiltinMap variablesMap(Term term, TermContext context) {
+    public static Term variablesMap(Term term, TermContext context) {
         BuiltinMap.Builder builder = BuiltinMap.builder();
-        Set<Variable> variables = term.variableSet();
-        for (Variable variable : variables) {
-            assert variable instanceof Variable : "this function only applies on variables";
+        for (Variable variable : term.variableSet()) {
             builder.put(new MetaVariable(variable), variable);
         }
         return builder.build();
@@ -159,7 +154,7 @@ public class MetaK {
 
     /**
      * Returns the K label of a specified {@link KItem}.
-     * 
+     *
      * @param kItem
      *            the specified {@code KItem}
      * @param context

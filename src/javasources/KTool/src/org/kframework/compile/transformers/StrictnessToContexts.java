@@ -6,8 +6,8 @@ import org.kframework.compile.utils.SyntaxByTag;
 import org.kframework.kil.*;
 import org.kframework.kil.loader.Context;
 import org.kframework.kil.visitors.CopyOnWriteTransformer;
-import org.kframework.parser.basic.Basic;
-import org.kframework.parser.basic.ParseException;
+import org.kframework.parser.outer.Outer;
+import org.kframework.parser.outer.ParseException;
 import org.kframework.utils.errorsystem.KException;
 import org.kframework.utils.errorsystem.KException.ExceptionType;
 import org.kframework.utils.errorsystem.KException.KExceptionGroup;
@@ -53,7 +53,7 @@ public class StrictnessToContexts extends CopyOnWriteTransformer {
                    || !prod.containsAttribute("strict", true) && prod.containsAttribute("seqstrict", true);
             Boolean isSeq = prod.containsAttribute("seqstrict", true);
 
-            if (!(MetaK.isComputationSort(prod.getSort()) || prod.getSort().equals(KSorts.KLABEL))) {
+            if (!(prod.getSort().isComputationSort() || prod.getSort().equals(Sort.KLABEL))) {
                 GlobalSettings.kem.register(new KException(ExceptionType.ERROR,
                         KExceptionGroup.COMPILER,
                         "only productions of sort K, sort KLabel or of syntactic sorts can have "
@@ -75,7 +75,7 @@ public class StrictnessToContexts extends CopyOnWriteTransformer {
                     continue;
                 } else {
                     Attributes attributes = prod.getAttributes();
-                    prod = new Production(new Sort(KSorts.KLABEL),
+                    prod = new Production(new NonTerminal(Sort.KLABEL),
                             Collections.<ProductionItem>singletonList(new Terminal(prod.getKLabel())));
                     prod.setAttributes(attributes);
                     kLabelStrictness(prod, isSeq);
@@ -83,7 +83,7 @@ public class StrictnessToContexts extends CopyOnWriteTransformer {
                 }
             }
 
-            if (prod.isConstant() && !prod.getSort().equals(KSorts.KLABEL)) {
+            if (prod.isConstant() && !prod.getSort().equals(Sort.KLABEL)) {
                 GlobalSettings.kem.register(new KException(ExceptionType.ERROR,
                         KExceptionGroup.COMPILER,
                         "Production is a constant and cannot be strict.",
@@ -126,7 +126,7 @@ public class StrictnessToContexts extends CopyOnWriteTransformer {
                 attribute = ALL;
             }
 
-            if (prod.getSort().equals(KSorts.KLABEL)) {
+            if (prod.getSort().equals(Sort.KLABEL)) {
                 assert attribute.equals(ALL) && strictCell.equals(DEFAULT_STRICTNESS_CELL) :
                         "Customized strictness for K labels not currently implemented";
                 kLabelStrictness(prod, isSeq);
@@ -134,7 +134,7 @@ public class StrictnessToContexts extends CopyOnWriteTransformer {
             }
 
             try {
-                strictAttrs = Basic.parseAttributes(attribute, prod.getFilename());
+                strictAttrs = Outer.parseAttributes(attribute, prod.getFilename());
             } catch (ParseException e) {
                 GlobalSettings.kem.register(new KException(ExceptionType.ERROR,
                         KExceptionGroup.COMPILER,
@@ -150,7 +150,7 @@ public class StrictnessToContexts extends CopyOnWriteTransformer {
                 if (strictAttrValue.isEmpty()) strictAttrAttrs = new Attributes();
                 else {
                     try {
-                        strictAttrAttrs = Basic.parseAttributes(strictAttrValue, prod.getFilename());
+                        strictAttrAttrs = Outer.parseAttributes(strictAttrValue, prod.getFilename());
                     } catch (ParseException e) {
                         GlobalSettings.kem.register(new KException(ExceptionType.ERROR,
                                 KExceptionGroup.COMPILER,
@@ -227,18 +227,8 @@ public class StrictnessToContexts extends CopyOnWriteTransformer {
                 Attribute newStrictAttr = newStrictAttrs.get(i);
                 TermCons termCons = (TermCons) MetaK.getTerm(prod, context);
                 for (int j = 0; j < prod.getArity(); ++j) {
-                    if (kompileOptions.backend.java()) {
-                        /*
-                         * the Java Rewrite Engine only supports strictness with
-                         * KItem variables The only exception is if the
-                         * "use_concrete" flag is used (needed for test
-                         * generation)
-                         */
-                        if (kompileOptions.experimental.testGen) {
-                            termCons.getContents().get(j).setSort(KSorts.KITEM);
-                        }
-                    } else {
-                        termCons.getContents().get(j).setSort(KSorts.K);
+                    if (!kompileOptions.backend.java()) {
+                        termCons.getContents().get(j).setSort(Sort.K);
                     }
                 }
 
@@ -251,13 +241,7 @@ public class StrictnessToContexts extends CopyOnWriteTransformer {
                 if (isSeq) {
                     for (int j = 0; j < i; ++j) {
                         Term arg = termCons.getContents().get(-1 + Integer.parseInt(newStrictAttrs.get(j).getKey()));
-                        if (kompileOptions.experimental.testGen) {
-                            KApp kResultPred = KApp.of(KLabelConstant.KRESULT_PREDICATE, arg);
-                            sideCond = sideCond == null ? kResultPred : 
-                                KApp.of(KLabelConstant.BOOL_ANDBOOL_KLABEL, sideCond, kResultPred);
-                        } else {
-                            arg.setSort(KSorts.KRESULT);
-                        }
+                        arg.setSort(Sort.KRESULT);
                     }
                 }
 
@@ -274,7 +258,7 @@ public class StrictnessToContexts extends CopyOnWriteTransformer {
                     String strictContextProdAttribute = strictContextProd.getAttribute(CONTEXT);
                     if (!strictContextProdAttribute.isEmpty()) {
                         try {
-                            Attributes strictContextAttrs = Basic.parseAttributes(
+                            Attributes strictContextAttrs = Outer.parseAttributes(
                                     strictContextProdAttribute, strictContextProd.getFilename());
                             ctx.getAttributes().setAll(strictContextAttrs);
                         } catch (ParseException e) {
@@ -314,7 +298,7 @@ public class StrictnessToContexts extends CopyOnWriteTransformer {
     }
 
     private Set<Production> getStrictContextProductions(String strictType, Production prod) {
-        Set<Production> productions = context.productions.get(strictType);
+        Set<Production> productions = context.klabels.get(strictType);
         if (productions == null) {
             GlobalSettings.kem.register(new KException(ExceptionType.ERROR,
                         KExceptionGroup.COMPILER,
@@ -332,12 +316,12 @@ public class StrictnessToContexts extends CopyOnWriteTransformer {
     private void kLabelStrictness(Production prod, boolean isSeq) {
         List<Term> contents = new ArrayList<>(3);
         //first argument is a variable of sort KList
-        Variable variable = Variable.getFreshVar(KSorts.KLIST);
+        Variable variable = Variable.getFreshVar(Sort.KLIST);
         contents.add(variable);
         //second is a HOLE
         contents.add(getHoleTerm(null, prod));
         //third argument is a variable of sort KList
-        contents.add(Variable.getFreshVar(KSorts.KLIST));
+        contents.add(Variable.getFreshVar(Sort.KLIST));
         KApp kapp = new KApp(MetaK.getTerm(prod, context), new KList(contents));
         //make a context from the TermCons
         org.kframework.kil.Context ctx = new org.kframework.kil.Context();

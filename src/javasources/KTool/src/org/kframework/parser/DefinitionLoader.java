@@ -17,6 +17,7 @@ import org.kframework.compile.utils.CheckVisitorStep;
 import org.kframework.kil.ASTNode;
 import org.kframework.kil.Definition;
 import org.kframework.kil.DefinitionItem;
+import org.kframework.kil.Sort;
 import org.kframework.kil.Term;
 import org.kframework.kil.loader.AddAutoIncludedModulesVisitor;
 import org.kframework.kil.loader.CollectConfigCellsVisitor;
@@ -25,7 +26,7 @@ import org.kframework.kil.loader.Context;
 import org.kframework.kil.loader.JavaClassesFactory;
 import org.kframework.kil.loader.RemoveUnusedModules;
 import org.kframework.kil.visitors.exceptions.ParseFailedException;
-import org.kframework.parser.basic.Basic;
+import org.kframework.parser.outer.Outer;
 import org.kframework.parser.concrete.disambiguate.AmbDuplicateFilter;
 import org.kframework.parser.concrete.disambiguate.AmbFilter;
 import org.kframework.parser.concrete.disambiguate.BestFitFilter;
@@ -39,13 +40,14 @@ import org.kframework.parser.concrete.disambiguate.FlattenListsFilter;
 import org.kframework.parser.concrete.disambiguate.GetFitnessUnitKCheckVisitor;
 import org.kframework.parser.concrete.disambiguate.GetFitnessUnitTypeCheckVisitor;
 import org.kframework.parser.concrete.disambiguate.PreferAvoidFilter;
+import org.kframework.parser.concrete.disambiguate.PreferDotsFilter;
 import org.kframework.parser.concrete.disambiguate.PriorityFilter;
 import org.kframework.parser.concrete.disambiguate.SentenceVariablesFilter;
 import org.kframework.parser.concrete.disambiguate.TypeInferenceSupremumFilter;
 import org.kframework.parser.concrete.disambiguate.TypeSystemFilter;
 import org.kframework.parser.concrete.disambiguate.TypeSystemFilter2;
 import org.kframework.parser.concrete.disambiguate.VariableTypeInferenceFilter;
-import org.kframework.parser.generator.BasicParser;
+import org.kframework.parser.generator.OuterParser;
 import org.kframework.parser.generator.CacheLookupFilter;
 import org.kframework.parser.generator.Definition2SDF;
 import org.kframework.parser.generator.DefinitionSDF;
@@ -62,30 +64,45 @@ import org.kframework.utils.XmlLoader;
 import org.kframework.utils.errorsystem.KException;
 import org.kframework.utils.errorsystem.KException.ExceptionType;
 import org.kframework.utils.errorsystem.KException.KExceptionGroup;
+import org.kframework.utils.errorsystem.KExceptionManager;
 import org.kframework.utils.file.FileUtil;
-import org.kframework.utils.general.GlobalSettings;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
+import com.google.inject.Inject;
+
 public class DefinitionLoader {
-    public static Definition loadDefinition(File mainFile, String lang, boolean autoinclude, Context context) throws IOException {
+
+    private final Stopwatch sw;
+    private final BinaryLoader loader;
+    private final KExceptionManager kem;
+
+    @Inject
+    public DefinitionLoader(
+            Stopwatch sw,
+            BinaryLoader loader,
+            KExceptionManager kem) {
+        this.sw = sw;
+        this.loader = loader;
+        this.kem = kem;
+    }
+
+    public Definition loadDefinition(File mainFile, String lang, boolean autoinclude, Context context) {
         Definition javaDef;
-        File canoFile = mainFile.getCanonicalFile();
+        File canoFile = mainFile.getAbsoluteFile();
 
         String extension = FilenameUtils.getExtension(mainFile.getAbsolutePath());
         if ("bin".equals(extension)) {
-            javaDef = (Definition) BinaryLoader.load(canoFile.toString());
+            javaDef = loader.loadOrDie(Definition.class, canoFile.toString());
 
-            Stopwatch.instance().printIntermediate("Load definition from binary");
+            sw.printIntermediate("Load definition from binary");
 
             javaDef.preprocess(context);
 
-            Stopwatch.instance().printIntermediate("Preprocess");
+            sw.printIntermediate("Preprocess");
 
         } else {
             javaDef = parseDefinition(mainFile, lang, autoinclude, context);
-
-            BinaryLoader.save(context.kompiled.getAbsolutePath() + "/defx-" + context.kompileOptions.backend.name().toLowerCase() + ".bin", javaDef);
         }
         return javaDef;
     }
@@ -97,15 +114,15 @@ public class DefinitionLoader {
      * @param mainModule
      * @return
      */
-    public static Definition parseDefinition(File mainFile, String mainModule, boolean autoinclude, Context context) {
+    public Definition parseDefinition(File mainFile, String mainModule, boolean autoinclude, Context context) {
         try {
             // for now just use this file as main argument
-            // ------------------------------------- basic parsing
+            // ------------------------------------- outer parsing
 
-            BasicParser bparser = new BasicParser(autoinclude, context.kompileOptions);
+            OuterParser bparser = new OuterParser(autoinclude, context.kompileOptions);
             bparser.slurp(mainFile.getPath(), context);
 
-            // transfer information from the BasicParser object, to the Definition object
+            // transfer information from the OuterParser object, to the Definition object
             org.kframework.kil.Definition def = new org.kframework.kil.Definition();
             try {
                 def.setMainFile(mainFile.getCanonicalPath());
@@ -120,48 +137,40 @@ public class DefinitionLoader {
             if (!context.kompileOptions.backend.documentation()) {
                 if (!def.getModulesMap().containsKey(context.kompileOptions.syntaxModule())) {
                     String msg = "Could not find main syntax module used to generate a parser for programs (X-SYNTAX). Using: '" + mainModule + "' instead.";
-                    GlobalSettings.kem.register(new KException(ExceptionType.HIDDENWARNING, KExceptionGroup.INNER_PARSER, msg, def.getMainFile(), "File system."));
+                    kem.register(new KException(ExceptionType.HIDDENWARNING, KExceptionGroup.INNER_PARSER, msg, def.getMainFile(), "File system."));
                     def.setMainSyntaxModule(mainModule);
                 } else {
                     def.setMainSyntaxModule(context.kompileOptions.syntaxModule());
                 }
-                
+
                 if (!def.getModulesMap().containsKey(mainModule)) {
                     String msg = "Could not find main module '" + mainModule + "'. Use --main-module option to specify another.";
-                    GlobalSettings.kem.register(new KException(ExceptionType.ERROR, KExceptionGroup.COMPILER, msg, def.getMainFile(), "File system."));
+                    kem.register(new KException(ExceptionType.ERROR, KExceptionGroup.COMPILER, msg, def.getMainFile(), "File system."));
                 }
             }
-            Stopwatch.instance().printIntermediate("Basic Parsing");
+            sw.printIntermediate("Outer Parsing");
 
-            //This following line was commented out to make the latex backend 
+            //This following line was commented out to make the latex backend
             //parse files importing from other files
             def = (Definition) new RemoveUnusedModules(context, autoinclude).visitNode(def);
-            
+
             // HERE: add labels to sorts
 
             def.preprocess(context);
 
-            Stopwatch.instance().printIntermediate("Preprocess");
+            sw.printIntermediate("Preprocess");
 
             new CheckVisitorStep<Definition>(new CheckSyntaxDecl(context), context).check(def);
             new CheckVisitorStep<Definition>(new CheckListDecl(context), context).check(def);
             new CheckVisitorStep<Definition>(new CheckSortTopUniqueness(context), context).check(def);
 
-            Stopwatch.instance().printIntermediate("Checks");
+            sw.printIntermediate("Checks");
 
             // ------------------------------------- generate files
-            try {
-                ResourceExtractor.ExtractDefSDF(new File(context.dotk, "def"));
-                ResourceExtractor.ExtractGroundSDF(new File(context.dotk, "ground"));
-    
-                ResourceExtractor.ExtractProgramSDF(new File(context.dotk, "pgm"));
-            } catch (IOException e) {
-                if (context.globalOptions.debug) {
-                    e.printStackTrace();
-                }
-                GlobalSettings.kem.register(new KException(ExceptionType.ERROR, KExceptionGroup.INTERNAL, 
-                        "IO error detected writing to " + context.kompiled.getAbsolutePath()));
-            }
+            ResourceExtractor.ExtractDefSDF(new File(context.dotk, "def"));
+            ResourceExtractor.ExtractGroundSDF(new File(context.dotk, "ground"));
+
+            ResourceExtractor.ExtractProgramSDF(new File(context.dotk, "pgm"));
             // ------------------------------------- generate parser TBL
             // cache the TBL if the sdf file is the same
             if (!context.kompileOptions.backend.documentation()) {
@@ -174,23 +183,20 @@ public class DefinitionLoader {
                 FileUtil.save(context.dotk.getAbsolutePath() + "/pgm/Program.sdf", newSdfPgmBuilder);
                 String newSdfPgm = FileUtil.getFileContent(context.dotk.getAbsolutePath() + "/pgm/Program.sdf");
 
-                Stopwatch.instance().printIntermediate("File Gen Pgm");
+                sw.printIntermediate("File Gen Pgm");
 
                 if (!oldSdfPgm.equals(newSdfPgm) || !new File(context.kompiled, "Program.tbl").exists()) {
                     Sdf2Table.run_sdf2table(new File(context.dotk.getAbsoluteFile() + "/pgm"), "Program");
                     try {
                         FileUtils.copyFileToDirectory(new File(context.dotk, "pgm/Program.sdf"), context.kompiled);
                         FileUtils.copyFileToDirectory(new File(context.dotk, "pgm/Program.tbl"), context.kompiled);
-                        } catch (IOException e) {
-                        if (context.globalOptions.debug) {
-                            e.printStackTrace();
-                        }
-                        GlobalSettings.kem.register(new KException(ExceptionType.ERROR, KExceptionGroup.INTERNAL, 
-                                "IO error detected writing program parser to file"));
-                        return null; //unreachable
+                    } catch (IOException e) {
+                        kem.registerInternalError(
+                                "IO error detected writing program parser to file", e);
+                        throw new AssertionError("unreachable");
                     }
-                    
-                    Stopwatch.instance().printIntermediate("Generate TBLPgm");
+
+                    sw.printIntermediate("Generate TBLPgm");
                 }
             }
 
@@ -207,7 +213,7 @@ public class DefinitionLoader {
             FileUtil.save(context.dotk.getAbsolutePath() + "/ground/Integration.sdf", Definition2SDF.getSdfForDefinition(def, context));
             String newSdf = FileUtil.getFileContent(context.dotk.getAbsolutePath() + "/def/Integration.sdf");
 
-            Stopwatch.instance().printIntermediate("File Gen Def");
+            sw.printIntermediate("File Gen Def");
 
             String cacheFile = context.kompiled.getAbsolutePath() + "/defx-cache.bin";
             if (!oldSdf.equals(newSdf) || !new File(context.kompiled, "Rule.tbl").exists()
@@ -223,12 +229,9 @@ public class DefinitionLoader {
                         try {
                             FileUtils.copyFile(new File(context.dotk, "ground/Concrete.tbl"), new File(context.kompiled, "Ground.tbl"));
                         } catch (IOException e) {
-                            if (context.globalOptions.debug) {
-                                e.printStackTrace();
-                            }
-                            GlobalSettings.kem.register(new KException(ExceptionType.ERROR, KExceptionGroup.INTERNAL, 
-                                    "IO error detected writing ground parser to file"));
-                            return null; //unreachable
+                            kem.registerInternalError(
+                                    "IO error detected writing ground parser to file", e);
+                            throw new AssertionError("unreachable");
                         }
                     }
                     t1.join();
@@ -236,26 +239,23 @@ public class DefinitionLoader {
                         FileUtils.copyFileToDirectory(new File(context.dotk, "def/Integration.sdf"), context.kompiled);
                         FileUtils.copyFile(new File(context.dotk, "def/Concrete.tbl"), new File(context.kompiled, "Rule.tbl"));
                     } catch (IOException e) {
-                        if (context.globalOptions.debug) {
-                            e.printStackTrace();
-                        }
-                        GlobalSettings.kem.register(new KException(ExceptionType.ERROR, KExceptionGroup.INTERNAL, 
-                                "IO error detected writing rule parser to file"));
-                        return null; //unreachable
+                        kem.registerInternalError(
+                                "IO error detected writing rule parser to file", e);
+                        throw new AssertionError("unreachable");
                     }
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
-                    GlobalSettings.kem.register(new KException(ExceptionType.ERROR, KExceptionGroup.CRITICAL, 
+                    kem.register(new KException(ExceptionType.ERROR, KExceptionGroup.CRITICAL,
                             "Thread was interrupted trying to run SDF2Table"));
                 }
-                
-                
-                Stopwatch.instance().printIntermediate("Generate TBLDef");
+
+
+                sw.printIntermediate("Generate TBLDef");
             }
-            
+
             org.kframework.parser.concrete.KParser.ImportTblRule(context.kompiled);
 
-            Stopwatch.instance().printIntermediate("Importing Files");
+            sw.printIntermediate("Importing Files");
             // ------------------------------------- parse configs
             JavaClassesFactory.startConstruction(context);
             def = (Definition) new ParseConfigsFilter(context).visitNode(def);
@@ -265,7 +265,7 @@ public class DefinitionLoader {
             // sort List in streaming cells
             new CheckVisitorStep<Definition>(new CheckStreams(context), context).check(def);
 
-            Stopwatch.instance().printIntermediate("Parsing Configs");
+            sw.printIntermediate("Parsing Configs");
 
             // ----------------------------------- parse rules
             JavaClassesFactory.startConstruction(context);
@@ -273,7 +273,7 @@ public class DefinitionLoader {
             // load definition if possible
             try {
                 @SuppressWarnings("unchecked")
-                Map<String, CachedSentence> cachedDefTemp = (Map<String, CachedSentence>) BinaryLoader.loadWithThrow(cacheFile);
+                Map<String, CachedSentence> cachedDefTemp = loader.load(Map.class, cacheFile);
                 cachedDef = cachedDefTemp;
             } catch (IOException | ClassNotFoundException e) {
                 // it means the cache is not valid, or it doesn't exist
@@ -292,7 +292,7 @@ public class DefinitionLoader {
                 te.printStackTrace();
             } finally {
                 // save definition
-                BinaryLoader.save(cacheFile, clf.getKept());
+                loader.saveOrDie(cacheFile, clf.getKept());
             }
             JavaClassesFactory.endConstruction();
 
@@ -306,7 +306,7 @@ public class DefinitionLoader {
             }
             def = (Definition) new NormalizeASTTransformer(context).visitNode(def);
 
-            Stopwatch.instance().printIntermediate("Parsing Rules [" + (clf.getKept().size() - cachedSentences) + "/" + clf.getKept().size() + "]");
+            sw.printIntermediate("Parsing Rules [" + (clf.getKept().size() - cachedSentences) + "/" + clf.getKept().size() + "]");
 
             return def;
         } catch (ParseFailedException e) {
@@ -326,7 +326,7 @@ public class DefinitionLoader {
      * @return A lightweight Definition element which contain all the definition items found in the string.
      */
     public static Definition parseString(String content, String filename, Context context) throws ParseFailedException {
-        List<DefinitionItem> di = Basic.parse(filename, content, context);
+        List<DefinitionItem> di = Outer.parse(filename, content, context);
 
         org.kframework.kil.Definition def = new org.kframework.kil.Definition();
         def.setItems(di);
@@ -360,7 +360,7 @@ public class DefinitionLoader {
         XmlLoader.reportErrors(doc);
 
         JavaClassesFactory.startConstruction(context);
-        org.kframework.kil.ASTNode config = (Term) JavaClassesFactory.getTerm((Element) doc.getFirstChild().getFirstChild().getNextSibling());
+        org.kframework.kil.ASTNode config = JavaClassesFactory.getTerm((Element) doc.getFirstChild().getFirstChild().getNextSibling());
         JavaClassesFactory.endConstruction();
 
         // TODO: reject rewrites
@@ -368,13 +368,14 @@ public class DefinitionLoader {
         config = new CellEndLabelFilter(context).visitNode(config);
         //if (checkInclusion)
         //    config = new InclusionFilter(localModule, context).visitNode(config);
-        config = new TypeSystemFilter2(startSymbol, context).visitNode(config);
+        config = new TypeSystemFilter2(Sort.of(startSymbol), context).visitNode(config);
         config = new CellTypesFilter(context).visitNode(config);
         config = new CorrectRewritePriorityFilter(context).visitNode(config);
         config = new CorrectKSeqFilter(context).visitNode(config);
         config = new CorrectCastPriorityFilter(context).visitNode(config);
         // config = new CheckBinaryPrecedenceFilter().visitNode(config);
         config = new PriorityFilter(context).visitNode(config);
+        config = new PreferDotsFilter(context).visitNode(config);
         config = new VariableTypeInferenceFilter(context).visitNode(config);
         try {
             config = new TypeSystemFilter(context).visitNode(config);
@@ -417,13 +418,14 @@ public class DefinitionLoader {
         config = new CellEndLabelFilter(context).visitNode(config);
         //if (checkInclusion)
         //    config = new InclusionFilter(localModule, context).visitNode(config);
-        config = new TypeSystemFilter2(startSymbol, context).visitNode(config);
+        config = new TypeSystemFilter2(Sort.of(startSymbol), context).visitNode(config);
         config = new CellTypesFilter(context).visitNode(config);
         config = new CorrectRewritePriorityFilter(context).visitNode(config);
         config = new CorrectKSeqFilter(context).visitNode(config);
         config = new CorrectCastPriorityFilter(context).visitNode(config);
         // config = new CheckBinaryPrecedenceFilter().visitNode(config);
         config = new PriorityFilter(context).visitNode(config);
+        config = new PreferDotsFilter(context).visitNode(config);
         config = new VariableTypeInferenceFilter(context).visitNode(config);
         try {
             config = new TypeSystemFilter(context).visitNode(config);
@@ -473,6 +475,7 @@ public class DefinitionLoader {
         // config = new VariableTypeInferenceFilter().visitNode(config);
         config = new AmbDuplicateFilter(context).visitNode(config);
         config = new TypeSystemFilter(context).visitNode(config);
+        config = new PreferDotsFilter(context).visitNode(config);
         config = new VariableTypeInferenceFilter(context).visitNode(config);
         // config = new PriorityFilter().visitNode(config);
         config = new BestFitFilter(new GetFitnessUnitTypeCheckVisitor(context), context).visitNode(config);

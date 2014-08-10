@@ -209,7 +209,7 @@ for the KOOL object-oriented constructs.
                 | "if" "(" Exp ")" Block "else" Block   [avoid, strict(1)]
                 | "if" "(" Exp ")" Block
                 | "while" "(" Exp ")" Block
-        	| "for" "(" Stmts Exp ";" Exp ")" Block
+            | "for" "(" Stmts Exp ";" Exp ")" Block
                 | "return" Exp ";"                      [strict]
                 | "return" ";"
                 | "print" "(" Exps ")" ";"              [strict]
@@ -415,15 +415,11 @@ definition. */
   rule false || E => E
 
 
-//  rule V:Val[N1:Int, N2:Int, Vs:Vals] => V[N1][N2, Vs]
-//    [structural, anywhere]
-  rule V:Val[N1:Int, N2:Int, Vs:Vals] => V[N1][N2, Vs]  [structural]
-  rule lvalue(V:Val[N1:Int, N2:Int, Vs:Vals] => V[N1][N2, Vs])  [structural]
+  rule V:Val[N1:Int, N2:Int, Vs:Vals] => V[N1][N2, Vs]
+    [structural, anywhere]
 
-//  rule array(L,_)[N:Int] => lookup(L +Int N)
-//    [structural, anywhere]
-  rule array(L,_)[N:Int] => lookup(L +Int N)  [structural]
-  rule lvalue(array(L,_)[N:Int] => lookup(L +Int N))  [structural]
+  rule array(L,_)[N:Int] => lookup(L +Int N)
+    [structural, anywhere]
 
 
   rule sizeOf(array(_,N)) => N
@@ -525,7 +521,7 @@ from SIMPLE unchanged. */
 
 //@ \subsection{Unchanged auxiliary operations from untyped SIMPLE}
 
-  syntax Decl ::= mkDecls(Ids,Vals)  [function]
+  syntax Stmts ::= mkDecls(Ids,Vals)  [function]
   rule mkDecls((X:Id, Xs:Ids), (V:Val, Vs:Vals)) => var X=V; mkDecls(Xs,Vs)
   rule mkDecls(.Ids,.Vals) => {}
 
@@ -542,8 +538,8 @@ from SIMPLE unchanged. */
   rule <k> lvalue(X:Id => loc(L)) ...</k> <env>... X |-> L:Int ...</env>
     [structural]
 
-  context lvalue(_::Exp[HOLE::Exps])
-  context lvalue(HOLE::Exp[_::Exps])
+  context lvalue(_:>Exp[HOLE:>Exps])
+  context lvalue(HOLE:>Exp[_:>Exps])
 
   rule lvalue(lookup(L:Int) => loc(L))  [structural]
 
@@ -974,7 +970,7 @@ member's location based on the current class of the object. */
   rule <k> lvalue(X:Id => this . X) ...</k>  <env> Env </env>
     when notBool(X in keys(Env))  [structural]
 
-  context lvalue(HOLE . _)
+  context lvalue((HOLE . _)<:Exp)
 
 /*  rule lvalue(objectClosure(<crntClass> C </crntClass>
                             <envStack>... (C,EnvC) EStack </envStack>)

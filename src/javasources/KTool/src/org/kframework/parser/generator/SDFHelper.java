@@ -9,8 +9,11 @@ import org.kframework.kil.Production;
 import org.kframework.kil.loader.Context;
 import org.kframework.utils.StringUtil;
 
+import com.google.common.collect.BiMap;
+
 public class SDFHelper {
-    public static String getSDFAttributes(Attributes attrs) {
+    public static String getSDFAttributes(Production p, BiMap<String, Production> conses) {
+        Attributes attrs = p.getAttributes();
         String str = " {";
         if (attrs.getContents().size() == 0)
             return "";
@@ -29,8 +32,8 @@ public class SDFHelper {
             str += "non-assoc, ";
         // if (attrs.containsKey("bracket")) // should not need this since we use the Bracket class
         // str += "bracket, ";
-        if (attrs.containsKey("cons"))
-            str += "cons(\"" + attrs.get("cons") + "\"), ";
+        if (conses.containsValue(p))
+            str += "cons(\"" + conses.inverse().get(p) + "\"), ";
 
         if (str.endsWith(", "))
             return str.substring(0, str.length() - 2) + "}";
@@ -40,15 +43,12 @@ public class SDFHelper {
 
     /**
      * Search for all the productions that have either 'klabel(tag)' or the 'tag' attribute
-     * 
+     *
      * @param tag
      * @return
      */
     public static Set<Production> getProductionsForTag(String tag, Context context) {
-        if (context.productions.containsKey(tag))
-            return context.productions.get(tag);
-        else
-            return new HashSet<Production>();
+        return context.tags.get(tag);
     }
 
     public static String getFollowRestrictionsForTerminals(Set<String> terminals) {
@@ -73,7 +73,7 @@ public class SDFHelper {
         String sdf = "lexical restrictions\n";
         sdf += "    %% follow restrictions\n";
         for (Ttuple tt : mytuples) {
-            sdf += "    \"" + StringUtil.escape(tt.value) + "\" -/- ";
+            sdf += "    " + StringUtil.enquoteCString(tt.value) + " -/- ";
             String ending = tt.key.substring(tt.value.length());
             for (int i = 0; i < ending.length(); i++) {
                 String ch = "" + ending.charAt(i);
@@ -90,9 +90,9 @@ public class SDFHelper {
 
     /**
      * Using this class to collect the prefixes amongst terminals
-     * 
+     *
      * @author RaduFmse
-     * 
+     *
      */
     private static class Ttuple {
         public String key;

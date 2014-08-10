@@ -15,8 +15,6 @@ import org.kframework.compile.utils.*;
 import org.kframework.kil.Definition;
 import org.kframework.kil.loader.Context;
 import org.kframework.kompile.KompileOptions;
-import org.kframework.main.FirstStep;
-import org.kframework.main.LastStep;
 import org.kframework.utils.Stopwatch;
 
 /**
@@ -50,6 +48,11 @@ public abstract class BasicBackend implements Backend {
         return !options.experimental.noPrelude;
     }
 
+    @Override
+    public org.kframework.kompile.KompileOptions.Backend getEnum() {
+        return options.backend;
+    }
+
     public CompilerSteps<Definition> getCompilationSteps() {
         CompilerSteps<Definition> steps = new CompilerSteps<Definition>(context);
         steps.add(new FirstStep(this, context));
@@ -74,8 +77,6 @@ public abstract class BasicBackend implements Backend {
         steps.add(new AddStreamCells(context));
         steps.add(new AddSymbolicK(context));
         steps.add(new AddSemanticEquality(context));
-        // steps.add(new ResolveFresh());
-        steps.add(new FreshCondToFreshVar(context));
         steps.add(new ResolveFreshVarMOS(context));
         steps.add(new AddTopCellConfig(context));
         if (options.experimental.addTopCell) {

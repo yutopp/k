@@ -24,14 +24,14 @@ import com.google.common.collect.Multimap;
  * the target node to return unless it is actually going to be mutated.
  * <p>
  * COW strategy allows safe sub-term sharing.
- * 
+ *
  * @author AndreiS
  */
 public class CopyOnWriteTransformer implements Transformer {
 
     protected final TermContext context;
     protected final Definition definition;
-    
+
     public CopyOnWriteTransformer(TermContext context) {
         this.context = context;
         this.definition = context.definition();
@@ -41,7 +41,7 @@ public class CopyOnWriteTransformer implements Transformer {
         this.context = null;
         this.definition = null;
     }
-    
+
     @Override
     public String getName() {
         return this.getClass().toString();
@@ -69,7 +69,7 @@ public class CopyOnWriteTransformer implements Transformer {
             cellMap = cellCollection.cellMap();
         }
 
-        // starting from now, !changed <=> cellMap == cellCollection.cellMap() 
+        // starting from now, !changed <=> cellMap == cellCollection.cellMap()
         List<Variable> transformedBaseTerms = Lists.newArrayList();
         for (Variable variable : cellCollection.baseTerms()) {
             Term transformedBaseTerm = (Term) variable.accept(this);
@@ -78,10 +78,10 @@ public class CopyOnWriteTransformer implements Transformer {
                     cellMap = ArrayListMultimap.create(cellCollection.cellMap());
                     changed = true;
                 }
-                
+
                 CellCollection transformedCellCollection = (CellCollection) transformedBaseTerm;
                 cellMap.putAll(transformedCellCollection.cellMap());
-                transformedBaseTerms.addAll(transformedCellCollection.baseTerms());                
+                transformedBaseTerms.addAll(transformedCellCollection.baseTerms());
             } else if (transformedBaseTerm instanceof Cell) {
                 if (!changed) {
                     cellMap = ArrayListMultimap.create(cellCollection.cellMap());
@@ -95,7 +95,7 @@ public class CopyOnWriteTransformer implements Transformer {
                 transformedBaseTerms.add((Variable) transformedBaseTerm);
             }
         }
-        
+
         return changed ? new CellCollection(cellMap, transformedBaseTerms, definition.context()) : cellCollection;
     }
 
@@ -263,7 +263,7 @@ public class CopyOnWriteTransformer implements Transformer {
             }
             transformedItems.add(transformedTerm);
         }
-        
+
         Term transformedFrame = null;
         if (kSequence.hasFrame()) {
             Variable frame = kSequence.frame();
@@ -272,12 +272,12 @@ public class CopyOnWriteTransformer implements Transformer {
                 changed = true;
             }
         }
-        
+
         if (!changed) {
             return kSequence;
         } else {
             KSequence transformedKSeq = KSequence.of(transformedItems, transformedFrame);
-            
+
             if (!transformedKSeq.hasFrame() && transformedKSeq.size() == 1) {
                 return transformedKSeq.get(0);
             } else {
@@ -325,16 +325,16 @@ public class CopyOnWriteTransformer implements Transformer {
     public ASTNode transform(BuiltinMap builtinMap) {
         boolean changed = false;
         BuiltinMap.Builder builder = BuiltinMap.builder();
-        
-        for (Map.Entry<Term, Term> entry : builtinMap) {
+
+        for (Map.Entry<Term, Term> entry : builtinMap.getEntries().entrySet()) {
             Term key = (Term) entry.getKey().accept(this);
             Term value = (Term) entry.getValue().accept(this);
-            
+
             // first time encounter a changed entry
             if (!changed && (key != entry.getKey() || value != entry.getValue())) {
                 changed = true;
                 // copy previous entries into the BuiltinMap being built
-                for (Map.Entry<Term, Term> copy : builtinMap) {
+                for (Map.Entry<Term, Term> copy : builtinMap.getEntries().entrySet()) {
                     if (copy.equals(entry)) {
                         // cannot rely on reference identity check here
                         break;
@@ -342,72 +342,44 @@ public class CopyOnWriteTransformer implements Transformer {
                     builder.put(copy.getKey(), copy.getValue());
                 }
             }
-            
+
             if (changed) {
                 builder.put(key, value);
             }
         }
-        
-        // at this point, if changed is false, the BuiltinMap being built is still empty
-        if (builtinMap.hasFrame()) {
-            Variable oldFrame = builtinMap.frame();
-            Term transformedFrame = (Term) oldFrame.accept(this);
-            if (transformedFrame != oldFrame) {
-                if (!changed) {
-                    // the only change is the frame
-                    changed = true;
-                    builder.setEntriesAs(builtinMap);
-                }
-                builder.concat(transformedFrame);
-            } else {
-                builder.setFrame(oldFrame);
-            }
-        } else {
-            // do nothing; if changed == true then all entries are already
-            // copied; if changed == false then we will simply return the
-            // original map later
+        /* special case for maps composed only of entries */
+        if (builtinMap.isConcreteCollection()) {
+            return changed ? builder.build() : builtinMap;
         }
-        
+
+        if (!changed) {
+            builder.putAll(builtinMap.getEntries());
+        }
+
+        for (Term term : builtinMap.baseTerms()) {
+            Term transformedTerm = (Term) term.accept(this);
+            changed = changed || (transformedTerm != term);
+            builder.concatenate(transformedTerm);
+        }
+
         return changed ? builder.build() : builtinMap;
     }
 
     @Override
     public ASTNode transform(BuiltinSet builtinSet) {
-        BuiltinSet transformedSet = null;
-        if (builtinSet.hasFrame()) {
-            Term frame = (Term) builtinSet.frame().accept(this);
-            if (frame != builtinSet.frame()) {
-                transformedSet = BuiltinSet.of(Collections.<Term>emptySet(), frame);
-            }
+        boolean changed = false;
+        BuiltinSet.Builder builder = BuiltinSet.builder();
+        for(Term element : builtinSet.elements()) {
+            Term transformedElement = (Term) element.accept(this);
+            builder.add(transformedElement);
+            changed = changed || (transformedElement != element);
         }
-
-        for(Term entry : builtinSet.elements()) {
-            Term key = (Term) entry.accept(this);
-
-            if (transformedSet == null && (key != entry)) {
-                if (builtinSet.hasFrame()) {
-                    transformedSet = new BuiltinSet(builtinSet.frame());
-                } else {
-                    transformedSet = new BuiltinSet();
-                }
-                for(Term copyEntry : builtinSet.elements()) {
-                    if (copyEntry.equals(entry)) {
-                        break;
-                    }
-                    transformedSet.add(copyEntry);
-                }
-            }
-
-            if (transformedSet != null) {
-                transformedSet.add(key);
-            }
+        for (Term term : builtinSet.baseTerms()) {
+            Term transformedTerm = (Term) term.accept(this);
+            changed = changed || (transformedTerm != term);
+            builder.concatenate(transformedTerm);
         }
-
-        if (transformedSet != null) {
-            return transformedSet;
-        } else {
-            return builtinSet;
-        }
+        return changed ? builder.build() : builtinSet;
     }
 
     @Override
@@ -563,7 +535,7 @@ public class CopyOnWriteTransformer implements Transformer {
         }
         UninterpretedConstraint processedLookups
                 = (UninterpretedConstraint) rule.lookups().accept(this);
-        
+
         Map<String, Term> processedLhsOfReadCell = null;
         Map<String, Term> processedRhsOfWriteCell = null;
         if (rule.isCompiledForFastRewriting()) {
@@ -631,7 +603,7 @@ public class CopyOnWriteTransformer implements Transformer {
     public ASTNode transform(Variable variable) {
         return variable;
     }
-    
+
     @Override
     public ASTNode transform(BuiltinMgu mgu) {
         SymbolicConstraint transformedConstraint = (SymbolicConstraint) mgu.constraint().accept(this);

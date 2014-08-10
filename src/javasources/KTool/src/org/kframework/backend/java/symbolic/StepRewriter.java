@@ -105,7 +105,7 @@ public class StepRewriter {
             /* evaluate pending functions in the rule RHS */
             result = result.evaluate(constrainedTerm.termContext());
             /* eliminate anonymous variables */
-            constraint.eliminateAnonymousVariables();
+            constraint.eliminateAnonymousVariables(constrainedTerm.variableSet());
 
             /* compute all results */
             constrainedTermResults.add(new ConstrainedTerm(result, constraint,
@@ -141,7 +141,7 @@ public class StepRewriter {
             if (!constraint.isMatching(leftHandSide)) {
                 continue;
             }
-            
+
             constraint.orientSubstitution(leftHandSide.variableSet());
 
             Term result = rule.rightHandSide();
