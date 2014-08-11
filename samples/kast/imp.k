@@ -1,6 +1,9 @@
 // Copyright (c) 2010-2014 K Team. All Rights Reserved.
 
+require "EVERYTHING REQUIRED BY THIS DEFINITION"
+
 module IMP-SYNTAX
+  imports EVERYTHING-THAT-THIS-DEF-IMPORTS
   syntax AExp  ::= Int | Id
                  | AExp "/" AExp              [left, strict, klabel(`_/_`)]
                  > AExp "+" AExp              [left, strict, klabel(`_+_`)]
