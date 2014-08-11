@@ -41,24 +41,26 @@ module IMP
 // AExp
   rule <k> X:Id => I:K ...</k> <state>... `_|->_`(X:Id,I:K) ...</state>
   rule `_/_`(I1:Int,I2:Int) => `_/Int_`(I1:Int,I2:Int) requires `_=/=Int_`(I2:Int,`0::Int`)
-  rule `_+_`(I1:Int,I2:Int) => `_+Int_`(I1,I2) // add all sorts to all vars?
+  rule `_+_`(I1:Int,I2:Int) => `_+Int_`(I1:Int,I2:Int)
 // BExp
-  rule `_<=_`(I1:Int,I2:Int) => `_<=Int_`(I1,I2)
-  rule `!_`(T:Bool) => `notBool_`(T)
-  rule `_&&_`(`true::Bool`,B) => B
-  rule `_&&_`(`false::Bool`,_) => `false::Bool`
+  rule `_<=_`(I1:Int,I2:Int) => `_<=Int_`(I1:Int,I2:Int)
+  rule `!_`(T:Bool) => `notBool_`(T:Bool)
+  rule `_&&_`(`true::Bool`,B:K) => B:K
+  rule `_&&_`(`false::Bool`,_:K) => `false::Bool`
 // Block
-  rule `{}` => .K     [structural]
-  rule `{_}`(S) => S  [structural]
+  rule `{}` => `.::K`         [structural]
+  rule `{_}`(S:K) => S:K      [structural]
 // Stmt
-  rule <k> `_=_;`(X,I:Int) => .K ...</k> <state>... `_|->_`(X,`_=>I`) ...</state>
-  rule `__::Stmt*Stmt->Stmt`(S1:Stmt,S2:Stmt) => S1 ~> S2  [structural]
-  rule `if(_)_else_`(`true::Bool`,S,_) => S
-  rule `if(_)_else_`(`false::Bool`,_,S) => S
-  rule `while(_)_`(B,S) => `if(_)_else_`(B,`{_}`(`__`(S,`while(_)_`(B,S))),`{}`)  [structural]
+  rule <k> `_=_;`(X:Id,I:Int) => `.::K` ...</k>
+       <state>... `_|->_`(X:Id,`_:K => I:Int`) ...</state>
+  rule `__::Stmt*Stmt->Stmt`(S1:Stmt,S2:Stmt) => S1:Stmt ~> S2:Stmt  [structural]
+  rule `if(_)_else_`(`true::Bool`,S:K,_:K) => S:K
+  rule `if(_)_else_`(`false::Bool`,_:K,S:K) => S:K
+  rule `while(_)_`(B:K,S:K)
+    => `if(_)_else_`(B:K,`{_}`(`__`(S:K,`while(_)_`(B:K,S:K))),`{}`)  [structural]
 // Pgm
-  rule <k> `int_;_`(`_,_`(X:Id,Xs) => Xs) </k>
-       <state> `__::Map`(Rho:Map, `.::Map` => `_|->_`(X,`0::Int`)) </state>
-    requires `notBool_`(`_in_`(X,`keys`(Rho)))
-  rule `int_;_`(`.::Ids`,S) => S  [structural]
+  rule <k> `int_;_`(`_,_`(X:Id,Xs:Ids) => Xs:Ids) </k>
+       <state> `__::Map`(Rho:Map, `.::Map` => `_|->_`(X:Id,`0::Int`)) </state>
+    requires `notBool_`(`_in_`(X:Id,`keys`(Rho)))
+  rule `int_;_`(`.::Ids`,S:K) => S:K  [structural]
 endmodule

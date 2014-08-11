@@ -20,10 +20,12 @@ module INNER-SYNTAX
                          | Token{"dummy"}  [regex(`[^`\s]+`)]  // like KLabels, but constant
   syntax MetaKItem  ::= MetaKConstant
                       | MetaKLabel "(" MetaKList ")"
-  syntax MetaKList  ::= NeList{MetaK,","}        // we need to say List{MetaK}{","}{"."}
-                      | ".KList"                 // we'll refer to it as . in the frontend
-  syntax MetaK      ::= NeList{MetaKItem,"~>"}   // we need to say List{MetaKItem}{"~>"}{"."}
-                      | ".K"                     // we'll refer to it as . in the frontend
+  syntax MetaKList  ::= NeList{MetaK,","}       [klabel(`_,_`)]
+                      | "."                     [kcontstant(`.::KList`)]
+  // we need to say somthing like List{MetaK}{","}{"."}
+  syntax MetaK      ::= NeList{MetaKItem,"~>"}  [klabel(`_~>_`)]
+                      | "."                     [kconstant(`.::K`)]
+  // we need to say List{MetaKItem}{"~>"}{"."}
 
   syntax Variable ::= Token{"dummy"} [notInRules, regex(\$?[A-Z_][A-Za-z0-9]*)]
 //  syntax MetaKLabel ::= Variable ":" MetaKLabel

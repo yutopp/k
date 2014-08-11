@@ -6,3 +6,4 @@
 ** Each terminal-only production should have precisely one kconstant attribute
 ** Only defined klabels and kconstants can be defined in rules
 ** All variables are sorted (properly)
+** One has to handle oneself constant productions that one wants to link to tokens ... ???
