@@ -1,0 +1,8 @@
+* See and incorporate comments from
+  https://github.com/kframework/k/issues/817
+
+* Additional checks the KAST parser should do
+** Each non-terminal production with non-terminals should have precisely one klabel attribute
+** Each terminal-only production should have precisely one kconstant attribute
+** Only defined klabels and kconstants can be defined in rules
+** All variables are sorted (properly)
