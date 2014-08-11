@@ -47,11 +47,6 @@ public class ProgramSDFVisitor extends BasicVisitor {
 
     public ProgramSDFVisitor(Context context) {
         super(context);
-        constantSorts.add("#Id");
-        constantSorts.add("#Bool");
-        constantSorts.add("#Int");
-        constantSorts.add("#String");
-        constantSorts.add("#Float");
     }
 
     public Void visit(Syntax syn, Void _) {

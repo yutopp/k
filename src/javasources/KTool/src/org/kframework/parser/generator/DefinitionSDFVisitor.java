@@ -44,11 +44,6 @@ public class DefinitionSDFVisitor extends BasicVisitor {
 
     public DefinitionSDFVisitor(boolean ground, Context context) {
         super(context);
-        constantSorts.add("#Id");
-        constantSorts.add("#Bool");
-        constantSorts.add("#Int");
-        constantSorts.add("#String");
-        constantSorts.add("#Float");
         this.ground = ground;
     }
 
