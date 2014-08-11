@@ -38,7 +38,7 @@ public final class JavaExecutionOptions {
     public boolean patternMatching = false;
 
     @Parameter(names="--pdmc", description = "Use the PDMC backend with specified file containing " +
-            " a Promela SPIN never claim.")
+            "a Promela SPIN never claim.")
     public String pdmc = "";
 }
 

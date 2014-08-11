@@ -1,18 +1,10 @@
 // Copyright (c) 2013-2014 K Team. All Rights Reserved.
 package org.kframework.backend.java.symbolic;
 
-import edu.uci.ics.jung.graph.DirectedSparseGraph;
-import org.apache.commons.lang3.tuple.Pair;
 import org.kframework.backend.java.kil.*;
 import org.kframework.backend.java.kil.Rule;
-import org.kframework.backend.pdmc.automaton.AutomatonInterface;
-import org.kframework.backend.pdmc.k.JavaKRunPromelaEvaluator;
 import org.kframework.backend.pdmc.k.JavaKRunPushdownSystem;
-import org.kframework.backend.pdmc.k.PromelaTermAdaptor;
-import org.kframework.backend.pdmc.pda.*;
-import org.kframework.backend.pdmc.pda.buchi.*;
-import org.kframework.backend.pdmc.pda.graph.TarjanSCC;
-import org.kframework.backend.pdmc.pda.pautomaton.PAutomatonState;
+import org.kframework.backend.pdmc.k.PromelaTermAdapter;
 import org.kframework.backend.java.kil.TermContext;
 import org.kframework.backend.java.kil.Variable;
 import org.kframework.backend.unparser.UnparserFilter;
@@ -23,10 +15,10 @@ import org.kframework.compile.utils.MetaK;
 import org.kframework.compile.utils.RuleCompilerSteps;
 import org.kframework.compile.utils.Substitution;
 import org.kframework.kil.Module;
-import org.kframework.kil.Sort;
 import org.kframework.kil.loader.Context;
 import org.kframework.krun.ColorSetting;
 import org.kframework.krun.KRunExecutionException;
+import org.kframework.krun.KRunOptions;
 import org.kframework.krun.SubstitutionFilter;
 import org.kframework.krun.KRunOptions.OutputMode;
 import org.kframework.krun.api.KRun;
@@ -37,14 +29,11 @@ import org.kframework.krun.api.KRunState;
 import org.kframework.krun.api.SearchResult;
 import org.kframework.krun.api.SearchResults;
 import org.kframework.krun.api.SearchType;
-import org.kframework.krun.api.TestGenResult;
 import org.kframework.krun.api.TestGenResults;
 import org.kframework.krun.api.Transition;
 import org.kframework.krun.api.UnsupportedBackendOptionException;
 import org.kframework.krun.api.io.FileSystem;
 import org.kframework.krun.ioserver.filesystem.portable.PortableFileSystem;
-
-import java.util.*;
 
 import edu.uci.ics.jung.graph.DirectedGraph;
 
@@ -98,6 +87,10 @@ public class JavaSymbolicKRun implements KRun {
 
     private KRunResult<KRunState> internalRun(org.kframework.kil.Term cfg, int bound) throws KRunExecutionException {
         ConstrainedTerm result = javaKILRun(cfg, bound);
+        return getKRunResult(result);
+    }
+
+    public KRunResult<KRunState> getKRunResult(ConstrainedTerm result) {
         org.kframework.kil.Term kilTerm = (org.kframework.kil.Term) result.term().accept(
                 new BackendJavaKILtoKILTransformer(context));
         KRunResult<KRunState> returnResult = new KRunResult<KRunState>(new KRunState(kilTerm, context), context);
@@ -331,73 +324,9 @@ public class JavaSymbolicKRun implements KRun {
             org.kframework.kil.Term cfg) throws KRunExecutionException {
         if (context.javaExecutionOptions.pdmc.isEmpty())
             throw new UnsupportedBackendOptionException("--ltlmc");
-        assert formula instanceof PromelaTermAdaptor;
-        return pdmc(cfg, ((PromelaTermAdaptor) formula).getAutomaton());
-    }
-
-
-    public KRunProofResult<DirectedGraph<KRunState, Transition>> pdmc(
-            org.kframework.kil.Term cfg, PromelaBuchi automaton) throws KRunExecutionException {
-        Term term = Term.of(cfg, definition);
-        JavaKRunPushdownSystem pds = new JavaKRunPushdownSystem(this, term);
-        JavaKRunPromelaEvaluator evaluator = new JavaKRunPromelaEvaluator(pds);
-        BuchiPushdownSystem<Term, Term> buchiPushdownSystem = new BuchiPushdownSystem<>(pds, automaton, evaluator);
-        System.err.println("\n----Buchi Pushdown System---");
-//        System.err.print(buchiPushdownSystem.toString());
-
-        BuchiPushdownSystemTools<Term, Term> bpsTool = new BuchiPushdownSystemTools<>(buchiPushdownSystem);
-
-        AutomatonInterface<PAutomatonState<Pair<Term, BuchiState>, Term>, Term> post = bpsTool.getPostStar();
-        System.err.println("\n\n\n----Post Automaton----");
-        System.err.println(post.toString());
-
-        TarjanSCC repeatedHeads = bpsTool.getRepeatedHeadsGraph();
-        System.err.println("\n\n\n----Repeated Heads----");
-        System.err.println(repeatedHeads.toString());
-
-        System.err.println("\n\n\n----Strongly Connected Components----");
-        System.err.println(repeatedHeads.getSCCSString());
-
-        TarjanSCC<ConfigurationHead<Pair<Term, BuchiState>, Term>, TrackingLabel<Pair<Term, BuchiState>, Term>> counterExampleGraph
-                = bpsTool.getCounterExampleGraph();
-        if (counterExampleGraph == BuchiPushdownSystemTools.NONE) {
-            System.out.println("No counterexample found. Property holds.");
-        } else {
-            System.out.println("Counterexample found for the given property");
-            ConfigurationHead<Pair<Term, BuchiState>, Term> head = counterExampleGraph.getVertices().iterator().next();
-            System.out.println("\n\n\n--- Prefix path ---");
-            Deque<org.kframework.backend.pdmc.pda.Rule<Pair<Term, BuchiState>, Term>> reachableConfigurationPath = bpsTool.getReachableConfiguration(head);
-            for(org.kframework.backend.pdmc.pda.Rule<Pair<Term, BuchiState>, Term> rule : reachableConfigurationPath) {
-                System.out.print(rule.getLabel().toString() + ";");
-            }
-            System.out.print("[");
-            Deque<org.kframework.backend.pdmc.pda.Rule<Pair<Term, BuchiState>, Term>> repeatingCycle = bpsTool.getRepeatingCycle(head);
-            for (org.kframework.backend.pdmc.pda.Rule<Pair<Term, BuchiState>, Term> rule : repeatingCycle) {
-                System.out.print(rule.getLabel().toString() + ";");
-            }
-            System.out.println("]");
-        }
-        if (false) {
-            TrackingLabelFactory<Term, Term> factory = new TrackingLabelFactory<>();
-            PostStar<Term, Term> postStar = new PostStar<>(pds, factory);
-
-
-            for (ConfigurationHead<Term, Term> head : postStar.getReachableHeads()) {
-                Deque<org.kframework.backend.pdmc.pda.Rule<Term, Term>> path = postStar.getReachableConfiguration(head);
-                System.out.println(head.toString() + ":");
-                for (org.kframework.backend.pdmc.pda.Rule<Term, Term> rule : path) {
-                    ConfigurationHead<Term, Term> head1 = rule.getHead();
-
-                    Term kStartConfig = pds.getKConfig(head1.getState(), head1.getLetter());
-                    Term kEndConfig = pds.getKConfig(rule.endConfiguration());
-                    System.out.println(kStartConfig + " => " + kEndConfig);
-                }
-//            System.out.println("\t" + path);
-            }
-        }
-        DirectedGraph<KRunState, Transition> kRunStateTransitionDirectedSparseGraph = new DirectedSparseGraph<>();
-        return new KRunProofResult<>(false, kRunStateTransitionDirectedSparseGraph, context);
-
+        JavaKRunPushdownSystem pds = new JavaKRunPushdownSystem(this, Term.of(cfg, definition));
+        assert formula instanceof PromelaTermAdapter;
+        return pds.pdmc(((PromelaTermAdapter) formula).getAutomaton());
     }
 
 

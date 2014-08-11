@@ -7,17 +7,17 @@ import org.kframework.kil.visitors.Visitor;
 /**
  * Created by Traian on 08.07.2014.
  */
-public class PromelaTermAdaptor extends Term {
+public class PromelaTermAdapter extends Term {
 
     final PromelaBuchi automaton;
 
-    public PromelaTermAdaptor(PromelaBuchi automaton) {
+    public PromelaTermAdapter(PromelaBuchi automaton) {
         this.automaton = automaton;
     }
 
     @Override
     public Term shallowCopy() {
-        return new PromelaTermAdaptor(automaton);
+        return new PromelaTermAdapter(automaton);
     }
 
     @Override
@@ -35,7 +35,7 @@ public class PromelaTermAdaptor extends Term {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
 
-        PromelaTermAdaptor that = (PromelaTermAdaptor) o;
+        PromelaTermAdapter that = (PromelaTermAdapter) o;
 
         if (!automaton.equals(that.automaton)) return false;
 
