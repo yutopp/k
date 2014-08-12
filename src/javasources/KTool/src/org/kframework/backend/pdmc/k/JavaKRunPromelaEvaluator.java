@@ -37,9 +37,10 @@ public class JavaKRunPromelaEvaluator implements Evaluator<ConfigurationHead<Ter
         Term term = KItem.of(KLabelConstant.of("'_|=_", definition),
                 new KList(ImmutableList.copyOf(new Term[]{KLabelInjection.injectionOf(state, termContext), idString})),
                 termContext);
-//        System.out.print(term.toString());
         Term result = term.evaluate(termContext);
-//        System.out.println( " = " + result.toString());
+        if (termContext.definition().context().globalOptions.verbose) {
+            System.err.println(term.toString() + " = " + result.toString());
+        }
         assert result instanceof BoolToken;
         return ((BoolToken) result).booleanValue();
     }

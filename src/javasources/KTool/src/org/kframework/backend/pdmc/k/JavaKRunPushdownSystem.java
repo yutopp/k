@@ -30,6 +30,7 @@ import java.util.Collection;
 
 /**
  * Created by Traian on 11.06.2014.
+ * TODO: Eroare la generarea contraexemplului: krun.bat --pdmc formulae/test2.promela tests/test2.bp -v
  */
 public class JavaKRunPushdownSystem  implements PushdownSystemInterface<Term, Term> {
 
@@ -75,7 +76,7 @@ public class JavaKRunPushdownSystem  implements PushdownSystemInterface<Term, Te
             System.out.println("\n\n\n--- Prefix path ---");
 
 
-            Term kStartConfig = this.getKConfig(head.getState().getKey(), head.getLetter());
+            Term kStartConfig = this.getKConfig(initialConfiguration());
             System.out.println(runner.getKRunResult(new ConstrainedTerm(kStartConfig, termContext)));
             Deque<org.kframework.backend.pdmc.pda.Rule<Pair<Term, BuchiState>, Term>> reachableConfigurationPath = bpsTool.getReachableConfiguration(head);
             for(org.kframework.backend.pdmc.pda.Rule<Pair<Term, BuchiState>, Term> rule : reachableConfigurationPath) {
