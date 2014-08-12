@@ -15,16 +15,15 @@ module INNER-SYNTAX
   syntax Bubble ::= MetaK
 
   syntax MetaKLabel ::= Token{"dummy"}  [regex(`[^`\s]+`)]
-  syntax MetaKConstant ::= #token(STRING,STRING)
+  syntax MetaKConstant ::= "`" TOKENID "::" SORTID "`"
                          | #klabel(MetaKLabel)
-                         | Token{"dummy"}  [regex(`[^`\s]+`)]  // like KLabels, but constant
   syntax MetaKItem  ::= MetaKConstant
                       | MetaKLabel "(" MetaKList ")"
-  syntax MetaKList  ::= NeList{MetaK,","}       [klabel(`_,_`)]
-                      | "."                     [kcontstant(`.::KList`)]
+  syntax MetaKList  ::= NeList{MetaK,","}
+                      | "."
   // we need to say somthing like List{MetaK}{","}{"."}
-  syntax MetaK      ::= NeList{MetaKItem,"~>"}  [klabel(`_~>_`)]
-                      | "."                     [kconstant(`.::K`)]
+  syntax MetaK      ::= NeList{MetaKItem,"~>"}
+                      | "."
   // we need to say List{MetaKItem}{"~>"}{"."}
 
   syntax Variable ::= Token{"dummy"} [notInRules, regex(\$?[A-Z_][A-Za-z0-9]*)]
@@ -49,6 +48,7 @@ module INNER-SYNTAX
   syntax CellTag  ::= Token{"dummy"} [regex([a-z][A-Za-z0-9]*)]
   syntax CellNAME ::= Token{"dummy"} [regex([A-Za-z][A-Za-z0-9]*)]
 
+  syntax TOKENID    ::= Token{"dummy"} [regex([^`:]+)] // [regex(([^`]|\\`)+)]
   syntax SORTID     ::= Token{"dummy"} [regex([#]?[A-Z][A-Za-z0-9]*)]
   syntax STRING     ::= Token{"dummy"} [regex("[\\\"](([^\\\"\\n\\r\\\\])|([\\\\][nrtf\\\"\\\\])|)*[\\\"]")]
 endmodule
