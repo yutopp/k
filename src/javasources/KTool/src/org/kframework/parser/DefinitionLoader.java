@@ -18,6 +18,7 @@ import org.kframework.kil.ASTNode;
 import org.kframework.kil.Definition;
 import org.kframework.kil.DefinitionItem;
 import org.kframework.kil.Sort;
+import org.kframework.kil.Source;
 import org.kframework.kil.Term;
 import org.kframework.kil.loader.AddAutoIncludedModulesVisitor;
 import org.kframework.kil.loader.CollectConfigCellsVisitor;
@@ -26,7 +27,7 @@ import org.kframework.kil.loader.Context;
 import org.kframework.kil.loader.JavaClassesFactory;
 import org.kframework.kil.loader.RemoveUnusedModules;
 import org.kframework.kil.visitors.exceptions.ParseFailedException;
-import org.kframework.parser.basic.Basic;
+import org.kframework.parser.outer.Outer;
 import org.kframework.parser.concrete.disambiguate.AmbDuplicateFilter;
 import org.kframework.parser.concrete.disambiguate.AmbFilter;
 import org.kframework.parser.concrete.disambiguate.BestFitFilter;
@@ -47,7 +48,7 @@ import org.kframework.parser.concrete.disambiguate.TypeInferenceSupremumFilter;
 import org.kframework.parser.concrete.disambiguate.TypeSystemFilter;
 import org.kframework.parser.concrete.disambiguate.TypeSystemFilter2;
 import org.kframework.parser.concrete.disambiguate.VariableTypeInferenceFilter;
-import org.kframework.parser.generator.BasicParser;
+import org.kframework.parser.generator.OuterParser;
 import org.kframework.parser.generator.CacheLookupFilter;
 import org.kframework.parser.generator.Definition2SDF;
 import org.kframework.parser.generator.DefinitionSDF;
@@ -117,12 +118,12 @@ public class DefinitionLoader {
     public Definition parseDefinition(File mainFile, String mainModule, boolean autoinclude, Context context) {
         try {
             // for now just use this file as main argument
-            // ------------------------------------- basic parsing
+            // ------------------------------------- outer parsing
 
-            BasicParser bparser = new BasicParser(autoinclude, context.kompileOptions);
+            OuterParser bparser = new OuterParser(autoinclude, context.kompileOptions);
             bparser.slurp(mainFile.getPath(), context);
 
-            // transfer information from the BasicParser object, to the Definition object
+            // transfer information from the OuterParser object, to the Definition object
             org.kframework.kil.Definition def = new org.kframework.kil.Definition();
             try {
                 def.setMainFile(mainFile.getCanonicalPath());
@@ -137,7 +138,7 @@ public class DefinitionLoader {
             if (!context.kompileOptions.backend.documentation()) {
                 if (!def.getModulesMap().containsKey(context.kompileOptions.syntaxModule())) {
                     String msg = "Could not find main syntax module used to generate a parser for programs (X-SYNTAX). Using: '" + mainModule + "' instead.";
-                    kem.register(new KException(ExceptionType.HIDDENWARNING, KExceptionGroup.INNER_PARSER, msg, def.getMainFile(), "File system."));
+                    kem.register(new KException(ExceptionType.HIDDENWARNING, KExceptionGroup.INNER_PARSER, msg));
                     def.setMainSyntaxModule(mainModule);
                 } else {
                     def.setMainSyntaxModule(context.kompileOptions.syntaxModule());
@@ -145,10 +146,10 @@ public class DefinitionLoader {
 
                 if (!def.getModulesMap().containsKey(mainModule)) {
                     String msg = "Could not find main module '" + mainModule + "'. Use --main-module option to specify another.";
-                    kem.register(new KException(ExceptionType.ERROR, KExceptionGroup.COMPILER, msg, def.getMainFile(), "File system."));
+                    kem.register(new KException(ExceptionType.ERROR, KExceptionGroup.COMPILER, msg));
                 }
             }
-            sw.printIntermediate("Basic Parsing");
+            sw.printIntermediate("Outer Parsing");
 
             //This following line was commented out to make the latex backend
             //parse files importing from other files
@@ -325,8 +326,8 @@ public class DefinitionLoader {
      *            - the context for disambiguation purposes.
      * @return A lightweight Definition element which contain all the definition items found in the string.
      */
-    public static Definition parseString(String content, String filename, Context context) throws ParseFailedException {
-        List<DefinitionItem> di = Basic.parse(filename, content, context);
+    public static Definition parseString(String content, Source source, Context context) throws ParseFailedException {
+        List<DefinitionItem> di = Outer.parse(source, content, context);
 
         org.kframework.kil.Definition def = new org.kframework.kil.Definition();
         def.setItems(di);
@@ -350,13 +351,13 @@ public class DefinitionLoader {
         return def;
     }
 
-    public static Term parseCmdString(String content, String filename, String startSymbol, Context context) throws ParseFailedException {
+    public static Term parseCmdString(String content, Source source, String startSymbol, Context context) throws ParseFailedException {
         if (!context.initialized) {
             assert false : "You need to load the definition before you call parsePattern!";
         }
         String parsed = org.kframework.parser.concrete.KParser.ParseKCmdString(content);
         Document doc = XmlLoader.getXMLDoc(parsed);
-        XmlLoader.addFilename(doc.getFirstChild(), filename);
+        XmlLoader.addSource(doc.getFirstChild(), source);
         XmlLoader.reportErrors(doc);
 
         JavaClassesFactory.startConstruction(context);
@@ -398,7 +399,7 @@ public class DefinitionLoader {
         return (Term) config;
     }
 
-    public static ASTNode parsePattern(String pattern, String filename, String startSymbol, Context context) throws ParseFailedException {
+    public static ASTNode parsePattern(String pattern, Source source, String startSymbol, Context context) throws ParseFailedException {
         if (!context.initialized) {
             assert false : "You need to load the definition before you call parsePattern!";
         }
@@ -406,7 +407,7 @@ public class DefinitionLoader {
         String parsed = org.kframework.parser.concrete.KParser.ParseKRuleString(pattern);
         Document doc = XmlLoader.getXMLDoc(parsed);
 
-        XmlLoader.addFilename(doc.getFirstChild(), filename);
+        XmlLoader.addSource(doc.getFirstChild(), source);
         XmlLoader.reportErrors(doc);
 
         JavaClassesFactory.startConstruction(context);

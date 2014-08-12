@@ -12,19 +12,16 @@ import org.kframework.kil.ASTNode;
 import org.kframework.kil.DefinitionItem;
 import org.kframework.kil.Module;
 import org.kframework.kil.Require;
+import org.kframework.kil.Sources;
 import org.kframework.kil.loader.Context;
 import org.kframework.kompile.KompileOptions;
-import org.kframework.kompile.KompileOptions.Backend;
 import org.kframework.main.GlobalOptions;
-import org.kframework.parser.basic.Basic;
-import org.kframework.utils.errorsystem.KException;
-import org.kframework.utils.errorsystem.KException.ExceptionType;
-import org.kframework.utils.errorsystem.KException.KExceptionGroup;
+import org.kframework.parser.outer.Outer;
 import org.kframework.utils.file.FileUtil;
 import org.kframework.utils.file.KPaths;
 import org.kframework.utils.general.GlobalSettings;
 
-public class BasicParser {
+public class OuterParser {
     private List<DefinitionItem> moduleItems;
     private Map<String, Module> modulesMap;
     private List<String> filePaths;
@@ -36,7 +33,7 @@ public class BasicParser {
     private KompileOptions kompileOptions;
     private GlobalOptions globalOptions;
 
-    public BasicParser(boolean autoinclude, KompileOptions kompileOptions) {
+    public OuterParser(boolean autoinclude, KompileOptions kompileOptions) {
         this.autoinclude = autoinclude;
         this.kompileOptions = kompileOptions;
         this.globalOptions = kompileOptions.global;
@@ -54,7 +51,7 @@ public class BasicParser {
             // parse first the file given at console for fast failure in case of error
             File file = new File(fileName);
             if (!file.exists())
-                GlobalSettings.kem.register(new KException(ExceptionType.ERROR, KExceptionGroup.CRITICAL, missingFileMsg + fileName + " given at console.", "", ""));
+                GlobalSettings.kem.registerCriticalError(missingFileMsg + fileName + " given at console.");
 
             slurp2(file, context);
 
@@ -68,8 +65,7 @@ public class BasicParser {
                 else
                     file = buildCanonicalPath("autoinclude.k", new File(fileName));
                 if (file == null)
-                    GlobalSettings.kem.register(new KException(ExceptionType.ERROR, KExceptionGroup.CRITICAL,
-                            missingFileMsg + fileName + " autoimported for every definition ", fileName, ""));
+                    GlobalSettings.kem.registerCriticalError(missingFileMsg + fileName + " autoimported for every definition ");
 
                 slurp2(file, context);
                 moduleItems.addAll(tempmi);
@@ -100,7 +96,7 @@ public class BasicParser {
 
             if (globalOptions.verbose)
                 System.out.println("Including file: " + file.getAbsolutePath());
-            List<DefinitionItem> defItemList = Basic.parse(file.getAbsolutePath(), FileUtil.getFileContent(file.getAbsolutePath()), context);
+            List<DefinitionItem> defItemList = Outer.parse(Sources.fromFile(file), FileUtil.getFileContent(file.getAbsolutePath()), context);
 
             // go through every required file
             for (ASTNode di : defItemList) {
@@ -110,8 +106,7 @@ public class BasicParser {
                     File newFile = buildCanonicalPath(req.getValue(), file);
 
                     if (newFile == null)
-                        GlobalSettings.kem.register(new KException(ExceptionType.ERROR, KExceptionGroup.CRITICAL, missingFileMsg + req.getValue(), req.getFilename(), req
-                                .getLocation()));
+                        GlobalSettings.kem.registerCriticalError(missingFileMsg + req.getValue(), req);
 
                     slurp2(newFile, context);
                     context.addFileRequirement(newFile.getCanonicalPath(), file.getCanonicalPath());
@@ -133,8 +128,7 @@ public class BasicParser {
                     Module previous = this.modulesMap.put(m.getName(), m);
                     if (previous != null) {
                         String msg = "Found two modules with the same name: " + m.getName();
-                        GlobalSettings.kem.register(new KException(ExceptionType.ERROR,
-                                KExceptionGroup.CRITICAL, msg, m.getFilename(), m.getLocation()));
+                        GlobalSettings.kem.registerCriticalError(msg, m);
                     }
                 }
             }

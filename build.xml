@@ -58,9 +58,12 @@
                    <fileset dir="${javasources}/KTool/src/org/kframework/backend/pdmc/pda/buchi/parser" includes="*.java" />  
                 </delete>
 		<delete>
-			<fileset dir="${javasources}/KTool/src/org/kframework/parser/basic" includes="*.java" />
+			<fileset dir="${javasources}/KTool/src/org/kframework/parser/outer" includes="*.java" />
 			<fileset dir="${javasources}/KTool/src/org/kframework/utils/kastparser" includes="*.java" />
 		</delete>
+		<!-- TODO: Remove after September 2014.
+		Keeping it in order to remove a package that was renamed. -->
+		<delete dir="${javasources}/KTool/src/org/kframework/parser/basic" />
 	</target>
 
 	<target name="makeversion">
@@ -212,7 +215,7 @@
                 <include name="**/*.java"/>
                 <exclude name="src/org/kframework/parser/concrete/lib/**" />
                 <exclude name="src/org/kframework/utils/kastparser/*.java" />
-                <exclude name="src/org/kframework/parser/basic/*.java" />
+                <exclude name="src/org/kframework/parser/outer/*.java" />
             </fileset>
         </checkstyle>
         <checkstyle config="${javasources}/KTool/checkstyle-k.xml">
