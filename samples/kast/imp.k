@@ -51,8 +51,8 @@ module IMP
   rule `_&&_`(`true::Bool`,B:K) => B:K
   rule `_&&_`(`false::Bool`,_:K) => `false::Bool`
 // Block
-  rule `{}` => `.::K`         [structural]
-  rule `{_}`(S:K) => S:K      [structural]
+  rule `{}`(.::MetaKList) => .::MetaK      [structural]
+  rule `{_}`(S:K) => S:K                   [structural]
 // Stmt
   rule <k> `_=_;`(X:Id,I:Int) => `.::K` ...</k>
        <state>... `_|->_`(X:Id,`_:K => I:Int`) ...</state>

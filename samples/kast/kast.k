@@ -21,7 +21,7 @@ module INNER-SYNTAX
                       | MetaKLabel "(" MetaKList ")"
   syntax MetaKList  ::= NeList{MetaK,","}
                       | "."
-  // we need to say somthing like List{MetaK}{","}{"."}
+  // we need to say something like List{MetaK}{","}{"."}
   syntax MetaK      ::= NeList{MetaKItem,"~>"}
                       | "."
   // we need to say List{MetaKItem}{"~>"}{"."}
@@ -48,7 +48,7 @@ module INNER-SYNTAX
   syntax CellTag  ::= Token{"dummy"} [regex([a-z][A-Za-z0-9]*)]
   syntax CellNAME ::= Token{"dummy"} [regex([A-Za-z][A-Za-z0-9]*)]
 
-  syntax TOKENID    ::= Token{"dummy"} [regex([^`:]+)] // [regex(([^`]|\\`)+)]
+  syntax TOKENID    ::= Token{"dummy"} [noAutoReject, regex([^`:]+)]
   syntax SORTID     ::= Token{"dummy"} [regex([#]?[A-Z][A-Za-z0-9]*)]
   syntax STRING     ::= Token{"dummy"} [regex("[\\\"](([^\\\"\\n\\r\\\\])|([\\\\][nrtf\\\"\\\\])|)*[\\\"]")]
 endmodule
@@ -93,7 +93,7 @@ module OUTER-SYNTAX
   syntax Production       ::= SimpleProduction Attributes
   syntax SimpleProduction ::= NeList{ProductionItem,""}
                             | TAG "(" SORTIDs ")"
-  syntax Attributes ::= "" [onlyLabel]    // [notInRules] does not work
+  syntax Attributes ::= "" [onlyLabel, klabel(noAttributes)]
                       | "[" AnnotationList "]"
 
   syntax ProductionItem ::= SORTID  // non-terminal
