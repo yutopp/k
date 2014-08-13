@@ -51,7 +51,8 @@ module IMP
   rule `_&&_`(`true::Bool`,B:K) => B:K
   rule `_&&_`(`false::Bool`,_:K) => `false::Bool`
 // Block
-  rule `{}`(.::MetaKList) => .::MetaK      [structural]
+//  rule `{}`(.::MetaKList) => .::MetaK      [structural]
+  rule `{}`(.MetaKList) => .MetaK      [structural]
   rule `{_}`(S:K) => S:K                   [structural]
 // Stmt
   rule <k> `_=_;`(X:Id,I:Int) => `.::K` ...</k>
@@ -60,7 +61,7 @@ module IMP
   rule `if(_)_else_`(`true::Bool`,S:K,_:K) => S:K
   rule `if(_)_else_`(`false::Bool`,_:K,S:K) => S:K
   rule `while(_)_`(B:K,S:K)
-    => `if(_)_else_`(B:K,`{_}`(`__`(S:K,`while(_)_`(B:K,S:K))),`{}`)  [structural]
+    => `if(_)_else_`(B:K,`{_}`(`__`(S:K,`while(_)_`(B:K,S:K))),`{}`(.MetaKList))  [structural]
 // Pgm
   rule <k> `int_;_`(`_,_`(X:Id,Xs:Ids) => Xs:Ids) </k>
        <state> `__::Map`(Rho:Map, `.::Map` => `_|->_`(X:Id,`0::Int`)) </state>

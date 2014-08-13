@@ -20,10 +20,10 @@ module INNER-SYNTAX
   syntax MetaKItem  ::= MetaKConstant
                       | MetaKLabel "(" MetaKList ")"
   syntax MetaKList  ::= NeList{MetaK,","}
-                      | "."
+                      | ".MetaKList"
   // we need to say something like List{MetaK}{","}{"."}
   syntax MetaK      ::= NeList{MetaKItem,"~>"}
-                      | "."
+                      | ".MetaK"
   // we need to say List{MetaKItem}{"~>"}{"."}
 
   syntax Variable ::= Token{"dummy"} [notInRules, regex(\$?[A-Z_][A-Za-z0-9]*)]
