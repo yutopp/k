@@ -15,15 +15,15 @@ module INNER-SYNTAX
   syntax Bubble ::= MetaK
 
   syntax MetaKLabel ::= Token{"dummy"}  [regex(`[^`\s]+`)]
-  syntax MetaKConstant ::= "`" TOKENID "::" SORTID "`"
+  syntax MetaKConstant ::= TOKENID "::" SORTID
                          | #klabel(MetaKLabel)
   syntax MetaKItem  ::= MetaKConstant
                       | MetaKLabel "(" MetaKList ")"
   syntax MetaKList  ::= NeList{MetaK,","}
-                      | ".MetaKList"
+                      | ".::MetaKList"
   // we need to say something like List{MetaK}{","}{"."}
   syntax MetaK      ::= NeList{MetaKItem,"~>"}
-                      | ".MetaK"
+                      | ".::MetaK"
   // we need to say List{MetaKItem}{"~>"}{"."}
 
   syntax Variable ::= Token{"dummy"} [notInRules, regex(\$?[A-Z_][A-Za-z0-9]*)]
@@ -33,7 +33,7 @@ module INNER-SYNTAX
                                               // sorting arbitrary KItems; Sort can also be
                                               // K, KItem, KToken, but not KList
   syntax MetaK ::= MetaK "=>" MetaK
-                 | "`" MetaK "`"  [bracket, prefer]
+                 | "`" MetaK "`"  [bracket]
 
   syntax MetaK ::= Cells
   syntax Cells ::= NeList{Cell,""}   // non-empty list
