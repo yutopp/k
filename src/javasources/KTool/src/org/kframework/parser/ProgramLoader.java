@@ -3,6 +3,7 @@ package org.kframework.parser;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.util.Map;
 
 import org.kframework.compile.transformers.AddEmptyLists;
 import org.kframework.compile.transformers.FlattenTerms;
@@ -162,6 +163,43 @@ public class ProgramLoader {
         }
         Stopwatch.instance().printIntermediate("Parsing Program");
 
+        return (Term) out;
+    }
+
+    public static Term parseInModule(String content, Source source, Sort startSymbol,
+                                  String moduleName, Context context) throws ParseFailedException {
+        @SuppressWarnings("unchecked")
+        Map<String, Grammar> grammars = BinaryLoader.instance().loadOrDie(Map.class, context.kompiled.getAbsolutePath() + "/pgm/newModuleParsers.bin");
+
+        ASTNode out;
+        Parser parser = new Parser(content);
+        out = parser.parse(grammars.get(moduleName).get(startSymbol.toString()), 0);
+        if (context.globalOptions.debug)
+            System.err.println("Raw: " + out + "\n");
+        try {
+            out = new TreeCleanerVisitor(context).visitNode(out);
+            out = new MakeConsList(context).visitNode(out);
+            if (context.globalOptions.debug)
+                System.err.println("Clean: " + out + "\n");
+            out = new PriorityFilter(context).visitNode(out);
+            out = new PreferAvoidFilter(context).visitNode(out);
+            if (context.globalOptions.debug)
+                System.err.println("Filtered: " + out + "\n");
+            out = new AmbFilter(context).visitNode(out);
+            out = new RemoveBrackets(context).visitNode(out);
+            out = new FlattenTerms(context).visitNode(out);
+        } catch (ParseFailedException te) {
+            ParseError perror = parser.getErrors();
+
+            String msg = content.length() == perror.position ?
+                    "Parse error: unexpected end of file." :
+                    "Parse error: unexpected character '" + content.charAt(perror.position) + "'.";
+            Location loc = new Location(perror.line, perror.column,
+                    perror.line, perror.column + 1);
+            throw new ParseFailedException(new KException(
+                    ExceptionType.ERROR, KExceptionGroup.INNER_PARSER, msg, source, loc));
+        }
+        out = new ResolveVariableAttribute(context).visitNode(out);
         return (Term) out;
     }
 }

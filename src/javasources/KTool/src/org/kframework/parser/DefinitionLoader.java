@@ -28,6 +28,7 @@ import org.kframework.kil.loader.Context;
 import org.kframework.kil.loader.JavaClassesFactory;
 import org.kframework.kil.loader.RemoveUnusedModules;
 import org.kframework.kil.visitors.exceptions.ParseFailedException;
+import org.kframework.parser.generator.ParsersPerModule;
 import org.kframework.parser.outer.Outer;
 import org.kframework.parser.concrete.disambiguate.AmbDuplicateFilter;
 import org.kframework.parser.concrete.disambiguate.AmbFilter;
@@ -194,6 +195,9 @@ public class DefinitionLoader {
                 String newSdfPgm = FileUtil.getFileContent(context.dotk.getAbsolutePath() + "/pgm/Program.sdf");
 
                 sw.printIntermediate("File Gen Pgm");
+
+                ParsersPerModule.generateParsersForModules(def, context);
+                sw.printIntermediate("Gen module parsers");
 
                 if (!oldSdfPgm.equals(newSdfPgm) || !new File(context.kompiled, "Program.tbl").exists()) {
                     Sdf2Table.run_sdf2table(new File(context.dotk.getAbsoluteFile() + "/pgm"), "Program");
