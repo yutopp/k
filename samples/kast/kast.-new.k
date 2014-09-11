@@ -6,7 +6,7 @@ endmodule
 
 
 module OUTER
-  imports K-SORT
+  import K-SORT
 
   // Top level module stuff
   syntax KDefinition   ::= KRequireList KModuleList
@@ -17,7 +17,7 @@ module OUTER
   syntax KImportList   ::= List{KImport,""}
   syntax KImport       ::= "import" KModuleName
   syntax KSentenceList ::= List{KSentence,""}
-  
+
   syntax KModuleName   ::= Token{"[A-Z\-]+"}
 
   syntax KSentence ::= KSyntacticSentence
@@ -83,7 +83,8 @@ endmodule
 
 module KAST
   import K-SORT
-  syntax KLabel ::= Token{"dummy"}  [regex(`[^`\s]+`)]  // drop the backticks?
+  syntax KLabel    ::= Token{...}
+                     | "`" KLabel "`"  [bracket]
   syntax KConstant ::= #token(KString, KString)
                      | #klabel(KLabel)
   syntax KItem     ::= KConstant
@@ -96,11 +97,10 @@ module KAST
   // we need to say List{KItem}{"~>"}{"."}
 
   syntax KVariable ::= Token{"dummy"} [notInRules, regex(\$?[A-Z_][A-Za-z0-9]*)]
-//  syntax MetaKLabel ::= Variable ":" MetaKLabel
   syntax KItem  ::= KVariable
-                  | KItem ":" SORTID  // KItem must obey its sort at runtime
-                                      // sorting arbitrary KItems; Sort can also be
-                                      // K, KItem, KToken, but not KList
+                  | KItem ":" KSort  // KItem must obey its sort at runtime
+                                     // sorting arbitrary KItems; Sort can also be
+                                     // K, KItem, KToken, but not KList
   syntax K ::= K "=>" K
              | K "requires" K
              | K "ensures" K
@@ -111,65 +111,6 @@ endmodule
 module OUTER-WITH-KAST
   import OUTER
   import KAST
+  rule #token(S:KString, "KAny") => #parse(S, "KDefinition", "OUTER-WITH-BUBBLES")
   rule #token(S:KString, "Bubble") => #parse(S, "K", "KAST")
-endmodule
-
-
-
-module INNER-SYNTAX
-/*
-*/
-
-  syntax Bubble ::= MetaK
-
-  syntax MetaKLabel ::= Token{"dummy"}  [regex(`[^`\s]+`)]
-  syntax MetaKConstant ::= TOKENID "::" SORTID
-                         | #klabel(MetaKLabel)
-  syntax MetaKItem  ::= MetaKConstant
-                      | MetaKLabel "(" MetaKList ")"
-  syntax MetaKList  ::= NeList{MetaK,","}
-                      | ".::MetaKList"
-  // we need to say something like List{MetaK}{","}{"."}
-  syntax MetaK      ::= NeList{MetaKItem,"~>"}
-                      | ".::MetaK"
-  // we need to say List{MetaKItem}{"~>"}{"."}
-
-  syntax Variable ::= Token{"dummy"} [notInRules, regex(\$?[A-Z_][A-Za-z0-9]*)]
-//  syntax MetaKLabel ::= Variable ":" MetaKLabel
-  syntax MetaKItem  ::= Variable
-                      | MetaKItem ":" SORTID  // KItem must obey its sort at runtime
-                                              // sorting arbitrary KItems; Sort can also be
-                                              // K, KItem, KToken, but not KList
-  syntax MetaK ::= MetaK "=>" MetaK
-                 | "`" MetaK "`"  [bracket]
-
-  syntax MetaK ::= Cells
-  syntax Cells ::= NeList{Cell,""}   // non-empty list
-  syntax Cell ::= "<" CellNAME CellAttributes ">" MetaK "</" CellNAME ">"
-                // the two NAMEs should be the same
-				| "<" CellNAME CellAttributes ">" MetaK "...</" CellNAME ">"
-				| "<" CellNAME CellAttributes ">..." MetaK "</" CellNAME ">"
-				| "<" CellNAME CellAttributes ">..." MetaK "...</" CellNAME ">"
-
-  syntax CellAttributes ::= List{CellAttribute,""}
-  syntax CellAttribute  ::= CellTag "=" STRING
-  syntax CellTag  ::= Token{"dummy"} [regex([a-z][A-Za-z0-9]*)]
-  syntax CellNAME ::= Token{"dummy"} [regex([A-Za-z][A-Za-z0-9]*)]
-
-  syntax TOKENID    ::= Token{"dummy"} [noAutoReject, regex([^`:]+)]
-  syntax SORTID     ::= Token{"dummy"} [regex([#]?[A-Z][A-Za-z0-9]*)]
-  syntax STRING     ::= Token{"dummy"} [regex("[\\\"](([^\\\"\\n\\r\\\\])|([\\\\][nrtf\\\"\\\\])|)*[\\\"]")]
-endmodule
-
-
-
-
-module KAST
-  imports KAST-SYNTAX
-  configuration <k> $PGM:Definition </k>
-
-                    | "rule"          K "requires" K "ensures" K
-                    | "rule"          K "requires" K
-                    | "rule"          K "ensures" K
-
 endmodule
