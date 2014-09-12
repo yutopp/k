@@ -93,7 +93,7 @@ public class TokenSortCollector extends BasicVisitor {
          *   syntax Id ::= "Main"
          *   syntax Id ::= "String2Id" "(" String ")"  [function, klabel(String2Id)]
          */
-        if (!production.isLexical() && !production.isTerminal()
+        /*if (!production.isLexical() && !production.isTerminal()
                 && !production.containsAttribute(Constants.FUNCTION))  {
             if (tokenSorts.contains(sort)) {
                 String msg = "Cannot subsort a non-lexical production to a token sort:\nsyntax "
@@ -102,7 +102,7 @@ public class TokenSortCollector extends BasicVisitor {
             }
 
             nonTokenSorts.add(sort);
-        }
+        }*/
     }
 
     @Override
