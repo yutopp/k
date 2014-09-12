@@ -31,10 +31,10 @@ module OUTER
                          | "left:"      KProductionList
                          | "right:"     KProductionList
                          | "non-assoc:" KProductionList
-  syntax KProductionList   ::= NeList{KProduction,"|"}
-  syntax KProduction       ::= KSimpleProduction KAttributes
-  syntax KSimpleProduction ::= NeList{ProductionItem,""}
-                             | KLabel "(" KSortList ")"
+  syntax KProductionList  ::= NeList{KProductionEntry,"|"}
+  syntax KProductionEntry ::= KProduction KAttributes
+  syntax KProduction ::= List{ProductionItem,""}
+                       | KLabel "(" KSortList ")"
   syntax KProductionItem ::= KSort                            // non-terminal
                            | KString                          // terminals
                            | "Token{" KRegEx "}"              // token
