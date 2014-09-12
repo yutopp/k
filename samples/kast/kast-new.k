@@ -62,15 +62,12 @@ module OUTER
 endmodule
 
 
-module BUBBLE is
-  syntax Bubble ::= List{BubbleItem,""}   [token]
-  syntax BubbleItem ::= Token{"dummy"} [regex([^`\s]\S*)]
-                      | Token{"dummy"} [regex([\`]{1}([^\`])+[\`]{1})]
-                      | Token{"dummy"} [regex([\`]{2}([^\`]|[\`][^\`])+[\`]{2})]
-                      | Token{"dummy"} [regex([\`]{3}([^\`]|[\`][^\`]|[\`][\`][^\`])+[\`]{3})]
-                      // can add more if we want to
-					  | "true"
-					  | "false"
+module BUBBLE
+  syntax Bubble ::= Token{"dummy"} [noAutoReject, regex(((?!rule|endmodule|syntax|configuration|context)(\S+)|\s+)+)]
+                  | Token{"dummy"} [noAutoReject, regex([\`]{1}([^\`])+[\`]{1})]
+                  | Token{"dummy"} [noAutoReject, regex([\`]{2}([^\`]|[\`][^\`])+[\`]{2})]
+                  | Token{"dummy"} [noAutoReject, regex([\`]{3}([^\`]|[\`][^\`]|[\`][\`][^\`])+[\`]{3})]
+                  // can add more if we want to
 endmodule
 
 

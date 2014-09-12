@@ -84,7 +84,7 @@ public class ParsersPerModule {
         Module m = def.getModulesMap().get(modName);
         // there are some mockup modules that don't really exist, like #BOOL-INTERFACE
         // from the old maude days
-        if (m == null )
+        if (m == null)
             return;
         visited.add(modName);
         for (ModuleItem mi : m.getItems()) {
