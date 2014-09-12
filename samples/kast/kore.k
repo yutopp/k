@@ -23,9 +23,9 @@ module OUTER
   syntax KSentence ::= KSyntacticSentence
                      | KSemanticSentence
 
-  syntax KSyntacticSentence ::= "syntax" KSort "::=" KSimpleProduction KAttributes
-  syntax KSimpleProduction ::= List{ProductionItem,""}
-                             | KLabel "(" KSortList ")"
+  syntax KSyntacticSentence ::= "syntax" KSort "::=" KProduction KAttributes
+  syntax KProduction ::= List{ProductionItem,""}
+                       | KLabel "(" KSortList ")"
   syntax KProductionItem ::= KSort                            // non-terminal
                            | KString                          // terminals
                            | "Token{" KRegEx "}"              // token
@@ -33,13 +33,10 @@ module OUTER
                            | "NeList{" KSort "," KString "}"  // nelists
                            // maybe more
 
-  syntax KSemanticSentence ::= "configuration" K KAttributes
-                             | "rule"          K KAttributes
-                             | "context"       K KAttributes
+  syntax KSemanticSentence ::= "configuration" K "[" KAttributeList "]"
+                             | "rule"          K "[" KAttributeList "]"
+                             | "context"       K "[" KAttributeList "]"
 
-  syntax KAttributes ::= "" [onlyLabel, klabel(noAttributes)]
-                       | "[" KAttributeList "]"
-                       
   syntax KAttributeList ::= List{KAttribute,","}
 
   syntax KAttribute ::= KTag
@@ -93,8 +90,6 @@ module KAST
                                      // sorting arbitrary KItems; Sort can also be
                                      // K, KItem, KToken, but not KList
   syntax K ::= K "=>" K
-             | K "requires" K
-             | K "ensures" K
              | "`" K "`"  [bracket]
 endmodule
 
