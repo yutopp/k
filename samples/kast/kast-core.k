@@ -1,102 +1,102 @@
 // Copyright (c) 2014 K Team. All Rights Reserved.
 
+/* This defines a core subset of K and KAST, with the property that any
+KAST definition, and thus any K definition, can be mechanically translated
+to a definition using only this minimal subset.  An additional property of
+this core is that we do not want to lose anything from the original
+definition.  For example, we do not want to lose the capability to pretty
+print terms based on the original syntax, or the capability to report error
+messages referring to constructs in the original definition.  */
+
+
 module K-SORT
-  syntax K
+  syntax K [hook(...)]
 endmodule
 
 
 module OUTER
   import K-SORT
 
-  // Top level module stuff
   syntax KDefinition   ::= KRequireList KModuleList
-  syntax KRequireList  ::= List{KRequire,""}
+
+  syntax KRequireList  ::= KRequire
+  syntax KRequireList  ::= "" [unit]
+  syntax KRequireList  ::= KRequireList KRequireList [assoc list]
   syntax KRequire      ::= "require" KString
-  syntax KModuleList   ::= List{KModule,""}
+
+  syntax KModuleList   ::= KModule
+  syntax KModuleList   ::= "" [unit]
+  syntax KModuleList   ::= KModuleList KModuleList [assoc list]
   syntax KModule       ::= "module" KModuleName KImportList KSentenceList "endmodule"
-  syntax KImportList   ::= List{KImport,""}
+
+  syntax KImportList   ::= KImport
+  syntax KImportList   ::= "" [unit]
+  syntax KImportList   ::= KImportList KImportList [assoc list]
   syntax KImport       ::= "import" KModuleName
-  syntax KSentenceList ::= List{KSentence,""}
 
-  syntax KModuleName   ::= Token{"[A-Z\-]+"}
+  syntax KSentenceList ::= KSentence
+  syntax KSentenceList ::= "" [unit]
+  syntax KSentenceList ::= KSentenceList KSentenceList [assoc list]
 
-  syntax KSentence ::= KSyntacticSentence
-                     | KSemanticSentence
+  syntax KSentence ::= "syntax" KSort                         "[" KAttributeList "]"
+  syntax KSentence ::= "syntax" KSort "::=" KProduction       "[" KAttributeList "]"
+  syntax KSentence ::= "configuration" K                      "[" KAttributeList "]"
+  syntax KSentence ::= "rule"          K requires K ensures K "[" KAttributeList "]"  // choice
+  syntax KSentence ::= "context"       K requires K           "[" KAttributeList "]"  // choice
 
-  syntax KSyntacticSentence ::= "syntax" KSort "::=" KProduction KAttributes
-  syntax KProduction ::= List{ProductionItem,""}
-                       | KLabel "(" KSortList ")"
-  syntax KProductionItem ::= KSort                            // non-terminal
-                           | KString                          // terminals
-                           | "Token{" KRegEx "}"              // token
-                           | "List{" KSort "," KString "}"    // lists
-                           | "NeList{" KSort "," KString "}"  // nelists
-                           // maybe more
+  syntax KProduction ::= KProductionItemList
+  syntax KProduction ::= KTag "(" KSortList ")"  // functional notation
+  syntax KProduction ::= "Token{" KRegEx "}"       // token
 
-  syntax KSemanticSentence ::= "configuration" K "[" KAttributeList "]"
-                             | "rule"          K "[" KAttributeList "]"
-                             | "context"       K "[" KAttributeList "]"
+  syntax KProductionItemList ::= KProductionItem
+  syntax KProductionItemList ::= "" [unit]
+  syntax KProductionItemList ::= KProductionItemList KProductionItemList [assoc list]
+  syntax KProductionItem     ::= KSort    // non-terminal
+  syntax KProductionItem     ::= KString  // terminals
 
-  syntax KAttributeList ::= List{KAttribute,","}
-
+  syntax KAttributeList ::= KAttribute
+  syntax KAttributeList ::= "" [unit]
+  syntax KAttributeList ::= KAttributeList "," KAttributeList  [assoc list]
   syntax KAttribute ::= KTag
-                      | KTag "(" KTagList ")"
+  syntax KAttribute ::= KString
+  syntax KAttribute ::= KTag "(" KTagList ")"
 
+  syntax KSortList ::= List{KSort,","}
+  syntax KTagList ::= List{KTag,","}
+
+  // The following can still change
+  syntax KModuleName ::= ...
   syntax KString ::= ...
   syntax KSort ::= ...
   syntax KTag ::= ...
-  syntax KTagList ::= List{KTag,","}
-
-endmodule
-
-
-module BUBBLE is
-  syntax Bubble ::= List{BubbleItem,""}   [token]
-  syntax BubbleItem ::= Token{"dummy"} [regex([^`\s]\S*)]
-                      | Token{"dummy"} [regex([\`]{1}([^\`])+[\`]{1})]
-                      | Token{"dummy"} [regex([\`]{2}([^\`]|[\`][^\`])+[\`]{2})]
-                      | Token{"dummy"} [regex([\`]{3}([^\`]|[\`][^\`]|[\`][\`][^\`])+[\`]{3})]
-                      // can add more if we want to
-					  | "true"
-					  | "false"
-endmodule
-
-
-module OUTER-WITH-BUBBLES
-  import OUTER
-  import BUBBLE
-  syntax K ::= Bubble
 endmodule
 
 
 module KAST
   import K-SORT
-  syntax KLabel    ::= Token{...}
-                     | "`" KLabel "`"  [bracket]
-  syntax KConstant ::= #token(KString, KString)
-                     | #klabel(KLabel)
-  syntax KItem     ::= KConstant
-                     | KLabel "(" KList ")"
-  syntax KList     ::= NeList{K,","}
-                     | ".::KList"
-  // we need to say something like List{K}{","}{"."}
-  syntax K         ::= NeList{KItem,"~>"}
-                     | ".::K"
-  // we need to say List{KItem}{"~>"}{"."}
 
-  syntax KVariable ::= Token{"dummy"} [notInRules, regex(\$?[A-Z_][A-Za-z0-9]*)]
-  syntax KItem  ::= KVariable
-                  | KItem ":" KSort  // KItem must obey its sort at runtime
-                                     // sorting arbitrary KItems; Sort can also be
-                                     // K, KItem, KToken, but not KList
-  syntax K ::= K "=>" K
-             | "`" K "`"  [bracket]
+  syntax MetaKLabel    ::= Token{...}
+  syntax MetaKConstant ::= #token(KString, KString)
+  syntax MetaKConstant ::= #klabel(MetaKLabel)
+  syntax MetaKItem     ::= MetaKConstant
+  syntax MetaKItem     ::= MetaKLabel "(" MetaKList ")"
+  syntax MetaKList     ::= MetaK
+  syntax MetaKList     ::= MetaKList "," MetaKList  [assoc unit(`.::KList`)]
+  syntax MetaKList     ::= ".::KList"
+  syntax MetaK         ::= MetaKItem
+  syntax MetaK         ::= MetaK "~>" MetaK  [assoc unit(`.::K`)]
+  syntax MetaK         ::= ".::K"
+
+  syntax KVariable     ::= Token{...}
+  syntax MetaKItem     ::= KVariable
+  syntax MetaKItem     ::= MetaKItem ":" KSort
+  syntax MetaK         ::= MetaK "=>" MetaK
+  syntax MetaK         ::= "`" MetaK "`"  [bracket]
 endmodule
 
 
 module OUTER-WITH-KAST
   import OUTER
   import KAST
-  rule #token(S:KString, "KAny") => #parse(S, "KDefinition", "OUTER-WITH-BUBBLES")
-  rule #token(S:KString, "Bubble") => #parse(S, "K", "KAST")
+...
 endmodule
