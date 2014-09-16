@@ -155,7 +155,6 @@ public class BuiltinIOOperationsImpl implements BuiltinIOOperations {
     @Override
     public Term parseInModule(StringToken input, StringToken startSymbol, StringToken moduleName, TermContext termContext) {
         try {
-            RunProcess rp = new RunProcess();
             org.kframework.kil.Term kast = ProgramLoader.parseInModule(
                     input.stringValue(),
                     new GeneratedSource(this.getClass()),

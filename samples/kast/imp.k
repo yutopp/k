@@ -37,33 +37,35 @@ module IMP
   imports IMP-SYNTAX
   syntax KResult ::= Int | Bool
 
-  configuration <T color="yellow">
-                  <k color="green"> $PGM:Pgm </k>
-                  <state color="red"> `.::Map` </state>
-                </T>
+  configuration `<T>`(`__::Bag`(
+                      `<k>`(PGM:Pgm),
+                      `<state>`(`.::Map`(.::MetaKList))
+				   )
+                )
 // AExp
-  rule <k> X:Id => I:K ...</k> <state>... `_|->_`(X:Id,I:K) ...</state>
-  rule `_/_`(I1:Int,I2:Int) => `_/Int_`(I1:Int,I2:Int) requires `_=/=Int_`(I2:Int,`0::Int`)
+  rule `__::Bag`(`<k>`(X:Id => I:K ~> _:MetaK), `<state>`(`_Map_`(`_|->_`(X:Id,I:K), _:Map)))
+  rule `_/_`(I1:Int,I2:Int) => `_/Int_`(I1:Int,I2:Int) requires `_=/=Int_`(I2:Int, #token("Int", "0"))
   rule `_+_`(I1:Int,I2:Int) => `_+Int_`(I1:Int,I2:Int)
 // BExp
   rule `_<=_`(I1:Int,I2:Int) => `_<=Int_`(I1:Int,I2:Int)
   rule `!_`(T:Bool) => `notBool_`(T:Bool)
-  rule `_&&_`(`true::Bool`,B:K) => B:K
-  rule `_&&_`(`false::Bool`,_:K) => `false::Bool`
+  rule `_&&_`(#token("Bool", "true"),B:K) => B:K
+  rule `_&&_`(#token("Bool", "false"),_:K) => #token("Bool", "false")
 // Block
   rule `{}`(.::MetaKList) => .::MetaK      [structural]
   rule `{_}`(S:K) => S:K                   [structural]
 // Stmt
-  rule <k> `_=_;`(X:Id,I:Int) => `.::K` ...</k>
-       <state>... `_|->_`(X:Id,`_:K => I:Int`) ...</state>
+  rule `__::Bag`(`<k>`(`_=_;`(X:Id,I:Int) => `.::MetaK`(.::MetaKList) ~> _:MetaK),
+                 `<state>`(`__::Map`(`_|->_`(X:Id,`_:K => I:Int`), _:Map)))
   rule `__::Stmt*Stmt->Stmt`(S1:Stmt,S2:Stmt) => S1:Stmt ~> S2:Stmt  [structural]
-  rule `if(_)_else_`(`true::Bool`,S:K,_:K) => S:K
-  rule `if(_)_else_`(`false::Bool`,_:K,S:K) => S:K
-  rule `while(_)_`(B:K,S:K)
+  rule `if(_)_else_`(#token("Bool", "true") , S:K, _:K) => S:K
+  rule `if(_)_else_`(#token("Bool", "false"), _:K, S:K) => S:K
+  rule `while(_)_`(B:MetaK,S:MetaK)
     => `if(_)_else_`(B:K,`{_}`(`__`(S:K,`while(_)_`(B:K,S:K))),`{}`(.::MetaKList))  [structural]
 // Pgm
-  rule <k> `int_;_`(`_,_`(X:Id,Xs:Ids) => Xs:Ids) </k>
-       <state> `__::Map`(Rho:Map, `.::Map` => `_|->_`(X:Id,`0::Int`)) </state>
+  rule `__::Bag`(
+           `<k>`    (`int_;_`(`_,_`(X:Id,Xs:Ids) => Xs:Ids)),
+           `<state>`(`__::Map`(Rho:Map, ``.::Map`(.::MetaKList) => `_|->_`(X:Id, #token("Int", "0"))`)))
     requires `notBool_`(`_in_`(X:Id,`keys`(Rho)))
-  rule `int_;_`(`.::Ids`,S:K) => S:K  [structural]
+  rule `int_;_`(`.::Ids`(.::MetaKList), S:K) => S:K  [structural]
 endmodule

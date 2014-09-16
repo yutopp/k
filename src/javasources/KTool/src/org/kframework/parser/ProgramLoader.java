@@ -27,6 +27,7 @@ import org.kframework.parser.concrete.disambiguate.NormalizeASTTransformer;
 import org.kframework.parser.concrete.disambiguate.PreferAvoidFilter;
 import org.kframework.parser.concrete.disambiguate.PriorityFilter;
 import org.kframework.parser.concrete2.Grammar;
+import org.kframework.parser.concrete2.Grammar.NonTerminal;
 import org.kframework.parser.concrete2.MakeConsList;
 import org.kframework.parser.concrete2.Parser;
 import org.kframework.parser.concrete2.Parser.ParseError;
@@ -173,7 +174,19 @@ public class ProgramLoader {
 
         ASTNode out;
         Parser parser = new Parser(content);
-        out = parser.parse(grammars.get(moduleName).get(startSymbol.toString()), 0);
+        Grammar grammar = grammars.get(moduleName);
+        if (grammar == null) {
+            String msg = "Could not find module: " + moduleName + " when trying to parseInModule.";
+            throw new ParseFailedException(new KException(
+                    ExceptionType.ERROR, KExceptionGroup.INNER_PARSER, msg, source, null));
+        }
+        NonTerminal nt = grammar.get(startSymbol.toString());
+        if (nt == null) {
+            String msg = "Could not find start symbol: " + startSymbol + " when trying to parseInModule " + moduleName;
+            throw new ParseFailedException(new KException(
+                    ExceptionType.ERROR, KExceptionGroup.INNER_PARSER, msg, source, null));
+        }
+        out = parser.parse(nt, 0);
         if (context.globalOptions.debug)
             System.err.println("Raw: " + out + "\n");
         try {
