@@ -19,3 +19,6 @@
 *   syntax MetaKItem ::= MetaKItem ":" KSort  // KItem must obey its sort at runtime
                                      // sorting arbitrary KItems; Sort can also be
                                      // K, KItem, KToken, but not KList
+
+* It is not entirely clear whether we want requires and ensures to be constructors
+  for rules, contexts, etc., or for KItems
