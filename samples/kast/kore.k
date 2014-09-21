@@ -25,6 +25,8 @@ module BASIC-K
   syntax KList ::= K   [...]
   syntax KList ::= ".::KList"   [klabel(emptyKList), ...]
   syntax KList ::= KList "," KList   [assoc, unit(emptyKList), ...]
+  
+  syntax KSort ::= r"[A-Z][A-Za-z0-9]*"   [token, ...]
 endmodule
 
 
@@ -68,7 +70,6 @@ module OUTER-KORE
 
   // The following can still change
   syntax KModuleName ::= r"[A-Z][A-Z\-\_]*"   [token, ...]
-  syntax KSort ::= r"[A-Z][A-Za-z0-9]*"   [token, ...]
   syntax KString ::= ...Radu...   [token, ...]
          // optionally qualified strings, like in Scala "abc", i"abc", r"a*bc", etc.
 endmodule
