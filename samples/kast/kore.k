@@ -22,10 +22,7 @@ We selected this core of K based on the following two criteria:
 
 module BASIC-K
   syntax K   [...]
-  syntax KList ::= K   [...]
-  syntax KList ::= ".::KList"   [klabel(emptyKList), ...]
-  syntax KList ::= KList "," KList   [assoc, unit(emptyKList), ...]
-  
+    
   syntax KSort ::= r"[A-Z][A-Za-z0-9]*"   [token, ...]
   
   syntax KAttributes ::= "[" KList "]"   [...]
@@ -74,29 +71,51 @@ module OUTER-KORE
          // optionally qualified strings, like in Scala "abc", i"abc", r"a*bc", etc.
 endmodule
 
-module INNER-KAST                                         [ hookBase(org.kframework.kast) ]
+module KAST                                               [ hookBase(org.kframework.ast) ]
   import BASIC-K
 
   syntax KLabel    ::= r"([^`]|\+`)*"                     [token, hook(KLabel)] // everything except `, unless escaped \`
   syntax KLabel    ::= "`" KLabel "`"                     [bracket, hook(KLabel)]
-    // prefer optional brackets for labels, because we encode attributes as K terms, too
+    // prefer optional brackets for labels, 
+    because we encode attributes as K terms, too
 
-  syntax KConstant ::= "#token" "(" KString "," KSort ")" [hook(KConstant)]
-  syntax KConstant ::= "#klabel" "(" KLabel ")"           [hook(KConstant)] // why is this production needed. I need somebody to explain rewriting on labels to me.
+  syntax KList ::= K   [...]
+  syntax KList ::= ".::KList"                             [klabel(emptyKList), ...]
+  syntax KList ::= KList "," KList                        [assoc, unit(emptyKList), hook(KList)]
+
   syntax KItem     ::= KConstant   [...]
   syntax KItem     ::= KLabel "(" KList ")"               [hook(KApp)]
-  syntax K         ::= KItem   [...]
-  syntax K         ::= ".::K"                             [klabel(emptyK)]
-  syntax K         ::= K "~>" K                           [assoc, unit(emptyK), hook(KSeq)]
-
-  syntax KVariable ::= r"\$?[A-Z_][A-Za-z0-9]*"				    [token, hook(KVariable)]
-  syntax KItem     ::= KVariable                          [...]
   syntax KItem     ::= KItem ":" KSort                    [hook(KItem)]
   syntax KItem     ::= KItem KAttributes                  [hook(KItem)]
-  syntax K         ::= K "=>" K                           [hook(Rewrite)]
-  syntax K         ::= "`" K "`"                          [bracket, ...] // needed, e.g., <k> V ~> `env(E) => .` ...</k>
+
+  syntax KConstant ::= "#token" "(" KString "," KSort ")" [hook(KConstant)]
+  syntax KConstant ::= "#klabel" "(" KLabel ")"           [hook(KConstant)] 
 endmodule
 
+module K-STUFF                                  [ hookBase(org.kframework.kstuff) ]
+  syntax K         ::= KItem                    [...]
+  
+  syntax KVariable ::= r"\$?[A-Z_][A-Za-z0-9]*"	[token, hook(KVariable)]  
+  syntax KItem     ::= KVariable                [...]  
+  
+  syntax K         ::= ".::K"                   [klabel(emptyK)]
+  syntax K         ::= K "~>" K                 [assoc, unit(emptyK), hook(KSeq)]
+  
+  syntax K         ::= K "=>" K                 [hook(Rewrite)]
+  
+  syntax K         ::= "`" K "`"                [bracket, ...] // needed, e.g., <k> V ~> `env(E) => .` ...</k>  
+endmodule
+
+module INNER-KAST
+  import AST
+  import K-STUFF
+endmodule
+
+// just for exemplification
+module EXAMPLE-LANGUAGE-K
+  import EXAMPLE-LANGUAGE
+  import K-STUFF
+endmodule
 
 module KORE
   import OUTER-KORE
