@@ -74,27 +74,27 @@ module OUTER-KORE
          // optionally qualified strings, like in Scala "abc", i"abc", r"a*bc", etc.
 endmodule
 
-module INNER-KAST
+module INNER-KAST                                         [ hookBase(org.kframework.kast) ]
   import BASIC-K
 
-  syntax KLabel    ::= r"([^`]|\+`)*"  [token, ...] // everything except `, unless escaped \`
-  syntax KLabel    ::= "`" KLabel "`"   [bracket, ...]
+  syntax KLabel    ::= r"([^`]|\+`)*"                     [token, hook(KLabel)] // everything except `, unless escaped \`
+  syntax KLabel    ::= "`" KLabel "`"                     [bracket, hook(KLabel)]
     // prefer optional brackets for labels, because we encode attributes as K terms, too
 
-  syntax KConstant ::= "#token" "(" KString "," KSort ")"   [...]
-  syntax KConstant ::= "#klabel" "(" KLabel ")"   [...]
+  syntax KConstant ::= "#token" "(" KString "," KSort ")" [hook(KConstant)]
+  syntax KConstant ::= "#klabel" "(" KLabel ")"           [hook(KConstant)] // why is this production needed. I need somebody to explain rewriting on labels to me.
   syntax KItem     ::= KConstant   [...]
-  syntax KItem     ::= KLabel "(" KList ")"   [...]
+  syntax KItem     ::= KLabel "(" KList ")"               [hook(KApp)]
   syntax K         ::= KItem   [...]
-  syntax K         ::= ".::K"   [klabel(emptyK)]
-  syntax K         ::= K "~>" K  [assoc, unit(emptyK)]
+  syntax K         ::= ".::K"                             [klabel(emptyK)]
+  syntax K         ::= K "~>" K                           [assoc, unit(emptyK), hook(KSeq)]
 
-  syntax KVariable ::= r"\$?[A-Z_][A-Za-z0-9]*"				[token, ...]
-  syntax KItem     ::= KVariable   [...]
-  syntax KItem     ::= KItem ":" KSort   [...]
-  syntax KItem     ::= KItem KAttributes    [...]  
-  syntax K         ::= K "=>" K   [...]
-  syntax K         ::= "`" K "`"  [bracket, ...] // needed, e.g., <k> V ~> `env(E) => .` ...</k>
+  syntax KVariable ::= r"\$?[A-Z_][A-Za-z0-9]*"				    [token, hook(KVariable)]
+  syntax KItem     ::= KVariable                          [...]
+  syntax KItem     ::= KItem ":" KSort                    [hook(KItem)]
+  syntax KItem     ::= KItem KAttributes                  [hook(KItem)]
+  syntax K         ::= K "=>" K                           [hook(Rewrite)]
+  syntax K         ::= "`" K "`"                          [bracket, ...] // needed, e.g., <k> V ~> `env(E) => .` ...</k>
 endmodule
 
 
