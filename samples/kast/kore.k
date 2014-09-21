@@ -92,6 +92,7 @@ module INNER-KAST
   syntax KVariable ::= r"\$?[A-Z_][A-Za-z0-9]*"				[token, ...]
   syntax KItem     ::= KVariable   [...]
   syntax KItem     ::= KItem ":" KSort   [...]
+  syntax KItem     ::= KItem KAttributes    [...]  
   syntax K         ::= K "=>" K   [...]
   syntax K         ::= "`" K "`"  [bracket, ...] // needed, e.g., <k> V ~> `env(E) => .` ...</k>
 endmodule
