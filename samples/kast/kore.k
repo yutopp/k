@@ -27,6 +27,8 @@ module BASIC-K
   syntax KList ::= KList "," KList   [assoc, unit(emptyKList), ...]
   
   syntax KSort ::= r"[A-Z][A-Za-z0-9]*"   [token, ...]
+  
+  syntax KAttributes ::= "[" KList "]"   [...]
 endmodule
 
 
@@ -65,8 +67,6 @@ module OUTER-KORE
   syntax KProduction ::= KProduction KProduction [assoc, unit(emptyKProduction), ...]
   syntax KProductionItem ::= KSort   [...] // non-terminal
   syntax KProductionItem ::= KString   [...] // terminals, including regexes
-
-  syntax KAttributes ::= "[" KList "]"   [...]
 
   // The following can still change
   syntax KModuleName ::= r"[A-Z][A-Z\-\_]*"   [token, ...]
