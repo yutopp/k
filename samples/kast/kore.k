@@ -45,7 +45,7 @@ module OUTER-KORE
   syntax KModuleList   ::= KModule   [...]
   syntax KModuleList   ::= ""   [klabel(emptyKModuleList), ...]
   syntax KModuleList   ::= KModuleList KModuleList   [assoc, unit(emptyKModuleList), ...]
-  syntax KModule       ::= "module" KModuleName KImportList KSentenceList "endmodule"   [...]
+  syntax KModule       ::= "module" KAttributes KModuleName KImportList KSentenceList "endmodule"   [...]
 
   syntax KImportList   ::= KImport   [...]
   syntax KImportList   ::= ""   [klabel(emptyKImportList), ...]
