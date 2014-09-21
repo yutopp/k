@@ -89,7 +89,7 @@ module INNER-KAST
   syntax K         ::= ".::K"   [klabel(emptyK)]
   syntax K         ::= K "~>" K  [assoc, unit(emptyK)]
 
-  syntax KVariable ::= ... // same like KSort?
+  syntax KVariable ::= r"\$?[A-Z_][A-Za-z0-9]*"				[token, ...]
   syntax KItem     ::= KVariable   [...]
   syntax KItem     ::= KItem ":" KSort   [...]
   syntax K         ::= K "=>" K   [...]
