@@ -81,7 +81,7 @@ module INNER-KAST
   syntax KLabel    ::= "`" KLabel "`"   [bracket, ...]
     // prefer optional brackets for labels, because we encode attributes as K terms, too
 
-  syntax KConstant ::= "#token" "(" KString "," KString ")"   [...]
+  syntax KConstant ::= "#token" "(" KString "," KSort ")"   [...]
   syntax KConstant ::= "#klabel" "(" KLabel ")"   [...]
   syntax KItem     ::= KConstant   [...]
   syntax KItem     ::= KLabel "(" KList ")"   [...]
