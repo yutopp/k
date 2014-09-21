@@ -22,10 +22,9 @@ We selected this core of K based on the following two criteria:
 
 module BASIC-K
   syntax K   [...]
-    
-  syntax KSort ::= r"[A-Z][A-Za-z0-9]*"   [token, ...]
-  
-  syntax KAttributes ::= "[" KList "]"   [...]
+  syntax KList ::= K   [...]
+  syntax KList ::= ".::KList"   [klabel(emptyKList), ...]
+  syntax KList ::= KList "," KList   [assoc, unit(emptyKList), ...]
 endmodule
 
 
@@ -42,7 +41,7 @@ module OUTER-KORE
   syntax KModuleList   ::= KModule   [...]
   syntax KModuleList   ::= ""   [klabel(emptyKModuleList), ...]
   syntax KModuleList   ::= KModuleList KModuleList   [assoc, unit(emptyKModuleList), ...]
-  syntax KModule       ::= "module" KAttributes KModuleName KImportList KSentenceList "endmodule"   [...]
+  syntax KModule       ::= "module" KModuleName KImportList KSentenceList "endmodule"   [...]
 
   syntax KImportList   ::= KImport   [...]
   syntax KImportList   ::= ""   [klabel(emptyKImportList), ...]
@@ -65,57 +64,37 @@ module OUTER-KORE
   syntax KProductionItem ::= KSort   [...] // non-terminal
   syntax KProductionItem ::= KString   [...] // terminals, including regexes
 
+  syntax KAttributes ::= "[" KList "]"   [...]
+
   // The following can still change
   syntax KModuleName ::= r"[A-Z][A-Z\-\_]*"   [token, ...]
+  syntax KSort ::= r"[A-Z][A-Za-z0-9]*"   [token, ...]
   syntax KString ::= ...Radu...   [token, ...]
          // optionally qualified strings, like in Scala "abc", i"abc", r"a*bc", etc.
 endmodule
 
-module KAST                                               [ hookBase(org.kframework.ast) ]
+module INNER-KAST
   import BASIC-K
 
-  syntax KLabel    ::= r"([^`]|\+`)*"                     [token, hook(KLabel)] // everything except `, unless escaped \`
-  syntax KLabel    ::= "`" KLabel "`"                     [bracket, hook(KLabel)]
-    // prefer optional brackets for labels, 
-    because we encode attributes as K terms, too
+  syntax KLabel    ::= r"([^`]|\+`)*"  [token, ...] // everything except `, unless escaped \`
+  syntax KLabel    ::= "`" KLabel "`"   [bracket, ...]
+    // prefer optional brackets for labels, because we encode attributes as K terms, too
 
-  syntax KList ::= K   [...]
-  syntax KList ::= ".::KList"                             [klabel(emptyKList), ...]
-  syntax KList ::= KList "," KList                        [assoc, unit(emptyKList), hook(KList)]
-
+  syntax KConstant ::= "#token" "(" KString "," KString ")"   [...]
+  syntax KConstant ::= "#klabel" "(" KLabel ")"   [...]
   syntax KItem     ::= KConstant   [...]
-  syntax KItem     ::= KLabel "(" KList ")"               [hook(KApp)]
-  syntax KItem     ::= KItem ":" KSort                    [hook(KItem)]
-  syntax KItem     ::= KItem KAttributes                  [hook(KItem)]
+  syntax KItem     ::= KLabel "(" KList ")"   [...]
+  syntax K         ::= KItem   [...]
+  syntax K         ::= ".::K"   [klabel(emptyK)]
+  syntax K         ::= K "~>" K  [assoc, unit(emptyK)]
 
-  syntax KConstant ::= "#token" "(" KString "," KSort ")" [hook(KConstant)]
-  syntax KConstant ::= "#klabel" "(" KLabel ")"           [hook(KConstant)] 
+  syntax KVariable ::= ... // same like KSort?
+  syntax KItem     ::= KVariable   [...]
+  syntax KItem     ::= KItem ":" KSort   [...]
+  syntax K         ::= K "=>" K   [...]
+  syntax K         ::= "`" K "`"  [bracket, ...] // needed, e.g., <k> V ~> `env(E) => .` ...</k>
 endmodule
 
-module K-STUFF                                  [ hookBase(org.kframework.kstuff) ]
-  syntax K         ::= KItem                    [...]
-  
-  syntax KVariable ::= r"\$?[A-Z_][A-Za-z0-9]*"	[token, hook(KVariable)]  
-  syntax KItem     ::= KVariable                [...]  
-  
-  syntax K         ::= ".::K"                   [klabel(emptyK)]
-  syntax K         ::= K "~>" K                 [assoc, unit(emptyK), hook(KSeq)]
-  
-  syntax K         ::= K "=>" K                 [hook(Rewrite)]
-  
-  syntax K         ::= "`" K "`"                [bracket, ...] // needed, e.g., <k> V ~> `env(E) => .` ...</k>  
-endmodule
-
-module INNER-KAST
-  import AST
-  import K-STUFF
-endmodule
-
-// just for exemplification
-module EXAMPLE-LANGUAGE-K
-  import EXAMPLE-LANGUAGE
-  import K-STUFF
-endmodule
 
 module KORE
   import OUTER-KORE
