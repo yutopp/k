@@ -82,25 +82,25 @@ module OUTER-KORE [ hookNamespace(org.kframework.kore.outer) ]
          // optionally qualified strings, like in Scala "abc", i"abc", r"a*bc", etc.
 endmodule
 
-module INNER-KAST
+module INNER-KAST [ hookNamespace(org.kframework.kore) ]
   import BASIC-K
 
-  syntax KLabel    ::= r"([^`]|\+`)*"  [token, ...] // everything except `, unless escaped \`
-  syntax KLabel    ::= "`" KLabel "`"   [bracket, ...]
+  syntax KLabel    ::= r"([^`]|\+`)*"   [ token, hook ] // everything except `, unless escaped \`
+  syntax KLabel    ::= "`" KLabel "`"   [ bracket, hook ]
     // prefer optional brackets for labels, because we encode attributes as K terms, too
 
-  syntax KConstant ::= "#token" "(" KString "," KString ")"   [...]
-  syntax KConstant ::= "#klabel" "(" KLabel ")"   [...]
-  syntax KItem     ::= KConstant   [...]
-  syntax KItem     ::= KLabel "(" KList ")"   [...]
-  syntax K         ::= KItem   [...]
-  syntax K         ::= ".::K"   [klabel(emptyK)]
-  syntax K         ::= K "~>" K  [assoc, unit(emptyK)]
+  syntax KConstant ::= "#token" "(" KString "," KString ")" [ hook ]
+  syntax KConstant ::= "#klabel" "(" KLabel ")"             [ hook ]
+  syntax KItem     ::= KConstant                            [ ... ]
+  syntax KItem     ::= KLabel "(" KList ")"                 [ hook ]
+  syntax K         ::= KItem                                [ ... ]
+  syntax K         ::= ".::K"                               [ klabel(emptyK) ]
+  syntax K         ::= K "~>" K                             [ assoc, unit(emptyK) ]
 
-  syntax KVariable ::= ... // same like KSort?
-  syntax KItem     ::= KVariable   [...]
-  syntax KItem     ::= KItem ":" KSort   [...]
-  syntax K         ::= K "=>" K   [...]
+  syntax KVariable ::= ...              [ hook ] // same like KSort?
+  syntax KItem     ::= KVariable        [ ... ]
+  syntax KItem     ::= KItem ":" KSort  [ hook ]
+  syntax K         ::= K "=>" K         [ hook(Rewrite) ]
   syntax K         ::= "`" K "`"  [bracket, ...] // needed, e.g., <k> V ~> `env(E) => .` ...</k>
 endmodule
 
