@@ -101,7 +101,7 @@ module INNER-KAST [ hookNamespace(org.kframework.kore) ]
   syntax KItem     ::= KVariable        [ ... ]
   syntax KItem     ::= KItem ":" KSort  [ hook ]
   syntax K         ::= K "=>" K         [ hook(Rewrite) ]
-  syntax K         ::= "`" K "`"  [bracket, ...] // needed, e.g., <k> V ~> `env(E) => .` ...</k>
+  syntax K         ::= "`" K "`"        [bracket, ...] // needed, e.g., <k> V ~> `env(E) => .` ...</k>
 endmodule
 
 
