@@ -20,6 +20,15 @@ We selected this core of K based on the following two criteria:
 
 // Everything is Meta- at this level, so I dropped the Meta everywhere
 
+/*
+  The "hook" attribute has the follosing semantics:
+  1. Hooks are relative to the hookNamespace module attribute.
+  2. "hook(Foo)" will hook to the constructor named Foo with the arguments being 
+     the non-terminals of the production.
+  3. "hook" is shorthand for hooking to a constructor which has the same name as 
+     the sort of the current production.
+*/
+
 module BASIC-K
   syntax K   [...]
   syntax KList ::= K   [...]
@@ -28,47 +37,47 @@ module BASIC-K
 endmodule
 
 
-module OUTER-KORE
+module OUTER-KORE [ hookNamespace(org.kframework.kore.outer) ]
   import BASIC-K
 
-  syntax KDefinition   ::= KRequireList KModuleList   [...]
+  syntax KDefinition   ::= KRequireList KModuleList   [ hook ]
 
-  syntax KRequireList  ::= KRequire   [...]
-  syntax KRequireList  ::= ""   [klabel(emptyKRequireList), ...]
-  syntax KRequireList  ::= KRequireList KRequireList   [assoc, unit(emptyKRequireList), ...]
-  syntax KRequire      ::= "require" KString   [...]
+  syntax KRequireList  ::= KRequire                   [ ... ]
+  syntax KRequireList  ::= ""                         [ klabel(emptyKRequireList), ... ]
+  syntax KRequireList  ::= KRequireList KRequireList  [ assoc, com, unit(emptyKRequireList) ]
+  syntax KRequire      ::= "require" KString          [ hook ]
 
-  syntax KModuleList   ::= KModule   [...]
-  syntax KModuleList   ::= ""   [klabel(emptyKModuleList), ...]
-  syntax KModuleList   ::= KModuleList KModuleList   [assoc, unit(emptyKModuleList), ...]
-  syntax KModule       ::= "module" KModuleName KImportList KSentenceList "endmodule"   [...]
+  syntax KModuleList   ::= KModule                    [ ... ]
+  syntax KModuleList   ::= ""                         [ klabel(emptyKModuleList), ... ]
+  syntax KModuleList   ::= KModuleList KModuleList    [ assoc, com, unit(emptyKModuleList) ]
+  syntax KModule       ::= "module" KModuleName KImportList KSentenceList "endmodule"   [ hook ]
 
-  syntax KImportList   ::= KImport   [...]
-  syntax KImportList   ::= ""   [klabel(emptyKImportList), ...]
-  syntax KImportList   ::= KImportList KImportList   [assoc, unit(emptyKImportList), ...]
-  syntax KImport       ::= "import" KModuleName   [...]
+  syntax KImportList   ::= KImport                  [ ... ]
+  syntax KImportList   ::= ""                       [ klabel(emptyKImportList), ... ]
+  syntax KImportList   ::= KImportList KImportList  [ assoc, com, unit(emptyKImportList), ... ]
+  syntax KImport       ::= "import" KModuleName     [ hook ]
 
-  syntax KSentenceList ::= KSentence   [...]
-  syntax KSentenceList ::= ""      [klabel(emptyKSentenceList), ...]
-  syntax KSentenceList ::= KSentenceList KSentenceList   [assoc, unit(emptyKSentenceList), ...]
+  syntax KSentenceList ::= KSentence                    [ ... ]
+  syntax KSentenceList ::= ""                           [ klabel(emptyKSentenceList), ... ]
+  syntax KSentenceList ::= KSentenceList KSentenceList  [ assoc, com, unit(emptyKSentenceList), ... ]
 
-  syntax KSentence ::= "syntax" KSort                         KAttributes   [...]
-  syntax KSentence ::= "syntax" KSort "::=" KProduction       KAttributes   [...]
-  syntax KSentence ::= "configuration" K                      KAttributes   [...]
-  syntax KSentence ::= "rule"          K requires K ensures K KAttributes   [...]
-  syntax KSentence ::= "context"       K requires K           KAttributes   [...]
+  syntax KSentence ::= "syntax" KSort                         KAttributes   [ hook(Syntax) ]
+  syntax KSentence ::= "syntax" KSort "::=" KProduction       KAttributes   [ hook(Syntax) ]
+  syntax KSentence ::= "configuration" K                      KAttributes   [ hook(Configuration) ]
+  syntax KSentence ::= "rule"          K requires K ensures K KAttributes   [ hook(Rule) ]
+  syntax KSentence ::= "context"       K requires K           KAttributes   [ hook(Context) ]
 
   syntax KProduction ::= KProductionItem   [...]
   syntax KProduction ::= ""   [klabel(emptyProduction), ...]
   syntax KProduction ::= KProduction KProduction [assoc, unit(emptyKProduction), ...]
-  syntax KProductionItem ::= KSort   [...] // non-terminal
-  syntax KProductionItem ::= KString   [...] // terminals, including regexes
+  syntax KProductionItem ::= KSort    [ hook(NonTerminal) ] // non-terminal
+  syntax KProductionItem ::= KString  [ hook(Terminal) ]    // terminals, including regexes
 
-  syntax KAttributes ::= "[" KList "]"   [...]
+  syntax KAttributes ::= "[" KList "]"   [ hook(KAttributes) ]
 
   // The following can still change
   syntax KModuleName ::= r"[A-Z][A-Z\-\_]*"   [token, ...]
-  syntax KSort ::= r"[A-Z][A-Za-z0-9]*"   [token, ...]
+  syntax KSort ::= r"[A-Z][A-Za-z0-9]*"     [ token, hook ]
   syntax KString ::= ...Radu...   [token, ...]
          // optionally qualified strings, like in Scala "abc", i"abc", r"a*bc", etc.
 endmodule
