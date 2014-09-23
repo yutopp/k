@@ -55,7 +55,7 @@ and \texttt{unquote} nodes; these nodes are recognized with the predicate
   syntax KItem ::= "qVisitor" "(" Int ")" [klabel(qVisitor)]
 
   rule qVisitor(N:Int) => #visitor(#klabel(quoteit),#klist(N),
-                                   #klabel(isQuoted),#klist(.KList)) requires true ensures true [macro]
+                                   #klabel(isQuoted),#klist(.KList)) requires #token("true", "Bool") ensures #token("true", "Bool") [macro]
 
 /*@ The \texttt{mQuote} macro defined below simply applies the visitor to a
 given K term.  In this particular definition of Agent the K term will always
@@ -64,7 +64,7 @@ we want it to work also if we add other syntactic categories to our language
 (e.g., statements):  */
 
   syntax Exp ::= "mQuote" "(" K "," Int ")" [klabel(mQuote)]
-  rule mQuote(E, N) => #visit(E, qVisitor(N)) requires true ensures true [macro]
+  rule mQuote(E, N) => #visit(E, qVisitor(N)) requires #token("true", "Bool") ensures #token("true", "Bool") [macro]
 
 /*@ The semantics of \texttt{quote E} is defined as follows: visit \texttt{E},
 starting with counter 0; whenever a nested \texttt{quote} construct is
@@ -79,27 +79,27 @@ with label \texttt{\#visited}, the semantics of the constructs \texttt{lift}
 and \texttt{eval} are defined using the \texttt{\#visited} wrapper: */
 
   syntax KItem ::= "quoteit" "(" Int "," K ")" [klabel(quoteit)] 
-  rule `quote_`(E) => mQuote(E, 0) requires true ensures true [.::KList]
-  rule quoteit(N, `quote_`(E))   => #visiting.kapp(#klabel(`quote_`),mQuote(E, `_+Int_`(N, 1))) 
-    requires true ensures true [.::KList]
-  rule quoteit(0, `unquote_`(E)) => E requires true ensures true [.::KList]
-  rule quoteit(N, `unquote_`(E)) => #visiting.kapp(#klabel(`unquote_`),mQuote(E, `_-Int_`(N, 1)))
-    requires `_>Int_`(N, 0) ensures true [.::KList]
+  rule `quote_`(E) => mQuote(E, #token("0", "Int")) requires #token("true", "Bool") ensures #token("true", "Bool") [.::KList]
+  rule quoteit(N, `quote_`(E))   => #visiting.kapp(#klabel(`quote_`),mQuote(E, `_+Int_`(N, #token("1", "Int")))) 
+    requires #token("true", "Bool") ensures #token("true", "Bool") [.::KList]
+  rule quoteit(0, `unquote_`(E)) => E requires #token("true", "Bool") ensures #token("true", "Bool") [.::KList]
+  rule quoteit(N, `unquote_`(E)) => #visiting.kapp(#klabel(`unquote_`),mQuote(E, `_-Int_`(N, #token("1", "Int"))))
+    requires `_>Int_`(N, #token("0", "Int")) ensures #token("true", "Bool") [.::KList]
 
-  rule lift_(V:Val) => #visited(V) requires true ensures true [.::KList]
-  rule eval_(#visited(E)) => E requires true ensures true [.::KList]
+  rule lift_(V:Val) => #visited(V) requires #token("true", "Bool") ensures #token("true", "Bool") [.::KList]
+  rule eval_(#visited(E)) => E requires #token("true", "Bool") ensures #token("true", "Bool") [.::KList]
 
 /*@ Since we want code values to become actual values in our language, we also
 need to explicitly state it that \texttt{\#visited}-wrapped terms belong to
 \texttt{Val} (the generic visitor only ensures they are \texttt{KResult}s):  */
 
-  rule isVal(#visited(_)) => true requires true ensures true [.::KList]
+  rule isVal(#visited(_)) => #token("true", "Bool") requires #token("true", "Bool") ensures #token("true", "Bool") [.::KList]
 
 /*@ Finally, we define the auxiliary predicate testing if a code fragment is a
 \texttt{quote} or \texttt{unquote}:  */
   syntax Bool ::= "isQuoted" "(" Exp ")"     [ klabel(isQuoted), function]
-  rule isQuoted(`quote_`(E)) => true requires true ensures true [.::KList]
-  rule isQuoted(`unquote_`(K)) => true requires true ensures true [.::KList]
+  rule isQuoted(`quote_`(E)) => #token("true", "Bool") requires #token("true", "Bool") ensures #token("true", "Bool") [.::KList]
+  rule isQuoted(`unquote_`(K)) => #token("true", "Bool") requires #token("true", "Bool") ensures #token("true", "Bool") [.::KList]
 
 /*@  Conceptually, the above is the conventional definition of
 \texttt{quote}/\texttt{unquote}.
