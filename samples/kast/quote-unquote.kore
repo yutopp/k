@@ -79,26 +79,27 @@ with label \texttt{\#visited}, the semantics of the constructs \texttt{lift}
 and \texttt{eval} are defined using the \texttt{\#visited} wrapper: */
 
   syntax KItem ::= "quoteit" "(" Int "," K ")" [klabel(quoteit)] 
-  rule `quote_`(E) => mQuote(E, 0) requires true ensures true
-  rule quoteit(N, `quote_`(E))   => #visiting.kapp(#klabel(`quote_`),mQuote(E, `_+Int_`(N, 1))) requires true ensures true
-  rule quoteit(0, `unquote_`(E)) => E requires true ensures true
+  rule `quote_`(E) => mQuote(E, 0) requires true ensures true [.::KList]
+  rule quoteit(N, `quote_`(E))   => #visiting.kapp(#klabel(`quote_`),mQuote(E, `_+Int_`(N, 1))) 
+    requires true ensures true [.::KList]
+  rule quoteit(0, `unquote_`(E)) => E requires true ensures true [.::KList]
   rule quoteit(N, `unquote_`(E)) => #visiting.kapp(#klabel(`unquote_`),mQuote(E, `_-Int_`(N, 1)))
-  requires `_>Int_`(N, 0) ensures true
+    requires `_>Int_`(N, 0) ensures true [.::KList]
 
-  rule lift_(V:Val) => #visited(V) requires true ensures true
-  rule eval_(#visited(E)) => E requires true ensures true
+  rule lift_(V:Val) => #visited(V) requires true ensures true [.::KList]
+  rule eval_(#visited(E)) => E requires true ensures true [.::KList]
 
 /*@ Since we want code values to become actual values in our language, we also
 need to explicitly state it that \texttt{\#visited}-wrapped terms belong to
 \texttt{Val} (the generic visitor only ensures they are \texttt{KResult}s):  */
 
-  rule isVal(#visited(_)) => true requires true ensures true
+  rule isVal(#visited(_)) => true requires true ensures true [.::KList]
 
 /*@ Finally, we define the auxiliary predicate testing if a code fragment is a
 \texttt{quote} or \texttt{unquote}:  */
   syntax Bool ::= "isQuoted" "(" Exp ")"     [ klabel(isQuoted), function]
-  rule isQuoted(`quote_`(E)) => true requires true ensures true
-  rule isQuoted(`unquote_`(K)) => true requires true ensures true
+  rule isQuoted(`quote_`(E)) => true requires true ensures true [.::KList]
+  rule isQuoted(`unquote_`(K)) => true requires true ensures true [.::KList]
 
 /*@  Conceptually, the above is the conventional definition of
 \texttt{quote}/\texttt{unquote}.
