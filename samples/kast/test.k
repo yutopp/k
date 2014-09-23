@@ -70,12 +70,19 @@ endmodule
 
 
 module BUBBLE
-  syntax Bubble2 ::= Token{"dummy"} [onlyLabel, noAutoReject, regex(((?!rule|endmodule|syntax|configuration|context)(\S+)|\s+)+)]
+  //syntax Bubble2 ::= Token{"dummy"} [onlyLabel, noAutoReject, regex(((?!rule|endmodule|syntax|configuration|context)(\S+)|\s+)+)]
                   //| Token{"dummy"} [onlyLabel, noAutoReject, regex([\`]{1}([^\`])+[\`]{1})]
                   //| Token{"dummy"} [onlyLabel, noAutoReject, regex([\`]{2}([^\`]|[\`][^\`])+[\`]{2})]
                   //| Token{"dummy"} [onlyLabel, noAutoReject, regex([\`]{3}([^\`]|[\`][^\`]|[\`][\`][^\`])+[\`]{3})]
                   // can add more if we want to
-  syntax Bubble ::= Bubble2 [klabel('bubbleWrap)]
+  syntax BubbleItem ::= Token{"dummy"} [onlyLabel, noAutoReject, regex(\S+)]
+  syntax BubbleItem ::= "rule"          [reject]
+                      | "syntax"        [reject]
+                      | "configuration" [reject]
+                      | "context"       [reject]
+                      | "endmodule"     [reject]
+  syntax BubbleList ::= List{BubbleItem,""} [token]
+  syntax Bubble ::= BubbleList [klabel('bubbleWrap)]
 endmodule
 
 
