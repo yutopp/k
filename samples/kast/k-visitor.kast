@@ -1,0 +1,63 @@
+// Copyright (c) 2012-2014 K Team. All Rights Reserved.
+
+require "builtins/k-equal.k"
+
+module K-VISITOR
+  imports K-EQUAL-HOOKS
+  imports BUILTIN-HOOKS
+
+// Cosmin: we #klabel in KAST 
+//  syntax KItem  ::= #klabel(KLabel)       // Should be eventually builtin
+
+// Cosmin: but we don't have #klist in KORE yet
+// I think this would be solved by allowing 
+// _,_(a, b, c) to be equivalent to _,_(a, _,_(b))
+// This could also provide a very nice abstraction for assoc and comm
+// In any case, let's have another KLabel for now
+  syntax KLabel ::= "#klist"    [ .::KList ]    
+
+  syntax KLabel ::= "#visit"    [ .::KList ]
+  syntax KLabel ::= "#visitor"  [ .::KList ]
+  syntax KLabel ::= "#visited"  [ .::KList ]
+
+  rule #visit(L(Kl),
+              #visitor(#klabel(A),#klist(Kla), 
+                       #klabel(P),#klist(Klp)) 
+    => #if P(Klp,L(Kl)) ==K true 
+       #then A(Kla,L(Kl))
+       #else #visiting.kapp(#klabel(L),#visit(#klist(Kl),
+                            #visitor(#klabel(A),#klist(Kla),#klabel(P),#klist(Klp))))
+       #fi
+    requires `_=/=K_`(#klabel(L),#klabel(#klist)) ensures true [structural]
+    
+  rule #visit(K:KItem ~> Kr,Vz:KItem) => #visiting.kseq(#visit(K,Vz),#visit(Kr,Vz))
+    requires  `_=/=K_`(Kr,.::K) ensures #token("true", "Bool") [structural]
+    
+  rule #visit(#klist(.::KList),Vz:KItem) => #visited(.::KList) 
+    requires #token("true", "Bool") ensures #token("true", "Bool")  [structural]
+    
+  rule #visit(#klist(K:K,Kl:KList),Vz:KItem)
+    => #visiting.klist(#visit(K,Vz),#visit(#klist(Kl),Vz)) 
+    requires #token("true", "Bool") ensures #token("true", "Bool")   [structural]
+
+  rule isKResult(#visited(_)) => #token("true", "Bool")
+    requires #token("true", "Bool") ensures #token("true", "Bool") [ .::KList ]  
+
+  syntax KLabel ::= "#visiting.kapp"   [ .::KList ]    // [strict(2)]
+  syntax KLabel ::= "#visiting.kseq"   [ .::KList ]    // [strict]
+  syntax KLabel ::= "#visiting.klist"  [ .::KList ]    // [strict]
+
+// Due to bugs, the strictness attributes above don't work, so we need the following
+  context #visiting.kapp(_,HOLE) requires #token("true", "Bool") [ .::KList ] // the first argument should be a KToken
+  context #visiting.klist(_,HOLE) requires #token("true", "Bool") [ .::KList ]
+  context #visiting.klist(HOLE,_) requires #token("true", "Bool") [ .::KList ]
+  context #visiting.kseq(_,HOLE) requires #token("true", "Bool") [ .::KList ]
+  context #visiting.kseq(HOLE,_) requires #token("true", "Bool") [ .::KList ]
+
+  rule #visiting.kapp(#klabel(L),#visited(Kl)) => #visited(L(Kl))
+    requires #token("true", "Bool") ensures #token("true", "Bool") [structural]
+  rule #visiting.klist(#visited(Kl),#visited(Kl')) => #visited(Kl,Kl')
+    requires #token("true", "Bool") ensures #token("true", "Bool") [structural]
+  rule #visiting.kseq(#visited(K1),#visited(K2)) => #visited(K1 ~> K2)
+    requires #token("true", "Bool") ensures #token("true", "Bool") [structural]
+endmodule
