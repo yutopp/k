@@ -3,10 +3,10 @@
 require "/modules/k-visitor.k"
 
 module QUOTE-UNQUOTE-SYNTAX
-  syntax Exp ::= "quote" Exp    [quote]
-  syntax Exp ::= "unquote" Exp  [unquote]
-  syntax Exp ::= "lift" Exp     [lift, strict]
-  syntax Exp ::= "eval" Exp     [eval, strict]
+  syntax Exp ::= "quote" Exp    [quote, klabel(quote)]
+  syntax Exp ::= "unquote" Exp  [unquote, klabel(unquote)]
+  syntax Exp ::= "lift" Exp     [lift, strict, klabel(lift)]
+  syntax Exp ::= "eval" Exp     [eval, strict, klabel(eval)]
 endmodule
 
 module QUOTE-UNQUOTE
