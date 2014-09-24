@@ -34,7 +34,8 @@ module OUTER
                          | "right:"     KProductionList
                          | "non-assoc:" KProductionList
   syntax KProductionList   ::= NeList{KProduction,"|"}
-  syntax KProduction       ::= KSimpleProduction KAttributes
+  syntax KProduction       ::= KSimpleProduction
+                             | KSimpleProduction KAttributes
   syntax KSimpleProduction ::= NeList{KProductionItem,""}
                              | KTag "(" KSortList ")"
   syntax KSortList ::= List{KSort,","}
@@ -45,13 +46,22 @@ module OUTER
                            | "NeList{" KSort "," KString "}"  // nelists
                            // maybe more
 
-  syntax KSemanticSentence ::= "configuration" MetaK KAttributes
-                             | "rule"          MetaK KAttributes
-                             | "context"       MetaK KAttributes
+  syntax KSemanticSentence ::= "configuration" MetaK
+                             | "configuration" MetaK KAttributes [prefer]
+                             | "context"       MetaK
+                             | "context"       MetaK                  KAttributes [prefer]
+                             | "context"       MetaK "requires" MetaK
+                             | "context"       MetaK "requires" MetaK KAttributes [prefer]
+                             | "rule"          MetaK
+                             | "rule"          MetaK                                   KAttributes [prefer]
+                             | "rule"          MetaK "requires" MetaK
+                             | "rule"          MetaK "requires" MetaK                  KAttributes [prefer]
+                             | "rule"          MetaK "ensures"  MetaK
+                             | "rule"          MetaK "ensures"  MetaK                  KAttributes [prefer]
+                             | "rule"          MetaK "requires" MetaK "ensures"  MetaK
+                             | "rule"          MetaK "requires" MetaK "ensures"  MetaK KAttributes [prefer]
 
-  syntax KAttributes ::= ""                     [onlyLabel, klabel(noAttributes)]
-                       | "[" KAttributeList "]" [prefer]
-                       
+  syntax KAttributes ::= "[" KAttributeList "]" [onlyLabel]
   syntax KAttributeList ::= List{KAttribute,","}
 
   syntax KAttribute ::= KTag
@@ -80,6 +90,8 @@ module BUBBLE
                       | "syntax"        [reject]
                       | "configuration" [reject]
                       | "context"       [reject]
+                      | "requires"      [reject]
+                      | "ensures"       [reject]
                       | "endmodule"     [reject]
   syntax BubbleList ::= List{BubbleItem,""} [token]
   syntax Bubble ::= BubbleList [klabel('bubbleWrap)]
@@ -131,4 +143,5 @@ module TEST
   
   rule S:KAny         => #parseInModule(#tokenToString(S), "KDefinition", "OUTER-WITH-BUBBLES")
   rule 'bubbleWrap(S) => #parseInModule(#tokenToString(S), "MetaK",       "KAST")                [anywhere]
+
 endmodule
