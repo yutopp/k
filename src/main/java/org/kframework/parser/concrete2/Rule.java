@@ -83,6 +83,7 @@ public abstract class Rule implements Serializable {
             //Term term = new KApp(label, klist);
             Term term;
             if (label.containsAttribute("token")) {
+                // TODO: radum, figure out how to reject constants from here.
                 String value = metaData.input.subSequence(metaData.start.position, metaData.end.position).toString();
                 term = new Constant(label.getSort(), value, label);
             } else {

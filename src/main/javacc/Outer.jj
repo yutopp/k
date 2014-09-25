@@ -446,6 +446,8 @@ PARSER_END(Outer)
                  "\\\"" | "\\n" | "\\r" | "\\t" | "\\\\")* "\"">
 | <STRING_CASE_INSENSITIVE: "\'" (~["\'", "\\", "\n"] |
                  "\\\'" | "\\n" | "\\r" | "\\t" | "\\\\")* "\'">
+| <STRING_REGEX: "r\"" (~["\"", "\\", "\n"] |
+                 "\\\"" | "\\n" | "\\r" | "\\t" | "\\\\")* "\"">
 
 | <LPAREN: "(">
 | <RPAREN: ")">
@@ -498,6 +500,14 @@ String StringCaseInsensitive() : {}
   {
     String s = image();
     return StringUtil.unquoteCString(s, '\'');
+  }
+}
+String StringRegex() : {}
+{
+  <STRING_REGEX>
+  {
+    String s = image();
+    return StringUtil.unquoteCString(s.substring(1), '\"');
   }
 }
 
@@ -880,9 +890,10 @@ void ProductionItem(List<ProductionItem> items) :
 { Location loc = startLoc(); String str; String sep; NonTerminal nonTerminal;
   StringBuilder follow = new StringBuilder(); boolean isToken = false; }
 {
-  str = String() { items.add(tokenLoc(new Terminal(str))); }
+  str = String()                { items.add(tokenLoc(new Terminal(str))); }
 | str = StringCaseInsensitive() { items.add(tokenLoc(new Terminal(str, true))); }
-| nonTerminal = SimpleSortID() { items.add(nonTerminal); }
+| str = StringRegex()           { items.add(tokenLoc(new Terminal(str))); }
+| nonTerminal = SimpleSortID()  { items.add(nonTerminal); }
 | "List"
   ( "{" UpperId() { str = image(); } "," sep = String() "}"
     { items.add(markLoc(loc, new UserList(Sort.of(str), sep, "*"))); return; })?
