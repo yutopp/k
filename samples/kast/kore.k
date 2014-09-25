@@ -29,7 +29,7 @@ We selected this core of K based on the following two criteria:
      the sort of the current production.
 */
 
-// Known issue: The attributes do not yet parse as KList or K terms
+// Known issue: The attributes do not yet parse as K terms
 
 // Recall that in KORE productions must have one of the attributes klabel, token, bracket
 
@@ -44,10 +44,22 @@ endmodule
 
 
 
-// Defining the KList sort, useful for defining both KAST terms
-// and attributes
-module KLIST
-  import BASIC-K
+// To be used when parsing programs in KAST format
+// (e.g., programs parsed and then output by an external parser)
+module KAST [ hookNamespace(org.kframework.kore) ]  // the hook will probably change
+  syntax K     ::= KItem                                 [ ... ]
+
+  syntax KItem  ::= "#token" "(" KString "," KString ")"  [ klabel(#KToken), hook ]
+  // @cos proposes to eliminate the next injection, and instead to allow
+  // the use of meta-level KAST in definitions: #KApply(#token("_+_","KLabel"),#KList(1,3))
+  // @grosu is skeptic: that would imply to allow KAST syntax in programs; not worth the price
+  syntax KItem ::= "#klabel" "(" KLabel ")"              [ klabel(#KLabel), hook ]
+  syntax KItem ::= KLabel "(" KList ")"                  [ klabel(#KApply), hook ]
+
+  syntax KLabel ::= r"([^`]|\+`)*"                        [ token, hook ] // everything except `, unless escaped \`
+// KLabel brackets not needed if @cos' approach above works
+  syntax KLabel ::= "`" KLabel "`"   [ bracket, hook ]
+
   syntax KList ::= K                [...]
   syntax KList ::= ".::KList"       [klabel(#emptyKList), ...]
   syntax KList ::= KList "," KList  [klabel(#KList), assoc, unit(#emptyKList), ...]
@@ -55,28 +67,9 @@ endmodule
 
 
 
-// To be used when parsing programs in KAST format
-// (e.g., programs parsed and then output by an external parser)
-module KAST [ hookNamespace(org.kframework.kore) ]  // the hook will probably change
-  import KLIST
-  syntax KLabel ::= r"([^`]|\+`)*"                        [ token, hook ] // everything except `, unless escaped \`
-// KLabel brackets not needed if @cos' approach below works
-  syntax KLabel    ::= "`" KLabel "`"   [ bracket, hook ]
-
-  syntax KItem  ::= "#token" "(" KString "," KString ")"  [ klabel(#KToken), hook ]
-  // @cos proposes to eliminate the next injection, and instead to allow
-  // the use of meta-level KAST in definitions: #KApply(#token("_+_","KLabel"),#KList(1,3))
-  // @grosu is skeptic: that would imply to allow KAST syntax in programs; not worth the price
-  syntax KItem  ::= "#klabel" "(" KLabel ")"              [ klabel(#KLabel), hook ]
-  syntax KItem  ::= KLabel "(" KList ")"                  [ klabel(#KApply), hook ]
-  syntax K      ::= KItem                                 [ ... ]
-endmodule
-
-
-
 // To be used when pretty-printing stuck computations
 module KSEQ
-  import BASIC-K
+  import KAST
   syntax K     ::= ".::K"                                [ klabel(#emptyK) ]
   syntax K     ::= K "~>" K                              [ klabel(#KSequence), assoc, unit(#emptyK) ]
 endmodule
@@ -85,10 +78,10 @@ endmodule
 
 // To be used to parse semantic rules
 module K
-  import KAST
   import KSEQ
   syntax KVariable ::= ...              [ hook ] // same like KSort?
   syntax KItem     ::= KVariable        [ ... ]
+  syntax KVariable ::= KVariable        [ ... ]
   syntax K         ::= K "=>" K         [ klabel(#KRewrite), hook(Rewrite) ]
   // K bracket needed, e.g., Cxt[V ~> `env(E) => .`]
   syntax K         ::= "`" K "`"        [ bracket, ... ]
@@ -103,7 +96,7 @@ endmodule
 // where the K terms are put in bubbles.  A similar, but larger
 // module can be defined for global KAST definitions.
 module OUTER-KORE [ hookNamespace(org.kframework.kore.outer) ]
-  import KLIST  // @cos see below
+  import BASIC-K
 
   syntax KDefinition   ::= KRequireList KModuleList   [ hook ]
 
@@ -140,7 +133,7 @@ module OUTER-KORE [ hookNamespace(org.kframework.kore.outer) ]
 
   // @cos prefers K instead of KList below.  In that case, we need to define
   // "_,_" as as assoc/comm construct of KAttribute contents
-  syntax KAttributes ::= "[" KList "]"   [ klabel(#KAttributes), hook(KAttributes) ]
+  syntax KAttributes ::= "[" K "]"   [ klabel(#KAttributes), hook(KAttributes) ]
 
   // The following can still change
   syntax KModuleName ::= r"[A-Z][A-Z\-\_]*"  [token, ...]

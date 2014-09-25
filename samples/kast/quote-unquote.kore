@@ -21,21 +21,20 @@ module QUOTE-UNQUOTE
   syntax Exp ::= "mQuote" "(" K "," Int ")" [klabel(mQuote)]
   rule mQuote(E, N) => #visit(E, qVisitor(N)) requires #token("true", "Bool") ensures #token("true", "Bool") [macro]
 
-  syntax KItem ::= "quoteit" "(" Int "," K ")" [klabel(quoteit)] 
-  rule `quote_`(E) => mQuote(E, #token("0", "Int")) requires #token("true", "Bool") ensures #token("true", "Bool") [.::KList]
-  rule quoteit(N, `quote_`(E))   => #visiting.kapp(#klabel(`quote_`),mQuote(E, `_+Int_`(N, #token("1", "Int")))) 
+  syntax KItem ::= "quoteit" "(" Int "," K ")" [klabel(quoteit)]
+  rule quote(E) => mQuote(E, #token("0", "Int")) requires #token("true", "Bool") ensures #token("true", "Bool") [.::KList]
+  rule quoteit(N, quote(E))   => #visiting.kapp(#klabel(quote),mQuote(E, `_+Int_`(N, #token("1", "Int")))) 
     requires #token("true", "Bool") ensures #token("true", "Bool") [.::KList]
-  rule quoteit(0, `unquote_`(E)) => E requires #token("true", "Bool") ensures #token("true", "Bool") [.::KList]
-  rule quoteit(N, `unquote_`(E)) => #visiting.kapp(#klabel(`unquote_`),mQuote(E, `_-Int_`(N, #token("1", "Int"))))
+  rule quoteit(0, unquote(E)) => E requires #token("true", "Bool") ensures #token("true", "Bool") [.::KList]
+  rule quoteit(N, unquote(E)) => #visiting.kapp(#klabel(unquote),mQuote(E, `_-Int_`(N, #token("1", "Int"))))
     requires `_>Int_`(N, #token("0", "Int")) ensures #token("true", "Bool") [.::KList]
 
-  rule lift_(V:Val) => #visited(V) requires #token("true", "Bool") ensures #token("true", "Bool") [.::KList]
-  rule eval_(#visited(E)) => E requires #token("true", "Bool") ensures #token("true", "Bool") [.::KList]
+  rule lift(V:Val) => #visited(V) requires #token("true", "Bool") ensures #token("true", "Bool") [.::KList]
+  rule eval(#visited(E)) => E requires #token("true", "Bool") ensures #token("true", "Bool") [.::KList]
 
-  rule isVal(#visited(_)) => #token("true", "Bool") requires #token("true", "Bool") ensures #token("true", "Bool") [.::KList]
+  rule isVal(#visited(E)) => #token("true", "Bool") requires #token("true", "Bool") ensures #token("true", "Bool") [.::KList]
 
-  syntax Bool ::= "isQuoted" "(" Exp ")"     [ klabel(isQuoted), function]
-  rule isQuoted(`quote_`(E)) => #token("true", "Bool") requires #token("true", "Bool") ensures #token("true", "Bool") [.::KList]
-  rule isQuoted(`unquote_`(K)) => #token("true", "Bool") requires #token("true", "Bool") ensures #token("true", "Bool") [.::KList]
-
+  syntax Bool ::= "isQuoted" "(" Exp ")"     [klabel(isQuoted), function]
+  rule isQuoted(quote(E)) => #token("true", "Bool") requires #token("true", "Bool") ensures #token("true", "Bool") [.::KList]
+  rule isQuoted(unquote(K)) => #token("true", "Bool") requires #token("true", "Bool") ensures #token("true", "Bool") [.::KList]
 endmodule
