@@ -119,11 +119,11 @@ module OUTER-KORE [ hookNamespace(org.kframework.kore.outer) ]
   syntax KSentenceList ::= ""                           [ klabel(#emptyKSentenceList), ... ]
   syntax KSentenceList ::= KSentenceList KSentenceList  [ klabel(#KSentenceList), assoc, comm, unit(#kemptyKSentenceList), ... ]
 
-  syntax KSentence ::= "syntax" KSort                         KAttributes   [ klabel(#KSentenceSyntaxSort), hook(Syntax) ]
-  syntax KSentence ::= "syntax" KSort "::=" KProduction       KAttributes   [ klabel(#KSentenceSyntaxProduction), hook(Syntax) ]
-  syntax KSentence ::= "configuration" K                      KAttributes   [ klabel(#KSentenceConfiguration), hook(Configuration) ]
-  syntax KSentence ::= "rule"          K requires K ensures K KAttributes   [ klabel(#KSentenceRule), hook(Rule) ]
-  syntax KSentence ::= "context"       K requires K           KAttributes   [ klabel(#KSentenceContext), hook(Context) ]
+  syntax KSentence ::= "syntax" KSort                         KAttributesDeclaration   [ klabel(#KSentenceSyntaxSort), hook(Syntax) ]
+  syntax KSentence ::= "syntax" KSort "::=" KProduction       KAttributesDeclaration   [ klabel(#KSentenceSyntaxProduction), hook(Syntax) ]
+  syntax KSentence ::= "configuration" K                      KAttributesDeclaration   [ klabel(#KSentenceConfiguration), hook(Configuration) ]
+  syntax KSentence ::= "rule"          K requires K ensures K KAttributesDeclaration   [ klabel(#KSentenceRule), hook(Rule) ]
+  syntax KSentence ::= "context"       K requires K           KAttributesDeclaration   [ klabel(#KSentenceContext), hook(Context) ]
 
   syntax KProduction ::= KProductionItem         [ ... ]
   syntax KProduction ::= ""                      [ klabel(#emptyKProduction), ...]
@@ -131,12 +131,11 @@ module OUTER-KORE [ hookNamespace(org.kframework.kore.outer) ]
   syntax KProductionItem ::= KSort               [ hook(NonTerminal) ] // non-terminal
   syntax KProductionItem ::= KString             [ hook(Terminal) ]    // terminals, including regexes
 
-  // @cos prefers K instead of KList below.  In that case, we need to define
-  // "_,_" as as assoc/comm construct of KAttribute contents
-  syntax KAttributes ::= "[" K "]"   [ klabel(#KAttributes), hook(KAttributes) ]
+  // We are going to use #KAttributes as top KLabel in the K term holding the attributes
+  syntax KAttributesDeclaration ::= "[" K "]"   [ klabel(#KAttributesDeclaration), hook(KAttributes) ]
 
   // The following can still change
-  syntax KModuleName ::= r"[A-Z][A-Z\-\_]*"  [token, ...]
+  syntax KModuleName ::= r"[A-Z][A-Z\-\_]*"  [ token, ...]
   syntax KSort ::= r"[A-Z][A-Za-z0-9]*"      [ token, hook ]
 endmodule
 
