@@ -4,6 +4,7 @@
 *.kore
 *.pdf
 *.swp
+*.iml
 .metadata
 .recommenders
 .cache
@@ -12,7 +13,7 @@
 .settings/
 *~
 junit-reports
-samples/test/
+k-distribution/samples/test/
 release/
 target/
 
