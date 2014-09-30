@@ -20,7 +20,7 @@ module OUTER
   syntax KImport       ::= "imports" KModuleName
   syntax KSentenceList ::= List{Sentence,""}
 
-  syntax KModuleName   ::= r"#?[a-zA-Z](\\-?[a-zA-Z0-9])*" r"asdf"    [onlyLabel, noAutoReject, token]
+  syntax KModuleName   ::= r"#?[a-zA-Z](\\-?[a-zA-Z0-9])*"    [onlyLabel, noAutoReject, token]
 
   syntax Sentence ::= KSyntacticSentence
                     | KSemanticSentence
