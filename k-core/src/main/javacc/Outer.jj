@@ -892,7 +892,7 @@ void ProductionItem(List<ProductionItem> items) :
 {
   str = String()                { items.add(tokenLoc(new Terminal(str))); }
 | str = StringCaseInsensitive() { items.add(tokenLoc(new Terminal(str, true))); }
-| str = StringRegex()           { items.add(tokenLoc(new Terminal(str))); }
+| str = StringRegex()           { items.add(tokenLoc(new Lexical(str, ""))); }
 | nonTerminal = SimpleSortID()  { items.add(nonTerminal); }
 | "List"
   ( "{" UpperId() { str = image(); } "," sep = String() "}"

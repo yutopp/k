@@ -2,8 +2,8 @@
 require "modules/k-parser.k"
 module K-SORT
   syntax MetaK
-  syntax KString ::= Token{"dummy"} [onlyLabel, noAutoReject, regex("[\\\"]([^\\\"\\n\\r\\\\]|[\\\\][nrtf\\\"\\\\])*[\\\"]")]
-  syntax KSort   ::= Token{"dummy"} [onlyLabel, noAutoReject, regex((?<![A-Za-z0-9])#?[A-Z][a-zA-Z0-9]*)]
+  syntax KString ::= r"[\\\"]([^\\\"\\n\\r\\\\]|[\\\\][nrtf\\\"\\\\])*[\\\"]" [onlyLabel, noAutoReject, token]
+  syntax KSort   ::= r"(?<![A-Za-z0-9])#?[A-Z][a-zA-Z0-9]*"                   [onlyLabel, noAutoReject, token]
 endmodule
 
 
@@ -20,7 +20,7 @@ module OUTER
   syntax KImport       ::= "imports" KModuleName
   syntax KSentenceList ::= List{Sentence,""}
 
-  syntax KModuleName   ::= Token{"dummy"} [onlyLabel, noAutoReject, regex(#?[a-zA-Z](\-?[a-zA-Z0-9])*)]
+  syntax KModuleName   ::= r"#?[a-zA-Z](\\-?[a-zA-Z0-9])*" r"asdf"    [onlyLabel, noAutoReject, token]
 
   syntax Sentence ::= KSyntacticSentence
                     | KSemanticSentence
@@ -41,17 +41,20 @@ module OUTER
   syntax KSortList ::= List{KSort,","}
   syntax KProductionItem ::= KSort                            // non-terminal
                            | KString                          // terminals
+                           | "r" KString                      // regex terminals
                            | "Token{" KString "}"             // token
                            |   "List{" KSort "," KString "}"  // lists
                            | "NeList{" KSort "," KString "}"  // nelists
                            // maybe more
 
   syntax KSemanticSentence ::= "configuration" MetaK
-                             | "configuration" MetaK KAttributes [prefer]
+                             | "configuration" MetaK                                   KAttributes [prefer]
+                             | "configuration" MetaK "requires" MetaK
+                             | "configuration" MetaK "requires" MetaK                  KAttributes [prefer]
                              | "context"       MetaK
-                             | "context"       MetaK                  KAttributes [prefer]
+                             | "context"       MetaK                                   KAttributes [prefer]
                              | "context"       MetaK "requires" MetaK
-                             | "context"       MetaK "requires" MetaK KAttributes [prefer]
+                             | "context"       MetaK "requires" MetaK                  KAttributes [prefer]
                              | "rule"          MetaK
                              | "rule"          MetaK                                   KAttributes [prefer]
                              | "rule"          MetaK "requires" MetaK
@@ -67,25 +70,19 @@ module OUTER
   syntax KAttribute ::= KTag
                       | KTag "(" KTagContent ")" // To consider: maybe allow KItem in here?
                       | KTag "(" KString     ")"
-					  
-  syntax KTagContent ::= List{KTagC,""} [token] // anything with balanced parenthesis. Will have to get original string.
-  syntax KTagC       ::= Token{"dummy"} [onlyLabel, noAutoReject, regex("[^\\n\\r\\(\\)\\\"]+")]
+
+  syntax KTagContent ::= List{KTagC,""}          [token] // anything with balanced parenthesis. Will have to get original string.
+  syntax KTagC       ::= r"[^\\n\\r\\(\\)\\\"]+" [onlyLabel, noAutoReject, token]
   syntax KTagC       ::= "(" KTagContent ")"
+  syntax KTag    ::= r"[a-z][A-Za-z\\-0-9]*"     [onlyLabel, noAutoReject, token]
 
-
-  syntax KTag    ::= Token{"dummy"} [onlyLabel, noAutoReject, regex([a-z][A-Za-z\-0-9]*)]
   syntax KTagList ::= List{KTag,","}
 
 endmodule
 
 
 module BUBBLE
-  //syntax Bubble2 ::= Token{"dummy"} [onlyLabel, noAutoReject, regex(((?!rule|endmodule|syntax|configuration|context)(\S+)|\s+)+)]
-                  //| Token{"dummy"} [onlyLabel, noAutoReject, regex([\`]{1}([^\`])+[\`]{1})]
-                  //| Token{"dummy"} [onlyLabel, noAutoReject, regex([\`]{2}([^\`]|[\`][^\`])+[\`]{2})]
-                  //| Token{"dummy"} [onlyLabel, noAutoReject, regex([\`]{3}([^\`]|[\`][^\`]|[\`][\`][^\`])+[\`]{3})]
-                  // can add more if we want to
-  syntax BubbleItem ::= Token{"dummy"} [onlyLabel, noAutoReject, regex(\S+)]
+  syntax BubbleItem ::= r"\\S+" [onlyLabel, noAutoReject, token]
   syntax BubbleItem ::= "rule"          [reject]
                       | "syntax"        [reject]
                       | "configuration" [reject]
@@ -95,6 +92,10 @@ module BUBBLE
                       | "endmodule"     [reject]
   syntax BubbleList ::= List{BubbleItem,""} [token]
   syntax Bubble ::= BubbleList [klabel('bubbleWrap)]
+                  //| Token{"dummy"} [onlyLabel, noAutoReject, regex([\`]{1}([^\`])+[\`]{1})]
+                  //| Token{"dummy"} [onlyLabel, noAutoReject, regex([\`]{2}([^\`]|[\`][^\`])+[\`]{2})]
+                  //| Token{"dummy"} [onlyLabel, noAutoReject, regex([\`]{3}([^\`]|[\`][^\`]|[\`][\`][^\`])+[\`]{3})]
+                  // can add more if we want to
 endmodule
 
 
@@ -107,7 +108,7 @@ endmodule
 
 module KAST
   imports K-SORT
-  syntax MetaKLabel    ::= Token{"dummy"} [onlyLabel, noAutoReject, regex(`[^`\s]+`)]
+  syntax MetaKLabel    ::= r"`[^`\\s]+`" [onlyLabel, noAutoReject, token]
                      //| "`" MetaKLabel "`"  [bracket]
   syntax KConstant ::= "#token"  "("KString "," KString ")"
                      | "#klabel" "(" MetaKLabel ")"
@@ -120,7 +121,7 @@ module KAST
                      | ".::MetaK"
   // we need to say List{MetaKItem}{"~>"}{"."}
 
-  syntax KVariable ::= Token{"dummy"} [onlyLabel, noAutoReject, regex((?<![A-Za-z0-9\_])(\$|\!|\?)?([A-Z][A-Za-z0-9']*|_))]
+  syntax KVariable ::= r"(?<![A-Za-z0-9\\_])(\\$|\\!|\\?)?([A-Z][A-Za-z0-9']*|_)" [onlyLabel, noAutoReject, token]
   syntax MetaKItem ::= KVariable
                      | MetaKItem ":" KSort  // KItem must obey its sort at runtime
                                      // sorting arbitrary KItems; Sort can also be
@@ -137,10 +138,10 @@ module TEST
   imports KAST
   imports K-PARSER
   imports OUTER-WITH-BUBBLES
-  
+
   configuration <k> $PGM:KAny </k>
   syntax KAny ::= Token{~[]*} [onlyLabel, noAutoReject, regex((?s).*)]
-  
+
   rule S:KAny         => #parseInModule(#tokenToString(S), "KDefinition", "OUTER-WITH-BUBBLES")
   rule 'bubbleWrap(S) => #parseInModule(#tokenToString(S), "MetaK",       "KAST")                [anywhere]
 

@@ -37,10 +37,11 @@ public class CheckListDecl extends BasicVisitor {
                 String msg = "Inline list declarations are not allowed.";
                 GlobalSettings.kem.registerCompilerError(msg, this, pi);
             }
-            if (pi instanceof Lexical && node.getItems().size() > 1) {
-                String msg = "Inline lexical/token declarations are not allowed.";
-                GlobalSettings.kem.registerCompilerError(msg, this, pi);
-            }
+            // TODO: (radum) with the new parser lexical declarations are allowed in more places now.
+            //if (pi instanceof Lexical && node.getItems().size() > 1) {
+            //    String msg = "Inline lexical/token declarations are not allowed.";
+            //    GlobalSettings.kem.registerCompilerError(msg, this, pi);
+            //}
         }
         return null;
 
