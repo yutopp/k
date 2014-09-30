@@ -28,4 +28,8 @@ public class ParseFailedException extends Exception {
     public String getMessage() {
         return exception.getMessage();
     }
+
+    public KException getKException() {
+        return exception;
+    }
 }
