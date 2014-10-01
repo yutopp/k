@@ -55,27 +55,27 @@ public class QuickParser {
         ASTNode out = parser.parse(grammar.get(startSymbol.toString()), 0);
 
         try {
+            // only the unexpected character type of errors should be checked in this block
             out = new TreeCleanerVisitor(context).visitNode(out);
-            out = new MakeConsList(context).visitNode(out);
-            if (context.globalOptions.debug)
-                System.err.println("Clean: " + out + "\n");
-            out = new PriorityFilter(context).visitNode(out);
-            out = new PreferAvoidFilter(context).visitNode(out);
-            if (context.globalOptions.debug)
-                System.err.println("Filtered: " + out + "\n");
-//            out = new AmbFilter(context).visitNode(out);
-            out = new RemoveBrackets(context).visitNode(out);
         } catch (ParseFailedException te) {
             ParseError perror = parser.getErrors();
 
             String msg = program.length() == perror.position ? "Parse error: unexpected end of file."
-                    : "Parse error: unexpected character '" + program.charAt(perror.position)
-                            + "'.";
+                    : "Parse error: unexpected character '" + program.charAt(perror.position) + "'.";
             Location loc = new Location(perror.line, perror.column, perror.line, perror.column + 1);
             throw new ParseFailedException(
                     new KException(ExceptionType.ERROR, KExceptionGroup.INNER_PARSER, msg,
                             new GeneratedSource(QuickParser.class), loc));
         }
+        out = new MakeConsList(context).visitNode(out);
+        if (context.globalOptions.debug)
+            System.err.println("Clean: " + out + "\n");
+        out = new PriorityFilter(context).visitNode(out);
+        out = new PreferAvoidFilter(context).visitNode(out);
+        if (context.globalOptions.debug)
+            System.err.println("Filtered: " + out + "\n");
+//            out = new AmbFilter(context).visitNode(out);
+        out = new RemoveBrackets(context).visitNode(out);
 
         return (ProductionReference) out;
     }
