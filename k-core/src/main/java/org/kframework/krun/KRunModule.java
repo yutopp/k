@@ -37,7 +37,6 @@ import org.kframework.krun.api.SearchResults;
 import org.kframework.krun.api.Transition;
 import org.kframework.krun.tools.Debugger;
 import org.kframework.krun.tools.Executor;
-import org.kframework.krun.tools.GuiDebugger;
 import org.kframework.krun.tools.LtlModelChecker;
 import org.kframework.krun.tools.Prover;
 import org.kframework.main.FrontEnd;
@@ -153,7 +152,6 @@ public class KRunModule extends AbstractModule {
         MapBinder<ToolActivation, Transformation<Void, KRunResult<?>>> krunResultTools = MapBinder.newMapBinder(
                 binder(), TypeLiteral.get(ToolActivation.class), new TypeLiteral<Transformation<Void, KRunResult<?>>>() {});
         mainTools.addBinding(new ToolActivation.OptionActivation("--debugger")).to(Debugger.Tool.class);
-        mainTools.addBinding(new ToolActivation.OptionActivation("--debugger-gui")).to(GuiDebugger.class);
         krunResultTools.addBinding(new ToolActivation.OptionActivation("--ltlmc")).to(LtlModelChecker.Tool.class);
         krunResultTools.addBinding(new ToolActivation.OptionActivation("--ltlmc-file")).to(LtlModelChecker.Tool.class);
         krunResultTools.addBinding(new ToolActivation.OptionActivation("--prove")).to(Prover.Tool.class);
@@ -217,18 +215,33 @@ public class KRunModule extends AbstractModule {
         }
 
         @Provides
-        Executor getExecutor(KompileOptions options, Map<String, Provider<Executor>> map) {
-            return map.get(options.backend).get();
+        Executor getExecutor(KompileOptions options, Map<String, Provider<Executor>> map, KExceptionManager kem) {
+            Provider<Executor> provider = map.get(options.backend);
+            if (provider == null) {
+                kem.registerCriticalError("Backend " + options.backend + " does not support execution. Supported backends are: "
+                        + map.keySet());
+            }
+            return provider.get();
         }
 
         @Provides
-        LtlModelChecker getModelChecker(KompileOptions options, Map<String, Provider<LtlModelChecker>> map) {
-            return map.get(options.backend).get();
+        LtlModelChecker getModelChecker(KompileOptions options, Map<String, Provider<LtlModelChecker>> map, KExceptionManager kem) {
+            Provider<LtlModelChecker> provider = map.get(options.backend);
+            if (provider == null) {
+                kem.registerCriticalError("Backend " + options.backend + " does not support ltl model checking. Supported backends are: "
+                        + map.keySet());
+            }
+            return provider.get();
         }
 
         @Provides
-        Prover getProver(KompileOptions options, Map<String, Provider<Prover>> map) {
-            return map.get(options.backend).get();
+        Prover getProver(KompileOptions options, Map<String, Provider<Prover>> map, KExceptionManager kem) {
+            Provider<Prover> provider = map.get(options.backend);
+            if (provider == null) {
+                kem.registerCriticalError("Backend " + options.backend + " does not support program verification. Supported backends are: "
+                        + map.keySet());
+            }
+            return provider.get();
         }
 
         @Provides @Singleton
@@ -270,8 +283,6 @@ public class KRunModule extends AbstractModule {
             }
 
             bind(ConfigurationCreationOptions.class).toInstance(options.configurationCreation);
-            bind(GuiDebugger.class).annotatedWith(Main.class).to(GuiDebugger.class);
-            expose(GuiDebugger.class).annotatedWith(Main.class);
         }
     }
 }

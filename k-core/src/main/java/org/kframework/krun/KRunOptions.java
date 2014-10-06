@@ -284,16 +284,6 @@ public final class KRunOptions {
             return debugger;
         }
 
-        @Parameter(names="--debugger-gui", description="Run an execution in debug mode with graphical interface.")
-        private boolean debuggerGui = false;
-
-        public boolean debuggerGui() {
-            if (debuggerGui && search()) {
-                throw new ParameterException("Cannot specify --search with --debug-gui. In order to search inside the debugger, use the step-all command.");
-            }
-            return debuggerGui;
-        }
-
         @Parameter(names="--trace", description="Turn on maude trace.")
         public boolean trace = false;
 
@@ -335,20 +325,6 @@ public final class KRunOptions {
 
         @ParametersDelegate
         public SMTOptions smt = new SMTOptions();
-
-        @Parameter(names="--smt_prelude", description="Path to the SMT prelude file.")
-        private File smtPrelude;
-
-        public File smtPrelude() {
-            if (smtPrelude == null) return null;
-            if (!smtPrelude.exists() || smtPrelude.isDirectory()) {
-                throw new ParameterException("File not found: SMT prelude " + smtPrelude + ".");
-            }
-            return smtPrelude;
-        }
-
-        @Parameter(names="--z3-executable", description="Path to the SMT prelude file.")
-        public boolean z3Executable = false;
 
         @Parameter(names="--output-file", description="Store output in the file instead of displaying it.")
         public File outputFile;
