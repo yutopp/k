@@ -99,14 +99,14 @@ public class ProgramLoader {
         ASTNode out;
         if (whatParser == ParserType.GROUND) {
             org.kframework.parser.concrete.KParser.ImportTblGround(context.kompiled);
-            out = DefinitionLoader.parseCmdString(new String(content), source, startSymbol, context);
+            out = DefinitionLoader.parseCmdString(content, source, startSymbol, context);
             out = new RemoveBrackets(context).visitNode(out);
             out = new AddEmptyLists(context).visitNode(out);
             out = new RemoveSyntacticCasts(context).visitNode(out);
             out = new FlattenTerms(context).visitNode(out);
         } else if (whatParser == ParserType.RULES) {
             org.kframework.parser.concrete.KParser.ImportTblRule(context.kompiled);
-            out = DefinitionLoader.parsePattern(new String(content), source, startSymbol, context);
+            out = DefinitionLoader.parsePattern(content, source, startSymbol, context);
             out = new RemoveBrackets(context).visitNode(out);
             out = new AddEmptyLists(context).visitNode(out);
             out = new RemoveSyntacticCasts(context).visitNode(out);
@@ -132,32 +132,7 @@ public class ProgramLoader {
             Grammar grammar = BinaryLoader.instance().loadOrDie(Grammar.class, context.kompiled.getAbsolutePath() + "/pgm/newParser.bin");
 
             Parser parser = new Parser(content);
-            out = parser.parse(grammar.get(startSymbol.toString()), 0);
-            if (context.globalOptions.debug)
-                System.err.println("Raw: " + out + "\n");
-            try {
-                // only the unexpected character type of errors should be checked in this block
-                out = new TreeCleanerVisitor(context).visitNode(out);
-            } catch (ParseFailedException te) {
-                ParseError perror = parser.getErrors();
-
-                String msg = content.length() == perror.position ?
-                    "Parse error: unexpected end of file." :
-                    "Parse error: unexpected character '" + content.charAt(perror.position) + "'.";
-                Location loc = new Location(perror.line, perror.column,
-                                            perror.line, perror.column + 1);
-                throw new ParseFailedException(new KException(
-                        ExceptionType.ERROR, KExceptionGroup.INNER_PARSER, msg, source, loc));
-            }
-            out = new MakeConsList(context).visitNode(out);
-            if (context.globalOptions.debug)
-                System.err.println("Clean: " + out + "\n");
-            out = new PriorityFilter(context).visitNode(out);
-            out = new PreferAvoidFilter(context).visitNode(out);
-            if (context.globalOptions.debug)
-                System.err.println("Filtered: " + out + "\n");
-            out = new AmbFilter(context).visitNode(out);
-            out = new RemoveBrackets(context).visitNode(out);
+            out = newParserParse(content, grammar.get(startSymbol.toString()), source, context);
             out = new FlattenTerms(context).visitNode(out);
             out = new ResolveVariableAttribute(context).visitNode(out);
         } else {
@@ -175,7 +150,6 @@ public class ProgramLoader {
         Map<String, Grammar> grammars = BinaryLoader.instance().loadOrDie(Map.class, context.kompiled.getAbsolutePath() + "/pgm/newModuleParsers.bin");
 
         ASTNode out;
-        Parser parser = new Parser(content);
         Grammar grammar = grammars.get(moduleName);
         if (grammar == null) {
             String msg = "Could not find module: " + moduleName + " when trying to parseInModule.";
@@ -188,6 +162,15 @@ public class ProgramLoader {
             throw new ParseFailedException(new KException(
                     ExceptionType.ERROR, KExceptionGroup.INNER_PARSER, msg, source, null));
         }
+        out = newParserParse(content, nt, source, context);
+        out = new FlattenTerms(context).visitNode(out);
+        out = new ResolveVariableAttribute(context).visitNode(out);
+        return (Term) out;
+    }
+
+    public static ASTNode newParserParse(String content, NonTerminal nt, Source source, Context context) throws ParseFailedException {
+        Parser parser = new Parser(content);
+        ASTNode out;
         out = parser.parse(nt, 0);
         if (context.globalOptions.debug)
             System.err.println("Raw: " + out + "\n");
@@ -214,8 +197,6 @@ public class ProgramLoader {
             System.err.println("Filtered: " + out + "\n");
         out = new AmbFilter(context).visitNode(out);
         out = new RemoveBrackets(context).visitNode(out);
-        out = new FlattenTerms(context).visitNode(out);
-        out = new ResolveVariableAttribute(context).visitNode(out);
-        return (Term) out;
+        return out;
     }
 }
