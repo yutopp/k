@@ -131,7 +131,6 @@ public class ProgramLoader {
             // TODO(Radu): (the default one) with this branch of the 'if'
             Grammar grammar = BinaryLoader.instance().loadOrDie(Grammar.class, context.kompiled.getAbsolutePath() + "/pgm/newParser.bin");
 
-            Parser parser = new Parser(content);
             out = newParserParse(content, grammar.get(startSymbol.toString()), source, context);
             out = new FlattenTerms(context).visitNode(out);
             out = new ResolveVariableAttribute(context).visitNode(out);

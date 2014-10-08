@@ -23,8 +23,7 @@ public class QuickParser {
         context.kompileOptions = new KompileOptions();
         context.globalOptions = new GlobalOptions();
 
-        UpdateReferencesVisitor updateReferencesVisitor = new UpdateReferencesVisitor(context);
-        updateReferencesVisitor.visitNode(definition);
+        new UpdateReferencesVisitor(context).visitNode(definition);
         context.setTokenSorts(TokenSortCollector.collectTokenSorts(definition, context));
         
         // collect the syntax from those modules
@@ -34,9 +33,8 @@ public class QuickParser {
         KSyntax2GrammarStatesFilter ks2gsf = new KSyntax2GrammarStatesFilter(context, ctv);
         ks2gsf.visitNode(definition);
         Grammar grammar = ks2gsf.getGrammar();
-        
-        CollectPrioritiesVisitor collectPrioritiesVisitor = new CollectPrioritiesVisitor(context);
-        collectPrioritiesVisitor.visitNode(definition);
+
+        new CollectPrioritiesVisitor(context).visitNode(definition);
 
         ASTNode out = ProgramLoader.newParserParse(program, grammar.get(startSymbol.toString()), new GeneratedSource(QuickParser.class), context);
         return (ProductionReference) out;
