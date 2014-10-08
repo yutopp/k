@@ -32,13 +32,6 @@ option to make git accessible in the command line too.
 
 You can test if it works by calling `mvn -version` in a Terminal.
 
-## (On Windows only) Visual C++ 2012 Redistributable Package
-This is a dependency of the Z3 JNI library. You can download it here: 
-http://www.microsoft.com/en-us/download/details.aspx?id=30679
-
-Make sure to download the 64-bit version if you are using a 64-bit JRE,
-and the 32-bit version if you are using a 32-bit JRE.
-
 # Install
 Checkout this directory in your desired location and call `mvn package` from the main
 directory to build the distribution. For convenient usage, you can update
@@ -48,6 +41,11 @@ You are also encouraged to set the environment variable `MAVEN_OPTS` to `-XX:+Ti
 which will significantly speed up the incremental build process.
 
 # IDE Setup
+
+## General
+
+You should run K from the k-distribution project, because it is the only project to have the complete
+classpath and therefore all backends.
 
 ## Eclipse
 To autogenerate an Eclipse project for K, run `mvn install -DskipKTest; mvn eclipse:eclipse` on the
