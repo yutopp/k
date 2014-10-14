@@ -167,6 +167,15 @@ public class ProgramLoader {
         return (Term) out;
     }
 
+    /**
+     *
+     * @param content String to be parsed.
+     * @param nt      Start symbol.
+     * @param source  Source information for error reporting and term annotation.
+     * @param context The context in which to disambiguate the AST.
+     * @return AST representation of the input.
+     * @throws ParseFailedException In case the parse failed.
+     */
     public static ASTNode newParserParse(String content, NonTerminal nt, Source source, Context context) throws ParseFailedException {
         Parser parser = new Parser(content);
         ASTNode out;
