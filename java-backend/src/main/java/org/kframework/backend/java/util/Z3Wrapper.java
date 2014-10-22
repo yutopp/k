@@ -2,6 +2,7 @@
 package org.kframework.backend.java.util;
 
 import com.google.common.base.Charsets;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.io.Files;
 import com.google.inject.Inject;
 import com.microsoft.z3.Params;
@@ -9,13 +10,13 @@ import com.microsoft.z3.Solver;
 import com.microsoft.z3.Status;
 import com.microsoft.z3.Z3Exception;
 
-import org.kframework.krun.KRunOptions;
 import org.kframework.main.GlobalOptions;
 import org.kframework.utils.OS;
 import org.kframework.utils.errorsystem.KExceptionManager;
 import org.kframework.utils.options.SMTOptions;
 
 import java.io.*;
+import java.util.Set;
 
 /**
  * @author Traian
@@ -24,8 +25,9 @@ public class Z3Wrapper {
 
     private static final int Z3_RESTART_LIMIT = 3;
 
+    private static final Set<String> Z3_QUERY_RESULTS = ImmutableSet.of("unknown", "sat", "unsat");
+
     public final String SMT_PRELUDE;
-    private String logic;
     private final SMTOptions options;
     private final GlobalOptions globalOptions;
     private final KExceptionManager kem;
@@ -40,11 +42,9 @@ public class Z3Wrapper {
         this.globalOptions = globalOptions;
 
         String s = "";
-        logic = "";
         try {
             if (options.smtPrelude() != null) {
                 s = Files.toString(options.smtPrelude(), Charsets.UTF_8);
-                logic = options.smtPrelude().getName().equals("floating_point.smt2") ? "QF_FPA" : null;
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -64,7 +64,7 @@ public class Z3Wrapper {
         boolean result = false;
         try {
             com.microsoft.z3.Context context = new com.microsoft.z3.Context();
-            Solver solver = logic != null ? context.mkSolver(logic) : context.mkSolver();
+            Solver solver = context.mkSolver();
             Params params = context.mkParams();
             params.add("timeout", timeout);
             solver.setParameters(params);
@@ -74,6 +74,9 @@ public class Z3Wrapper {
         } catch (Z3Exception e) {
             kem.registerCriticalWarning(
                     "failed to translate smtlib expression:\n" + SMT_PRELUDE + query);
+        } catch (UnsatisfiedLinkError e) {
+            System.err.println(System.getProperty("java.library.path"));
+            throw e;
         }
         return result;
     }
@@ -83,7 +86,7 @@ public class Z3Wrapper {
         try {
             for (int i = 0; i < Z3_RESTART_LIMIT; i++) {
                 ProcessBuilder pb = new ProcessBuilder(
-                        OS.current().getNativeExecutable("z3").getAbsolutePath(),
+                        OS.current().getNativeExecutable("z3"),
                         "-in",
                         "-smt2",
                         "-t:" + timeout);
@@ -110,6 +113,10 @@ public class Z3Wrapper {
             result = "unknown";
             if (globalOptions.debug) {
                 System.err.println("Z3 crashed on query:\n" + SMT_PRELUDE + query + "(check-sat)\n");
+            }
+        } else if (result != null) {
+            if (globalOptions.debug && !Z3_QUERY_RESULTS.contains(result)) {
+                System.err.println("Unexpected Z3 query result:\n" + result);
             }
         }
         return result.equals("unsat");

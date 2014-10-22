@@ -7,9 +7,9 @@ import org.kframework.backend.java.kil.KLabelConstant;
 import org.kframework.backend.java.kil.KLabelInjection;
 import org.kframework.backend.java.kil.KList;
 import org.kframework.backend.java.kil.KSequence;
-import org.kframework.backend.java.kil.KilFactory;
 import org.kframework.backend.java.kil.Term;
 import org.kframework.backend.java.kil.TermContext;
+import org.kframework.backend.java.symbolic.KILtoBackendJavaKILTransformer;
 import org.kframework.kil.GeneratedSource;
 import org.kframework.kil.Sort;
 import org.kframework.kil.Source;
@@ -18,10 +18,12 @@ import org.kframework.kil.visitors.exceptions.ParseFailedException;
 import org.kframework.krun.KRunOptions.ConfigurationCreationOptions;
 import org.kframework.krun.RunProcess;
 import org.kframework.krun.api.io.FileSystem;
+import org.kframework.utils.file.WorkingDir;
 
 import com.google.inject.Inject;
 import org.kframework.parser.ProgramLoader;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.charset.CharacterCodingException;
 import java.util.Map;
@@ -37,7 +39,8 @@ public class BuiltinIOOperationsImpl implements BuiltinIOOperations {
     private final FileSystem fs;
     private final Context context;
     private final ConfigurationCreationOptions ccOptions;
-    private final KilFactory kilFactory;
+    private final KILtoBackendJavaKILTransformer kilTransformer;
+    private final File workingDir;
 
     @Inject
     public BuiltinIOOperationsImpl(
@@ -45,12 +48,14 @@ public class BuiltinIOOperationsImpl implements BuiltinIOOperations {
             FileSystem fs,
             Context context,
             ConfigurationCreationOptions ccOptions,
-            KilFactory kilFactory) {
+            KILtoBackendJavaKILTransformer kilTransformer,
+            @WorkingDir File workingDir) {
         this.def = def;
         this.fs = fs;
         this.context = context;
         this.ccOptions = ccOptions;
-        this.kilFactory = kilFactory;
+        this.kilTransformer = kilTransformer;
+        this.workingDir = workingDir;
     }
 
     @Override
@@ -146,8 +151,7 @@ public class BuiltinIOOperationsImpl implements BuiltinIOOperations {
             org.kframework.kil.Term kast = rp.runParser(
                     ccOptions.parser(context),
                     term1.stringValue(), true, Sort.of(term2.stringValue()), context);
-            Term term = kilFactory.term(kast);
-            term = term.evaluate(termContext);
+            Term term = kilTransformer.transformAndEval(kast);
             return term;
         } catch (ParseFailedException e) {
             String line = "" + e.getKException().getLocation().lineStart;
@@ -164,7 +168,7 @@ public class BuiltinIOOperationsImpl implements BuiltinIOOperations {
                     new GeneratedSource(this.getClass()),
                     Sort.of(startSymbol.stringValue()),
                     moduleName.stringValue(), context);
-            Term term = kilFactory.term(kast);
+            Term term = kilTransformer.transformAndEval(kast);
             term = term.evaluate(termContext);
             return term;
         } catch (ParseFailedException e) {
@@ -180,7 +184,7 @@ public class BuiltinIOOperationsImpl implements BuiltinIOOperations {
         Map<String, String> environment = new HashMap<>();
         String[] args = term.stringValue().split("\001", -1);
         //for (String c : args) { System.out.println(c); }
-        rp.execute(environment, args);
+        rp.execute(workingDir, environment, args);
 
         KLabelConstant klabel = KLabelConstant.of("'#systemResult(_,_,_)", context);
         /*

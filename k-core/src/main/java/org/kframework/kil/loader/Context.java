@@ -21,7 +21,9 @@ import org.kframework.krun.KRunOptions;
 import org.kframework.main.GlobalOptions;
 import org.kframework.utils.Poset;
 import org.kframework.utils.StringUtil;
+import org.kframework.utils.file.FileUtil;
 import org.kframework.utils.general.GlobalSettings;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
@@ -29,6 +31,7 @@ import java.util.Collections;
 import java.util.Formatter;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -76,7 +79,7 @@ public class Context implements Serializable {
     public SetMultimap<String, Production> tags = HashMultimap.create();
     public Map<String, Cell> cells = new HashMap<String, Cell>();
     public Map<String, Sort> cellSorts = new HashMap<>();
-    public Map<Sort, Production> listProductions = new HashMap<>();
+    public Map<Sort, Production> listProductions = new LinkedHashMap<>();
     public SetMultimap<String, Production> listKLabels = HashMultimap.create();
     public Map<String, String> listLabelSeparator = new HashMap<>();
     public Map<String, ASTNode> locations = new HashMap<String, ASTNode>();
@@ -89,11 +92,11 @@ public class Context implements Serializable {
     private Poset<String> assocLeft = Poset.create();
     private Poset<String> assocRight = Poset.create();
     private Poset<String> modules = Poset.create();
-    private Poset<String> fileRequirements = Poset.create();
+    private Poset<File> fileRequirements = Poset.create();
     public Sort startSymbolPgm = Sort.K;
     public Map<String, Sort> configVarSorts = new HashMap<>();
-    public File dotk = null;
-    public File kompiled = null;
+    @Deprecated
+    public transient FileUtil files;
     public boolean initialized = false;
     protected java.util.List<String> komputationCells = null;
     public Map<String, CellDataStructure> cellDataStructures = new HashMap<>();
@@ -380,12 +383,16 @@ public class Context implements Serializable {
         return priorities.isInRelation(klabelParent, klabelChild);
     }
 
-    public void addFileRequirement(String required, String local) {
+    public void addFileRequirement(File required, File local) {
         // add the new subsorting
         if (required.equals(local))
             return;
 
-        fileRequirements.addRelation(required, local);
+        try {
+            fileRequirements.addRelation(required.getCanonicalFile(), local.getCanonicalFile());
+        } catch (IOException e) {
+           GlobalSettings.kem.registerInternalError("Cannot create canonical files from " + required + " and " + local, e);
+        }
     }
 
     public void finalizeRequirements() {
@@ -414,12 +421,12 @@ public class Context implements Serializable {
         return modules.isInRelation(localModule, importedModule);
     }
 
-    public boolean isRequiredEq(String required, String local) {
+    public boolean isRequiredEq(File required, File local) {
         try {
-            required = new File(required).getCanonicalPath();
-            local = new File(local).getCanonicalPath();
+            required = required.getCanonicalFile();
+            local = local.getCanonicalFile();
         } catch (IOException e) {
-            e.printStackTrace();
+            GlobalSettings.kem.registerInternalError("Cannot create canonical files from " + required + " and " + local, e);
         }
         if (required.equals(local))
             return true;

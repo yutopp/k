@@ -57,7 +57,7 @@ public class ProgramLoader {
         // ------------------------------------- import files in Stratego
         ASTNode out;
 
-        org.kframework.parser.concrete.KParser.ImportTblPgm(context.kompiled);
+        org.kframework.parser.concrete.KParser.ImportTblPgm(context.files.resolveKompiled("."));
         String parsed = org.kframework.parser.concrete.KParser.ParseProgramString(content, startSymbol.toString());
         Document doc = XmlLoader.getXMLDoc(parsed);
 
@@ -98,14 +98,14 @@ public class ProgramLoader {
 
         ASTNode out;
         if (whatParser == ParserType.GROUND) {
-            org.kframework.parser.concrete.KParser.ImportTblGround(context.kompiled);
+            org.kframework.parser.concrete.KParser.ImportTblGround(context.files.resolveKompiled("."));
             out = DefinitionLoader.parseCmdString(content, source, startSymbol, context);
             out = new RemoveBrackets(context).visitNode(out);
             out = new AddEmptyLists(context).visitNode(out);
             out = new RemoveSyntacticCasts(context).visitNode(out);
             out = new FlattenTerms(context).visitNode(out);
         } else if (whatParser == ParserType.RULES) {
-            org.kframework.parser.concrete.KParser.ImportTblRule(context.kompiled);
+            org.kframework.parser.concrete.KParser.ImportTblRule(context.files.resolveKompiled("."));
             out = DefinitionLoader.parsePattern(content, source, startSymbol, context);
             out = new RemoveBrackets(context).visitNode(out);
             out = new AddEmptyLists(context).visitNode(out);
@@ -129,7 +129,7 @@ public class ProgramLoader {
             // load the new parser
             // TODO(Radu): after the parser is in a good enough shape, replace the program parser
             // TODO(Radu): (the default one) with this branch of the 'if'
-            Grammar grammar = BinaryLoader.instance().loadOrDie(Grammar.class, context.kompiled.getAbsolutePath() + "/pgm/newParser.bin");
+            Grammar grammar = BinaryLoader.instance().loadOrDie(Grammar.class, context.files.resolveKompiled("newParser.bin"));
 
             out = newParserParse(content, grammar.get(startSymbol.toString()), source, context);
             out = new FlattenTerms(context).visitNode(out);
@@ -146,7 +146,7 @@ public class ProgramLoader {
     public static Term parseInModule(String content, Source source, Sort startSymbol,
                                   String moduleName, Context context) throws ParseFailedException {
         @SuppressWarnings("unchecked")
-        Map<String, Grammar> grammars = BinaryLoader.instance().loadOrDie(Map.class, context.kompiled.getAbsolutePath() + "/pgm/newModuleParsers.bin");
+        Map<String, Grammar> grammars = BinaryLoader.instance().loadOrDie(Map.class, context.files.resolveTemp("pgm/newModuleParsers.bin"));
 
         ASTNode out;
         Grammar grammar = grammars.get(moduleName);

@@ -54,16 +54,16 @@ public class SymbolicUnifier extends AbstractUnifier {
         /**
          * A conjunction of disjunctions of {@code SymbolicConstraint}s created by this unifier.
          */
-        public Collection<Collection<SymbolicConstraint.Data>> multiConstraints;
+        public Collection<Collection<SymbolicConstraint>> multiConstraints;
 
         //TODO: the fields should be final
 
-        public Data(Collection<Collection<SymbolicConstraint.Data>> multiConstraints) {
+        public Data(Collection<Collection<SymbolicConstraint>> multiConstraints) {
             this.multiConstraints = multiConstraints;
         }
 
         public Data() {
-            this(new ArrayList<java.util.Collection<SymbolicConstraint.Data>>());
+            this(new ArrayList<java.util.Collection<SymbolicConstraint>>());
         }
 
         @Override
@@ -121,9 +121,9 @@ public class SymbolicUnifier extends AbstractUnifier {
 
     public Collection<Collection<SymbolicConstraint>> multiConstraints() {
         ArrayList<Collection<SymbolicConstraint>> multiConstraints = new ArrayList<>();
-        for(Collection<SymbolicConstraint.Data> mcd: data.multiConstraints) {
+        for(Collection<SymbolicConstraint> mcd: data.multiConstraints) {
             ArrayList<SymbolicConstraint> mc = new ArrayList<>();
-            for(SymbolicConstraint.Data scd: mcd)
+            for(SymbolicConstraint scd: mcd)
                 mc.add(new SymbolicConstraint(scd, termContext));
             multiConstraints.add(mc);
         }
@@ -320,14 +320,14 @@ public class SymbolicUnifier extends AbstractUnifier {
             return unifyMap(map, otherMap, true);
         }
 
-        Set<BuiltinMap> foldedMaps = new HashSet<>();
+        Set<BuiltinMap> foldedMaps = Sets.newLinkedHashSet();
         foldedMaps.add(map);
         Queue<BuiltinMap> queue = new LinkedList<>();
         queue.add(map);
         while (!queue.isEmpty()) {
             BuiltinMap candidate = queue.remove();
             for (Rule rule : termContext.definition().patternFoldingRules()) {
-                for (Map<Variable, Term> substitution : PatternMatcher.patternMatch(candidate, rule, termContext)) {
+                for (Map<Variable, Term> substitution : PatternMatcher.match(candidate, rule, termContext)) {
                     BuiltinMap result = (BuiltinMap) rule.rightHandSide().substituteAndEvaluate(substitution, termContext);
                     if (foldedMaps.add(result)) {
                         queue.add(result);
@@ -588,7 +588,7 @@ public class SymbolicUnifier extends AbstractUnifier {
             Variable otherFrame = otherCellCollection.hasFrame()? otherCellCollection.frame() : null;
 
             if (frame != null && otherFrame != null && (numOfDiffCellLabels > 0) && (numOfOtherDiffCellLabels > 0)) {
-                Variable variable = Variable.getFreshVariable(Sort.BAG);
+                Variable variable = Variable.getAnonVariable(Sort.BAG);
                 fConstraint.add(frame, CellCollection.of(getRemainingCellMap(otherCellCollection, unifiableCellLabels), variable, context));
                 fConstraint.add(CellCollection.of(getRemainingCellMap(cellCollection, unifiableCellLabels), variable, context), otherFrame);
             } else if (frame == null && (numOfOtherDiffCellLabels > 0)
@@ -671,7 +671,7 @@ public class SymbolicUnifier extends AbstractUnifier {
 
                 try {
                     for (int i = 0; i < otherCells.length; ++i) {
-                        unify(cells[generator.selection.get(i)], otherCells[i]);
+                        unify(cells[generator.getSelection(i)], otherCells[i]);
                     }
                 } catch (UnificationFailure e) {
                     continue;
@@ -679,7 +679,7 @@ public class SymbolicUnifier extends AbstractUnifier {
 
                 CellCollection.Builder builder = CellCollection.builder(context);
                 for (int i = 0; i < cells.length; ++i) {
-                    if (!generator.selected.contains(i)) {
+                    if (!generator.isSelected(i)) {
                         builder.add(cells[i]);
                     }
                 }
@@ -706,9 +706,9 @@ public class SymbolicUnifier extends AbstractUnifier {
             if (constraints.size() == 1) {
                 fConstraint.addAll(constraints.iterator().next());
             } else {
-                List<SymbolicConstraint.Data> constraintsData = new ArrayList<>();
+                List<SymbolicConstraint> constraintsData = new ArrayList<>();
                 for(SymbolicConstraint c : constraints)
-                    constraintsData.add(c.data);
+                    constraintsData.add(c);
                 data.multiConstraints.add(constraintsData);
             }
         }
@@ -724,65 +724,6 @@ public class SymbolicUnifier extends AbstractUnifier {
         };
 
         return Multimaps.filterKeys(cellCollection.cellMap(), notRemoved);
-    }
-
-    private class SelectionGenerator {
-
-        private final int size;
-        private final int coSize;
-        public List<Integer> selection;
-        public Set<Integer> selected;
-        private int index;
-
-        public SelectionGenerator(int size, int coSize) {
-            assert size <= coSize;
-
-            this.size = size;
-            this.coSize = coSize;
-            selection = new ArrayList<Integer>();
-            selected = new HashSet<Integer>();
-            for (int i = 0; i < size; ++i) {
-                selection.add(i);
-                selected.add(i);
-            }
-        }
-
-        private void pop() {
-            index = selection.remove(selection.size() - 1);
-            selected.remove(index);
-            ++index;
-        }
-
-        private void push() {
-            selection.add(index);
-            selected.add(index);
-            index = 0;
-        }
-
-        public boolean generate() {
-            if (selection.isEmpty()) return false;
-            pop();
-            while (selection.size() != size) {
-                if (index == coSize) {
-                    if (selection.isEmpty()) {
-                        break;
-                    } else {
-                        pop();
-                        continue;
-                    }
-                }
-
-                if (!selected.contains(index)) {
-                    push();
-                    continue;
-                }
-
-                ++index;
-            }
-
-            return !selection.isEmpty();
-        }
-
     }
 
     @Override

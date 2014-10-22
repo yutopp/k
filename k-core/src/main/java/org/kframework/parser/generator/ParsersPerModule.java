@@ -62,8 +62,7 @@ public class ParsersPerModule {
         }
 
         // save the new parser info
-        new File(context.kompiled, "pgm").mkdirs();
-        BinaryLoader.instance().saveOrDie(context.kompiled.getPath()+ "/pgm/newModuleParsers.bin", parsers);
+        BinaryLoader.instance().saveOrDie(context.files.resolveTemp("pgm/newModuleParsers.bin"), parsers);
     }
 
     /**

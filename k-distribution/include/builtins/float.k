@@ -26,7 +26,7 @@ module FLOAT-HOOKS
                | exponentBitsFloat(Float) [function, hook(#FLOAT:exponentBits)]
 
   syntax Bool ::= signFloat(Float)      [function, hook(#FLOAT:sign)]
-                | isNaN(Float)          [function, smtlib((not (== #1 #1)))]
+                | isNaN(Float)          [function, smtlib((not (== #1 #1))), hook(#FLOAT:isNaN)]
   syntax MInt ::= significandFloat(Float) [function, hook(#FLOAT:significand)]
 
   syntax Float ::= fpNaN(Int, Int)              [smtlib((as NaN (_ FP #1 #2)))]
@@ -57,6 +57,7 @@ module FLOAT-HOOKS
                  | atan2Float(Float, Float)     [function, hook(#FLOAT:atan2)]
                  | maxFloat(Float, Float)       [function, smtlib(max), hook(#FLOAT:max)]
                  | minFloat(Float, Float)       [function, smtlib(min), hook(#FLOAT:min)]
+                 | sqrtFloat(Float)             [function]
 
   syntax Bool ::= Float "<=Float" Float       [function, left, smtlib(<=), latex({#1}\mathrel{\leq_{\scriptstyle\it Float}}{#2}), hook(#FLOAT:le)]
                 | Float "<Float" Float        [function, left, smtlib(<), latex({#1}\mathrel{<_{\scriptstyle\it Float}}{#2}), hook(#FLOAT:lt)]
@@ -71,5 +72,6 @@ module FLOAT-HOOKS
   syntax Float ::= Int2Float(Int, Int, Int)    [function, klabel(Int2Float), latex({\\it{}Int2Float}), hook(#CONVERSION:int2Float)]
   syntax Int ::= Float2Int(Float)    [function, klabel(Float2Int), latex({\\it{}Float2Int}), hook(#CONVERSION:float2Int)]
 
+  rule sqrtFloat(F:Float) => rootFloat(F, 2)
 
 endmodule

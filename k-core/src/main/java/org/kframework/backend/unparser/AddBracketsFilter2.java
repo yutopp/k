@@ -2,6 +2,7 @@
 package org.kframework.backend.unparser;
 
 import org.kframework.kil.*;
+import org.kframework.kil.Cast.CastType;
 import org.kframework.kil.loader.Context;
 import org.kframework.kil.visitors.ParseForestTransformer;
 import org.kframework.kil.visitors.exceptions.ParseFailedException;
@@ -16,7 +17,7 @@ public class AddBracketsFilter2 extends ParseForestTransformer {
 
     public AddBracketsFilter2(Context context) throws IOException {
         super("Add more brackets", context);
-        org.kframework.parser.concrete.KParser.ImportTblRule(context.kompiled);
+        org.kframework.parser.concrete.KParser.ImportTblRule(context.files.resolveKompiled("."));
     }
 
     private Term reparsed = null;
@@ -30,6 +31,14 @@ public class AddBracketsFilter2 extends ParseForestTransformer {
 
     @Override
     public ASTNode visit(TermCons ast, Void _) throws ParseFailedException {
+        boolean tmp = atTop;
+        atTop = false;
+        ASTNode result = super.visit(ast, _);
+        return postpare((Term)result, tmp);
+    }
+
+    @Override
+    public ASTNode visit(Constant ast, Void _) throws ParseFailedException {
         boolean tmp = atTop;
         atTop = false;
         ASTNode result = super.visit(ast, _);
@@ -97,7 +106,7 @@ public class AddBracketsFilter2 extends ParseForestTransformer {
         if (reparsed != null) {
             ASTNode result = addBracketsIfNeeded(ast);
             if (atTop && result instanceof Bracket) {
-                return new Cast(result.getLocation(), result.getSource(), (Term)result, context);
+                return new Cast(result.getLocation(), result.getSource(), (Term)result, CastType.SYNTACTIC, context);
             }
             return result;
         }
@@ -117,7 +126,7 @@ public class AddBracketsFilter2 extends ParseForestTransformer {
     }
 
     private Variable replaceWithVar(Term ast) {
-        Variable var = Variable.getFreshVar(((Term)ast).getSort());
+        Variable var = Variable.getAnonVar(((Term)ast).getSort());
         substitution.put(var.getName(), (Term) ast);
         return var;
     }
