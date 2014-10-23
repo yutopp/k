@@ -33,7 +33,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * Collect the syntax module, call the syntax collector and print SDF for programs.
+ * For each module, collect the included modules and create a new parser.
  */
 public class ParsersPerModule {
 
@@ -62,7 +62,7 @@ public class ParsersPerModule {
         }
 
         // save the new parser info
-        BinaryLoader.instance().saveOrDie(context.files.resolveTemp("pgm/newModuleParsers.bin"), parsers);
+        BinaryLoader.instance().saveOrDie(context.files.resolveKompiled("newModuleParsers.bin"), parsers);
     }
 
     /**

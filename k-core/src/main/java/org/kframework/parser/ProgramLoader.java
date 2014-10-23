@@ -146,7 +146,7 @@ public class ProgramLoader {
     public static Term parseInModule(String content, Source source, Sort startSymbol,
                                   String moduleName, Context context) throws ParseFailedException {
         @SuppressWarnings("unchecked")
-        Map<String, Grammar> grammars = BinaryLoader.instance().loadOrDie(Map.class, context.files.resolveTemp("pgm/newModuleParsers.bin"));
+        Map<String, Grammar> grammars = BinaryLoader.instance().loadOrDie(Map.class, context.files.resolveKompiled("newModuleParsers.bin"));
 
         ASTNode out;
         Grammar grammar = grammars.get(moduleName);
