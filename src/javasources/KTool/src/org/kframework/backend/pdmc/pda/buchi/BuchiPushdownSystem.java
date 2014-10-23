@@ -18,8 +18,8 @@ import java.util.*;
 //DONE Test head reachibility graph
 //DONE Test TarjanSCC
 //
-//TODO Counterexample generation?
-//TODO Integration with K
+//DONE Counterexample generation?
+//DONE Integration with K
 public class BuchiPushdownSystem<Control, Alphabet>
         implements BuchiPushdownSystemInterface<Control, Alphabet> {
     private PushdownSystemInterface<Control, Alphabet> pds;

@@ -20,7 +20,7 @@ import java.util.*;
  *    </li>
  * </ul>
  *
- * Implements some pushdown model-checking related algorithms from  Stefan Schwoon's Phd Thesis:
+ ** Implements some pushdown model-checking related algorithms from  Stefan Schwoon's Phd Thesis:
  * S. Schwoon.  Model-Checking Pushdown Systems.  Ph.D. Thesis, Technische Universitaet Muenchen, June 2002.
  *
  * @author TraianSF
@@ -214,6 +214,10 @@ public class PostStar<Control, Alphabet> extends BasicAutomaton<PAutomatonState<
                 assert transition.getLetter()!=null;
                 assert transition.getEnd().getLetter()!= null; // this is an intermediate stare
                 transition = getUncompressedTransition(path);
+                label = labelFactory.get(transition);
+                assert label != null;
+                rule = label.getRule();
+                assert rule.endStack().size() == 2;
 
             } else {
                 // First transition: p -w-> q
@@ -227,6 +231,7 @@ public class PostStar<Control, Alphabet> extends BasicAutomaton<PAutomatonState<
                     transition.getEnd()
             );
             assert transition.getLetter()!=null;
+            assert labelFactory.get(transition) != null;
             path.addFirst(transition);
             // Add rule to list of rules
             result.addFirst(rule);
@@ -244,6 +249,13 @@ public class PostStar<Control, Alphabet> extends BasicAutomaton<PAutomatonState<
         TrackingLabel<Control, Alphabet> label;
         PAutomatonState<Control, Alphabet> backState;
         label = labelFactory.get(transition);
+//        if (label == null) {
+//            for (Transition<PAutomatonState<Control, Alphabet>, Alphabet> trans : path) {
+//                System.out.println(transition);
+//                System.out.println();
+//            }
+//            System.out.println(transition);
+//        }
         backState = label.getBackState();
         if (backState != null) {
             Transition<PAutomatonState<Control, Alphabet>, Alphabet> transition2 =
