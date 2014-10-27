@@ -8,14 +8,13 @@ import org.kframework.kil.Sort;
 import org.kframework.kil.loader.CollectPrioritiesVisitor;
 import org.kframework.kil.loader.Context;
 import org.kframework.kil.loader.UpdateReferencesVisitor;
-import org.kframework.kil.visitors.exceptions.ParseFailedException;
 import org.kframework.kompile.KompileOptions;
 import org.kframework.main.GlobalOptions;
 import org.kframework.parser.ProgramLoader;
 import org.kframework.parser.concrete2.Grammar;
 import org.kframework.parser.concrete2.KSyntax2GrammarStatesFilter;
-import org.kframework.parser.concrete2.Parser;
 import org.kframework.parser.generator.CollectTerminalsVisitor;
+import org.kframework.utils.errorsystem.ParseFailedException;
 
 public class QuickParser {
     public static ProductionReference parse(String program, Sort startSymbol, ASTNode definition) throws ParseFailedException {

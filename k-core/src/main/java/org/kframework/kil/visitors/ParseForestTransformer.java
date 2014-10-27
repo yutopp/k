@@ -5,9 +5,11 @@ import java.util.ArrayList;
 
 import org.kframework.kil.ASTNode;
 import org.kframework.kil.Ambiguity;
+import org.kframework.kil.Definition;
+import org.kframework.kil.Module;
 import org.kframework.kil.Term;
 import org.kframework.kil.loader.Context;
-import org.kframework.kil.visitors.exceptions.ParseFailedException;
+import org.kframework.utils.errorsystem.ParseFailedException;
 import org.kframework.utils.errorsystem.KException;
 import org.kframework.utils.errorsystem.KException.ExceptionType;
 import org.kframework.utils.errorsystem.KException.KExceptionGroup;
@@ -23,6 +25,11 @@ public class ParseForestTransformer extends AbstractTransformer<ParseFailedExcep
 
     public ParseForestTransformer(String name, Context context) {
         super(name, context);
+    }
+
+    public ParseForestTransformer(String name, Context context,
+                                  Definition currentDefinition, Module currentModule) {
+        super(name, context, currentDefinition, currentModule);
     }
 
     @Override

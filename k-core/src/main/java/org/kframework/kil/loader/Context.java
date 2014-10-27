@@ -9,11 +9,8 @@ import org.kframework.kil.Cell;
 import org.kframework.kil.Cell.Ellipses;
 import org.kframework.kil.CellDataStructure;
 import org.kframework.kil.DataStructureSort;
-import org.kframework.kil.KApp;
-import org.kframework.kil.KInjectedLabel;
 import org.kframework.kil.Production;
 import org.kframework.kil.Sort;
-import org.kframework.kil.Term;
 import org.kframework.kil.UserList;
 import org.kframework.kompile.KompileOptions;
 import org.kframework.krun.ColorOptions;
@@ -24,8 +21,6 @@ import org.kframework.utils.StringUtil;
 import org.kframework.utils.file.FileUtil;
 import org.kframework.utils.general.GlobalSettings;
 
-import java.io.File;
-import java.io.IOException;
 import java.io.Serializable;
 import java.util.Collections;
 import java.util.Formatter;
@@ -47,10 +42,6 @@ import com.google.inject.Singleton;
 
 @Singleton
 public class Context implements Serializable {
-
-    public static final Set<String> generatedTags = ImmutableSet.of(
-            "kgeneratedlabel",
-            "prefixlabel");
 
     public static final Set<Key<String>> parsingTags = ImmutableSet.of(
         Attribute.keyOf("left"),
@@ -81,7 +72,6 @@ public class Context implements Serializable {
     public Map<String, Sort> cellSorts = new HashMap<>();
     public Map<Sort, Production> listProductions = new LinkedHashMap<>();
     public SetMultimap<String, Production> listKLabels = HashMultimap.create();
-    public Map<String, String> listLabelSeparator = new HashMap<>();
     public Map<String, ASTNode> locations = new HashMap<String, ASTNode>();
 
     public Map<Sort, Production> canonicalBracketForSort = new HashMap<>();
@@ -91,14 +81,11 @@ public class Context implements Serializable {
     private Poset<String> priorities = Poset.create();
     private Poset<String> assocLeft = Poset.create();
     private Poset<String> assocRight = Poset.create();
-    private Poset<String> modules = Poset.create();
-    private Poset<File> fileRequirements = Poset.create();
     public Sort startSymbolPgm = Sort.K;
     public Map<String, Sort> configVarSorts = new HashMap<>();
     @Deprecated
     public transient FileUtil files;
     public boolean initialized = false;
-    protected java.util.List<String> komputationCells = null;
     public Map<String, CellDataStructure> cellDataStructures = new HashMap<>();
     public Set<Sort> variableTokenSorts = new HashSet<>();
     public HashMap<Sort, String> freshFunctionNames = new HashMap<>();
@@ -280,44 +267,8 @@ public class Context implements Serializable {
      * @return the sort which is the LUB of the given set of sorts on success;
      *         otherwise {@code null}
      */
-    public Sort getLUBSort(Set<Sort> sorts) {
-        return subsorts.getLUB(sorts);
-    }
-
-    /**
-     * Finds the LUB (Least Upper Bound) of a given set of sorts.
-     *
-     * @param sorts
-     *            the given set of sorts
-     * @return the sort which is the LUB of the given set of sorts on success;
-     *         otherwise {@code null}
-     */
     public Sort getLUBSort(Sort... sorts) {
         return subsorts.getLUB(Sets.newHashSet(sorts));
-    }
-
-    /**
-     * Finds the GLB (Greatest Lower Bound) of a given set of sorts.
-     *
-     * @param sorts
-     *            the given set of sorts
-     * @return the sort which is the GLB of the given set of sorts on success;
-     *         otherwise {@code null}
-     */
-    public Sort getGLBSort(Set<Sort> sorts) {
-        return subsorts.getGLB(sorts);
-    }
-
-    /**
-     * Finds the GLB (Greatest Lower Bound) of a given set of sorts.
-     *
-     * @param sorts
-     *            the given set of sorts
-     * @return the sort which is the GLB of the given set of sorts on success;
-     *         otherwise {@code null}
-     */
-    public Sort getGLBSort(Sort... sorts) {
-        return subsorts.getGLB(Sets.newHashSet(sorts));
     }
 
     /**
@@ -381,56 +332,6 @@ public class Context implements Serializable {
      */
     public boolean isPriorityWrong(String klabelParent, String klabelChild) {
         return priorities.isInRelation(klabelParent, klabelChild);
-    }
-
-    public void addFileRequirement(File required, File local) {
-        // add the new subsorting
-        if (required.equals(local))
-            return;
-
-        try {
-            fileRequirements.addRelation(required.getCanonicalFile(), local.getCanonicalFile());
-        } catch (IOException e) {
-           GlobalSettings.kem.registerInternalError("Cannot create canonical files from " + required + " and " + local, e);
-        }
-    }
-
-    public void finalizeRequirements() {
-        fileRequirements.transitiveClosure();
-    }
-
-    public void addModuleImport(String mainModule, String importedModule) {
-        // add the new subsorting
-        if (mainModule.equals(importedModule))
-            return;
-
-        modules.addRelation(mainModule, importedModule);
-    }
-
-    public void finalizeModules() {
-        modules.transitiveClosure();
-    }
-
-    public boolean isModuleIncluded(String localModule, String importedModule) {
-        return modules.isInRelation(localModule, importedModule);
-    }
-
-    public boolean isModuleIncludedEq(String localModule, String importedModule) {
-        if (localModule.equals(importedModule))
-            return true;
-        return modules.isInRelation(localModule, importedModule);
-    }
-
-    public boolean isRequiredEq(File required, File local) {
-        try {
-            required = required.getCanonicalFile();
-            local = local.getCanonicalFile();
-        } catch (IOException e) {
-            GlobalSettings.kem.registerInternalError("Cannot create canonical files from " + required + " and " + local, e);
-        }
-        if (required.equals(local))
-            return true;
-        return fileRequirements.isInRelation(required, local);
     }
 
     public void addSubsort(Sort bigSort, Sort smallSort) {
@@ -527,10 +428,6 @@ public class Context implements Serializable {
         return syntacticSubsorts.isInRelation(bigSort, smallSort);
     }
 
-    public boolean isTagGenerated(String key) {
-        return generatedTags.contains(key);
-    }
-
     public boolean isSpecialTerminal(String terminal) {
         return specialTerminals.contains(terminal);
     }
@@ -550,12 +447,6 @@ public class Context implements Serializable {
      */
     public Set<Production> productionsOf(String label) {
         return klabels.get(label);
-    }
-
-    public Term kWrapper(Term t) {
-        if (isSubsortedEq(Sort.K, t.getSort()))
-            return t;
-        return KApp.of(new KInjectedLabel(t));
     }
 
     public Map<Sort, DataStructureSort> getDataStructureSorts() {

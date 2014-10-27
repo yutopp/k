@@ -21,7 +21,7 @@ import org.kframework.kil.Term;
 import org.kframework.kil.loader.Context;
 import org.kframework.kil.loader.JavaClassesFactory;
 import org.kframework.kil.loader.ResolveVariableAttribute;
-import org.kframework.kil.visitors.exceptions.ParseFailedException;
+import org.kframework.main.GlobalOptions;
 import org.kframework.parser.concrete.disambiguate.AmbFilter;
 import org.kframework.parser.concrete.disambiguate.NormalizeASTTransformer;
 import org.kframework.parser.concrete.disambiguate.PreferAvoidFilter;
@@ -36,15 +36,35 @@ import org.kframework.utils.BinaryLoader;
 import org.kframework.utils.Stopwatch;
 import org.kframework.utils.XmlLoader;
 import org.kframework.utils.errorsystem.KException;
+import org.kframework.utils.errorsystem.KExceptionManager;
+import org.kframework.utils.errorsystem.ParseFailedException;
 import org.kframework.utils.errorsystem.KException.ExceptionType;
 import org.kframework.utils.errorsystem.KException.KExceptionGroup;
 import org.kframework.utils.general.GlobalSettings;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
+import com.google.inject.Inject;
 import com.sun.org.apache.xerces.internal.impl.dv.util.Base64;
 
 public class ProgramLoader {
+
+    private final BinaryLoader loader;
+    private final Stopwatch sw;
+    private final KExceptionManager kem;
+    private final GlobalOptions globalOptions;
+
+    @Inject
+    ProgramLoader(
+            BinaryLoader loader,
+            Stopwatch sw,
+            KExceptionManager kem,
+            GlobalOptions globalOptions) {
+        this.loader = loader;
+        this.sw = sw;
+        this.kem = kem;
+        this.globalOptions = globalOptions;
+    }
 
     /**
      * Load program file to ASTNode.
@@ -52,7 +72,7 @@ public class ProgramLoader {
      * @param kappize
      *            If true, then apply KAppModifier to AST.
      */
-    public static ASTNode loadPgmAst(String content, Source source, Boolean kappize, Sort startSymbol, Context context)
+    public ASTNode loadPgmAst(String content, Source source, Boolean kappize, Sort startSymbol, Context context)
             throws ParseFailedException {
         // ------------------------------------- import files in Stratego
         ASTNode out;
@@ -79,7 +99,7 @@ public class ProgramLoader {
         return out;
     }
 
-    public static ASTNode loadPgmAst(String content, Source source, Sort startSymbol, Context context) throws ParseFailedException {
+    public ASTNode loadPgmAst(String content, Source source, Sort startSymbol, Context context) throws ParseFailedException {
         return loadPgmAst(content, source, true, startSymbol, context);
     }
 
@@ -88,9 +108,9 @@ public class ProgramLoader {
      *
      * Save it in kompiled cache under pgm.maude.
      */
-    public static Term processPgm(String content, Source source, Sort startSymbol,
+    public Term processPgm(String content, Source source, Sort startSymbol,
             Context context, ParserType whatParser) throws ParseFailedException {
-        Stopwatch.instance().printIntermediate("Importing Files");
+        sw.printIntermediate("Importing Files");
         if (!context.definedSorts.contains(startSymbol)) {
             throw new ParseFailedException(new KException(ExceptionType.ERROR, KExceptionGroup.CRITICAL,
                     "The start symbol must be declared in the definition. Found: " + startSymbol));
@@ -120,7 +140,7 @@ public class ProgramLoader {
             out = ((Rule) out).getBody();
         } else if (whatParser == ParserType.BINARY) {
             try (ByteArrayInputStream in = new ByteArrayInputStream(Base64.decode(content))) {
-                out = BinaryLoader.instance().loadOrDie(Term.class, in);
+                out = loader.loadOrDie(Term.class, in);
             } catch (IOException e) {
                 GlobalSettings.kem.registerInternalError("Error reading from binary file", e);
                 throw new AssertionError("unreachable");
@@ -129,7 +149,7 @@ public class ProgramLoader {
             // load the new parser
             // TODO(Radu): after the parser is in a good enough shape, replace the program parser
             // TODO(Radu): (the default one) with this branch of the 'if'
-            Grammar grammar = BinaryLoader.instance().loadOrDie(Grammar.class, context.files.resolveKompiled("newParser.bin"));
+            Grammar grammar = loader.loadOrDie(Grammar.class, context.files.resolveKompiled("newParser.bin"));
 
             out = newParserParse(content, grammar.get(startSymbol.toString()), source, context);
             out = new FlattenTerms(context).visitNode(out);
@@ -138,15 +158,15 @@ public class ProgramLoader {
             out = loadPgmAst(content, source, startSymbol, context);
             out = new ResolveVariableAttribute(context).visitNode(out);
         }
-        Stopwatch.instance().printIntermediate("Parsing Program");
+        sw.printIntermediate("Parsing Program");
 
         return (Term) out;
     }
 
-    public static Term parseInModule(String content, Source source, Sort startSymbol,
+    public Term parseInModule(String content, Source source, Sort startSymbol,
                                   String moduleName, Context context) throws ParseFailedException {
         @SuppressWarnings("unchecked")
-        Map<String, Grammar> grammars = BinaryLoader.instance().loadOrDie(Map.class, context.files.resolveKompiled("newModuleParsers.bin"));
+        Map<String, Grammar> grammars = loader.loadOrDie(Map.class, context.files.resolveKompiled("newModuleParsers.bin"));
 
         ASTNode out;
         Grammar grammar = grammars.get(moduleName);

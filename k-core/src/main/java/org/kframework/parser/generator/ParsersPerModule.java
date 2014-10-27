@@ -43,7 +43,7 @@ public class ParsersPerModule {
      * @param def        The definition for which to generate all the program parsers.
      * @param context    The Context object, with all the helper methods.
      */
-    public static void generateParsersForModules(Definition def, Context context) {
+    public static  Map<String, Grammar> generateParsersForModules(Definition def, Context context) {
         Map<String, Grammar> parsers = new HashMap<>();
         for (DefinitionItem di : def.getItems()) {
             if (di instanceof Module) {
@@ -60,9 +60,7 @@ public class ParsersPerModule {
                 parsers.put(((Module) di).getName(), ks2gsf.getGrammar());
             }
         }
-
-        // save the new parser info
-        BinaryLoader.instance().saveOrDie(context.files.resolveKompiled("newModuleParsers.bin"), parsers);
+        return parsers;
     }
 
     /**

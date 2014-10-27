@@ -8,8 +8,8 @@ import org.kframework.kil.Definition;
 import org.kframework.kil.ProductionReference;
 import org.kframework.kil.Sort;
 import org.kframework.kil.Sources;
-import org.kframework.kil.visitors.exceptions.ParseFailedException;
 import org.kframework.parser.outer.Outer;
+import org.kframework.utils.errorsystem.ParseFailedException;
 
 import java.io.File;
 

@@ -14,16 +14,14 @@ import org.kframework.kil.GeneratedSource;
 import org.kframework.kil.Sort;
 import org.kframework.kil.Source;
 import org.kframework.kil.loader.Context;
-import org.kframework.kil.visitors.exceptions.ParseFailedException;
+import org.kframework.utils.errorsystem.ParseFailedException;
 import org.kframework.krun.KRunOptions.ConfigurationCreationOptions;
 import org.kframework.krun.RunProcess;
+import org.kframework.krun.RunProcess.ProcessOutput;
 import org.kframework.krun.api.io.FileSystem;
-import org.kframework.utils.file.WorkingDir;
-
 import com.google.inject.Inject;
 import org.kframework.parser.ProgramLoader;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.charset.CharacterCodingException;
 import java.util.Map;
@@ -40,7 +38,8 @@ public class BuiltinIOOperationsImpl implements BuiltinIOOperations {
     private final Context context;
     private final ConfigurationCreationOptions ccOptions;
     private final KILtoBackendJavaKILTransformer kilTransformer;
-    private final File workingDir;
+    private final ProgramLoader programLoader;
+    private final RunProcess rp;
 
     @Inject
     public BuiltinIOOperationsImpl(
@@ -49,13 +48,15 @@ public class BuiltinIOOperationsImpl implements BuiltinIOOperations {
             Context context,
             ConfigurationCreationOptions ccOptions,
             KILtoBackendJavaKILTransformer kilTransformer,
-            @WorkingDir File workingDir) {
+            ProgramLoader programLoader,
+            RunProcess rp) {
         this.def = def;
         this.fs = fs;
         this.context = context;
         this.ccOptions = ccOptions;
         this.kilTransformer = kilTransformer;
-        this.workingDir = workingDir;
+        this.programLoader = programLoader;
+        this.rp = rp;
     }
 
     @Override
@@ -147,7 +148,6 @@ public class BuiltinIOOperationsImpl implements BuiltinIOOperations {
     @Override
     public Term parse(StringToken term1, StringToken term2, TermContext termContext) {
         try {
-            RunProcess rp = new RunProcess();
             org.kframework.kil.Term kast = rp.runParser(
                     ccOptions.parser(context),
                     term1.stringValue(), true, Sort.of(term2.stringValue()), context);
@@ -163,7 +163,7 @@ public class BuiltinIOOperationsImpl implements BuiltinIOOperations {
     @Override
     public Term parseInModule(StringToken input, StringToken startSymbol, StringToken moduleName, TermContext termContext) {
         try {
-            org.kframework.kil.Term kast = ProgramLoader.parseInModule(
+            org.kframework.kil.Term kast = programLoader.parseInModule(
                     input.stringValue(),
                     new GeneratedSource(this.getClass()),
                     Sort.of(startSymbol.stringValue()),
@@ -180,11 +180,10 @@ public class BuiltinIOOperationsImpl implements BuiltinIOOperations {
 
     @Override
     public Term system(StringToken term, TermContext termContext) {
-        RunProcess rp = new RunProcess();
         Map<String, String> environment = new HashMap<>();
         String[] args = term.stringValue().split("\001", -1);
         //for (String c : args) { System.out.println(c); }
-        rp.execute(workingDir, environment, args);
+        ProcessOutput output = rp.execute(environment, args);
 
         KLabelConstant klabel = KLabelConstant.of("'#systemResult(_,_,_)", context);
         /*
@@ -192,9 +191,9 @@ public class BuiltinIOOperationsImpl implements BuiltinIOOperations {
         KLabelConstant klabel = KLabelConstant.of(klabelString, context);
         assert def.kLabels().contains(klabel) : "No KLabel in definition for " + klabelString;
         */
-        String stdout = rp.getStdout() != null ? rp.getStdout() : "";
-        String stderr = rp.getErr()    != null ? rp.getErr()    : "";
-        return KItem.of(klabel, KList.concatenate(IntToken.of(rp.getExitCode()),
+        String stdout = output.stdout != null ? output.stdout : "";
+        String stderr = output.stderr != null ? output.stderr : "";
+        return KItem.of(klabel, KList.concatenate(IntToken.of(output.exitCode),
             StringToken.of(stdout.trim()), StringToken.of(stderr.trim())), termContext);
     }
 

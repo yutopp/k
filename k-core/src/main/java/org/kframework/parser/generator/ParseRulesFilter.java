@@ -19,7 +19,7 @@ import org.kframework.kil.loader.Constants;
 import org.kframework.kil.loader.Context;
 import org.kframework.kil.loader.JavaClassesFactory;
 import org.kframework.kil.visitors.ParseForestTransformer;
-import org.kframework.kil.visitors.exceptions.ParseFailedException;
+import org.kframework.utils.errorsystem.ParseFailedException;
 import org.kframework.parser.utils.CachedSentence;
 import org.kframework.utils.XmlLoader;
 import org.kframework.utils.errorsystem.KException;
@@ -64,7 +64,7 @@ public class ParseRulesFilter extends ParseForestTransformer {
 
                 long koreStartTime = System.currentTimeMillis();
                 parsed = org.kframework.parser.concrete.KParser.ParseKoreString(ss.getContent());
-                if (globalOptions.verbose)
+                if (context.globalOptions.verbose)
                     System.out.println("Parsing with Kore: " + ss.getSource() + ":" + ss.getLocation() + " - " + (System.currentTimeMillis() - koreStartTime));
             } else
                 parsed = org.kframework.parser.concrete.KParser.ParseKConfigString(ss.getContent());
@@ -101,7 +101,7 @@ public class ParseRulesFilter extends ParseForestTransformer {
             }
             cachedDef.put(key, new CachedSentence(sentence, startLine, startColumn));
 
-            if (globalOptions.debug) {
+            if (context.globalOptions.debug) {
                 File file = context.files.resolveTemp("timing.log");
                 if (!file.getParentFile().exists() && !file.getParentFile().mkdirs()) {
                     GlobalSettings.kem.registerCriticalError("Could not create directory " + file.getParentFile());
