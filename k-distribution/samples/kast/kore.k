@@ -23,9 +23,9 @@ We selected this core of K based on the following two criteria:
 /*
   The "hook" attribute has the following semantics:
   1. Hooks are relative to the hookNamespace module attribute.
-  2. "hook(Foo)" will hook to the constructor named Foo with the arguments being 
+  2. "hook(Foo)" will hook to the constructor named Foo with the arguments being
      the non-terminals of the production.
-  3. "hook" is shorthand for hooking to a constructor which has the same name as 
+  3. "hook" is shorthand for hooking to a constructor which has the same name as
      the sort of the current production.
 */
 

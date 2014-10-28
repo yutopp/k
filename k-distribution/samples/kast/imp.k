@@ -40,7 +40,7 @@ module IMP
   configuration `<T>`(`__::Bag`(
                       `<k>`(PGM:Pgm),
                       `<state>`(`.::Map`(.::MetaKList))
-				   )
+                   )
                 )
 // AExp
   rule `__::Bag`(`<k>`(X:Id => I:K ~> _:MetaK), `<state>`(`_Map_`(`_|->_`(X:Id,I:K), _:Map)))

@@ -15,10 +15,11 @@ import org.kframework.parser.ProgramLoader;
 import org.kframework.parser.concrete2.Grammar;
 import org.kframework.parser.concrete2.KSyntax2GrammarStatesFilter;
 import org.kframework.parser.generator.CollectTerminalsVisitor;
+import org.kframework.utils.errorsystem.KExceptionManager;
 import org.kframework.utils.errorsystem.ParseFailedException;
 
 public class QuickParser {
-    public static ProductionReference parse(String program, Sort startSymbol, ASTNode definition) throws ParseFailedException {
+    public static ProductionReference parse(String program, Sort startSymbol, ASTNode definition, KExceptionManager kem) throws ParseFailedException {
         Context context = new Context();
         context.kompileOptions = new KompileOptions();
         context.globalOptions = new GlobalOptions();
@@ -30,7 +31,7 @@ public class QuickParser {
         CollectTerminalsVisitor ctv = new CollectTerminalsVisitor(context);
         // visit all modules to collect all Terminals first
         ctv.visitNode(definition);
-        KSyntax2GrammarStatesFilter ks2gsf = new KSyntax2GrammarStatesFilter(context, ctv);
+        KSyntax2GrammarStatesFilter ks2gsf = new KSyntax2GrammarStatesFilter(context, ctv, kem);
         ks2gsf.visitNode(definition);
         Grammar grammar = ks2gsf.getGrammar();
 

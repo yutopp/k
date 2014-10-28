@@ -9,11 +9,12 @@ import org.kframework.kil.ProductionReference;
 import org.kframework.kil.Sort;
 import org.kframework.kil.Sources;
 import org.kframework.parser.outer.Outer;
+import org.kframework.utils.BaseTestCase;
 import org.kframework.utils.errorsystem.ParseFailedException;
 
 import java.io.File;
 
-public class KoreTest {
+public class KoreTest extends BaseTestCase {
 
     @Test
     public void testKore() throws Exception {
@@ -24,7 +25,7 @@ public class KoreTest {
         def.setItems(Outer.parse(Sources.generatedBy(KoreTest.class), kore, null));
         ProductionReference pr = null;
         try {
-            pr = QuickParser.parse(quq, Sort.of("KDefinition"), def);
+            pr = QuickParser.parse(quq, Sort.of("KDefinition"), def, kem);
         } catch (ParseFailedException e) {
             System.err.println(e.getMessage() + " Line: " + e.getKException().getLocation().lineStart + " Column: " + e.getKException().getLocation().columnStart);
             assert false;

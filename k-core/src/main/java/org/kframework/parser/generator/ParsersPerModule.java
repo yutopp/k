@@ -21,6 +21,7 @@ import org.kframework.parser.concrete2.Grammar;
 import org.kframework.parser.concrete2.KSyntax2GrammarStatesFilter;
 import org.kframework.utils.BinaryLoader;
 import org.kframework.utils.StringUtil;
+import org.kframework.utils.errorsystem.KExceptionManager;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -43,7 +44,7 @@ public class ParsersPerModule {
      * @param def        The definition for which to generate all the program parsers.
      * @param context    The Context object, with all the helper methods.
      */
-    public static  Map<String, Grammar> generateParsersForModules(Definition def, Context context) {
+    public static  Map<String, Grammar> generateParsersForModules(Definition def, Context context, KExceptionManager kem) {
         Map<String, Grammar> parsers = new HashMap<>();
         for (DefinitionItem di : def.getItems()) {
             if (di instanceof Module) {
@@ -54,7 +55,7 @@ public class ParsersPerModule {
                 // visit all modules to collect all Terminals first
                 for (String modName : imported)
                     ctv.visitNode(def.getModulesMap().get(modName));
-                KSyntax2GrammarStatesFilter ks2gsf = new KSyntax2GrammarStatesFilter(context, ctv);
+                KSyntax2GrammarStatesFilter ks2gsf = new KSyntax2GrammarStatesFilter(context, ctv, kem);
                 for (String modName : imported)
                     ks2gsf.visitNode(def.getModulesMap().get(modName));
                 parsers.put(((Module) di).getName(), ks2gsf.getGrammar());

@@ -8,8 +8,8 @@ module INNER-SYNTAX
                       | Token{"dummy"} [regex([\`]{2}([^\`]|[\`][^\`])+[\`]{2})]
                       | Token{"dummy"} [regex([\`]{3}([^\`]|[\`][^\`]|[\`][\`][^\`])+[\`]{3})]
                       // can add more if we want to
-					  | "true"
-					  | "false"
+                      | "true"
+                      | "false"
 */
 
   syntax Bubble ::= MetaK
@@ -39,9 +39,9 @@ module INNER-SYNTAX
   syntax Cells ::= NeList{Cell,""}   // non-empty list
   syntax Cell ::= "<" CellNAME CellAttributes ">" MetaK "</" CellNAME ">"
                 // the two NAMEs should be the same
-				| "<" CellNAME CellAttributes ">" MetaK "...</" CellNAME ">"
-				| "<" CellNAME CellAttributes ">..." MetaK "</" CellNAME ">"
-				| "<" CellNAME CellAttributes ">..." MetaK "...</" CellNAME ">"
+                | "<" CellNAME CellAttributes ">" MetaK "...</" CellNAME ">"
+                | "<" CellNAME CellAttributes ">..." MetaK "</" CellNAME ">"
+                | "<" CellNAME CellAttributes ">..." MetaK "...</" CellNAME ">"
 
   syntax CellAttributes ::= List{CellAttribute,""}
   syntax CellAttribute  ::= CellTag "=" STRING
@@ -78,7 +78,7 @@ module OUTER-SYNTAX
                     | "rule"          Bubble "requires" Bubble Attributes
                     | "configuration" Bubble
                     | "context"       Bubble
-					| Syntax
+                    | Syntax
 
   // Syntax declarations
   syntax Syntax ::= "syntax" SORTID "::=" PriorityBlockList

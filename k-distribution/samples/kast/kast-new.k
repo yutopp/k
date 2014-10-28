@@ -48,7 +48,7 @@ module OUTER
 
   syntax KAttributes ::= "" [onlyLabel, klabel(noAttributes)]
                        | "[" KAttributeList "]"
-                       
+
   syntax KAttributeList ::= List{KAttribute,","}
 
   syntax KAttribute ::= KTag
