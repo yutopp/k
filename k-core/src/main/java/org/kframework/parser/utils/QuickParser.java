@@ -26,7 +26,7 @@ public class QuickParser {
 
         new UpdateReferencesVisitor(context).visitNode(definition);
         context.setTokenSorts(TokenSortCollector.collectTokenSorts(definition, context));
-        
+
         // collect the syntax from those modules
         CollectTerminalsVisitor ctv = new CollectTerminalsVisitor(context);
         // visit all modules to collect all Terminals first
