@@ -28,7 +28,7 @@ endmodule
 
 
 
-// To be used when parsing programs in KAST format
+// To be used when parsing/pretty-printing programs in KAST format
 // (e.g., programs parsed and then output by an external parser)
 module KAST  
   imports BASIC-K
@@ -55,7 +55,7 @@ endmodule
 
 
 
-// To be used when pretty-printing stuck computations
+// To be used when parsing/pretty-printing ground configurations
 module KSEQ
   imports KAST
   syntax K     ::= ".::K"
@@ -66,13 +66,20 @@ endmodule
 
 
 
-// To be used to parse semantic rules
-module K
+// To be used when parsing/pretty-printing symbolic configurations
+module KSEQ-SYMBOLIC
   imports KSEQ
   syntax KVariable ::= r"(?<![A-Za-z0-9\\_])(\\$|\\!|\\?)?([A-Z][A-Za-z0-9']*|_)"
     [ hook(org.kframework.kore.KVariable) ] // same like KSort?
   syntax KItem     ::= KVariable        
   syntax KLabel    ::= KVariable        
+endmodule
+
+
+
+// To be used to parse semantic rules
+module K
+  imports KSEQ-SYMBOLIC
   syntax K         ::= K "=>" K
     [ klabel(#KRewrite), hook(org.kframework.kore.KRewrite) ]
   // K bracket needed, e.g., Cxt[V ~> `env(E) => .`]
@@ -84,9 +91,9 @@ endmodule
 
 
 
-// To be used for first-level parsing of global KORE definitions,
-// where the K terms are put in bubbles.  A similar, but larger
-// OUTER module can be defined for arbitrary K definitions.
+// To be used for first-level parsing/pretty-printing of global KORE
+// definitions, where the K terms are put in bubbles.  A similar, but
+// larger OUTER module can be defined for arbitrary K definitions.
 module OUTER-KORE
   imports BASIC-K
 
