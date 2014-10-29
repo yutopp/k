@@ -19,5 +19,4 @@ java-backend/.project
 k-distribution/.project
 *~
 junit-reports
-k-distribution/samples/test/
 target/
