@@ -75,34 +75,8 @@ public class TokenSortCollector extends BasicVisitor {
      *            the specified production
      */
     private void checkIllegalProduction(Production production) {
-        Sort sort = production.getSort();
-
-        if (production.isLexical() && !production.containsAttribute(Constants.VARIABLE)) {
-            if (nonTokenSorts.contains(sort)) {
-                String msg = "Cannot subsort a lexical production to a non-token sort:\nsyntax "
-                        + sort + " ::= " + production;
-                throw KExceptionManager.compilerError(msg,
-                        this, production);
-            }
-
-            tokenSorts.add(sort);
-        }
-
-        /*
-         * The second and third check above is used to filter out cases such as the following:
-         *   syntax Id ::= "Main"
-         *   syntax Id ::= "String2Id" "(" String ")"  [function, klabel(String2Id)]
-         */
-        /*if (!production.isLexical() && !production.isTerminal()
-                && !production.containsAttribute(Constants.FUNCTION))  {
-            if (tokenSorts.contains(sort)) {
-                String msg = "Cannot subsort a non-lexical production to a token sort:\nsyntax "
-                        + sort + " ::= " + production;
-                throw KExceptionManager.compilerError(msg, this, production);
-            }
-
-            nonTokenSorts.add(sort);
-        }*/
+        // (radum) removed since it doesn't comply with the filosophy of the new parser.
+        // once the new parser is fully functional, this entire class should be removed at the same time with SDF.
     }
 
     @Override

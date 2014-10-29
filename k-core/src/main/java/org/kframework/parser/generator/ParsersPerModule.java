@@ -39,10 +39,11 @@ import java.util.regex.Pattern;
 public class ParsersPerModule {
 
     /**
-     * Generates and saves to disk a Map of moduleName -> programParser for the entire definition
+     * Generates a Map of moduleName -> programParser for the entire definition
      * given as argument.
      * @param def        The definition for which to generate all the program parsers.
      * @param context    The Context object, with all the helper methods.
+     * @return Map of moduleName -> programParser
      */
     public static  Map<String, Grammar> generateParsersForModules(Definition def, Context context, KExceptionManager kem) {
         Map<String, Grammar> parsers = new HashMap<>();
