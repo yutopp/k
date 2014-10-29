@@ -11,6 +11,7 @@ import org.kframework.kil.Sources;
 import org.kframework.parser.outer.Outer;
 import org.kframework.utils.BaseTestCase;
 import org.kframework.utils.errorsystem.ParseFailedException;
+import org.kframework.utils.file.JarInfo;
 
 import java.io.File;
 
@@ -18,9 +19,9 @@ public class KoreTest extends BaseTestCase {
 
     @Test
     public void testKore() throws Exception {
-        //System.out.println(new File(".").getAbsolutePath());
-        String quq = FileUtils.readFileToString(new File("k-distribution/samples/kast/quote-unquote.kore"));
-        String kore = FileUtils.readFileToString(new File("k-distribution/samples/kast/kore.k"));
+        System.out.println(JarInfo.getKBase(false));
+        String quq = FileUtils.readFileToString(new File(JarInfo.getKBase(false) + "/samples/kast/quote-unquote.kore"));
+        String kore = FileUtils.readFileToString(new File(JarInfo.getKBase(false) + "/samples/kast/kore.k"));
         Definition def = new Definition();
         def.setItems(Outer.parse(Sources.generatedBy(KoreTest.class), kore, null));
         ProductionReference pr = null;
