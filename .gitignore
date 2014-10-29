@@ -6,7 +6,6 @@
 *.kore
 *.pdf
 *.swp
-*.iml
 .metadata
 .recommenders
 .cache
