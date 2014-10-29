@@ -69,21 +69,13 @@ public class TermLoader {
         org.kframework.kil.Definition def = new org.kframework.kil.Definition();
         def.setItems(di);
 
-        // ------------------------------------- import files in Stratego
-        org.kframework.parser.concrete.KParser.ImportTblRule(context.files.resolveKompiled("."));
-
         // ------------------------------------- parse configs
-        JavaClassesFactory.startConstruction(context);
         def = (Definition) new ParseConfigsFilter(context, false, kem).visitNode(def);
-        JavaClassesFactory.endConstruction();
 
         // ----------------------------------- parse rules
-        JavaClassesFactory.startConstruction(context);
         def = (Definition) new ParseRulesFilter(context).visitNode(def);
         def = (Definition) new DisambiguateRulesFilter(context, false, kem).visitNode(def);
         def = (Definition) new NormalizeASTTransformer(context, kem).visitNode(def);
-
-        JavaClassesFactory.endConstruction();
 
         return def;
     }
@@ -92,14 +84,12 @@ public class TermLoader {
         if (!context.initialized) {
             assert false : "You need to load the definition before you call parsePattern!";
         }
-        String parsed = org.kframework.parser.concrete.KParser.ParseKCmdString(content);
+        String parsed = org.kframework.parser.concrete.DefinitionLocalKParser.ParseKCmdString(content, context.files.resolveKompiled("."));
         Document doc = XmlLoader.getXMLDoc(parsed);
         XmlLoader.addSource(doc.getFirstChild(), source);
         XmlLoader.reportErrors(doc);
 
-        JavaClassesFactory.startConstruction(context);
-        org.kframework.kil.ASTNode config = JavaClassesFactory.getTerm((Element) doc.getFirstChild().getFirstChild().getNextSibling());
-        JavaClassesFactory.endConstruction();
+        org.kframework.kil.ASTNode config = new JavaClassesFactory(context).getTerm((Element) doc.getFirstChild().getFirstChild().getNextSibling());
 
         // TODO: reject rewrites
         config = new SentenceVariablesFilter(context).visitNode(config);
@@ -137,15 +127,13 @@ public class TermLoader {
             assert false : "You need to load the definition before you call parsePattern!";
         }
 
-        String parsed = org.kframework.parser.concrete.KParser.ParseKRuleString(pattern);
+        String parsed = org.kframework.parser.concrete.DefinitionLocalKParser.ParseKRuleString(pattern, context.files.resolveKompiled("."));
         Document doc = XmlLoader.getXMLDoc(parsed);
 
         XmlLoader.addSource(doc.getFirstChild(), source);
         XmlLoader.reportErrors(doc);
 
-        JavaClassesFactory.startConstruction(context);
-        ASTNode config = JavaClassesFactory.getTerm((Element) doc.getDocumentElement().getFirstChild().getNextSibling());
-        JavaClassesFactory.endConstruction();
+        ASTNode config = new JavaClassesFactory(context).getTerm((Element) doc.getDocumentElement().getFirstChild().getNextSibling());
 
         // TODO: reject rewrites
         config = new SentenceVariablesFilter(context).visitNode(config);
@@ -183,15 +171,13 @@ public class TermLoader {
             assert false : "You need to load the definition before you call parsePattern!";
         }
 
-        String parsed = org.kframework.parser.concrete.KParser.ParseKRuleString(pattern);
+        String parsed = org.kframework.parser.concrete.DefinitionLocalKParser.ParseKRuleString(pattern, context.files.resolveKompiled("."));
         Document doc = XmlLoader.getXMLDoc(parsed);
 
         // XmlLoader.addFilename(doc.getFirstChild(), filename);
         XmlLoader.reportErrors(doc);
 
-        JavaClassesFactory.startConstruction(context);
-        ASTNode config = JavaClassesFactory.getTerm((Element) doc.getDocumentElement().getFirstChild().getNextSibling());
-        JavaClassesFactory.endConstruction();
+        ASTNode config = new JavaClassesFactory(context).getTerm((Element) doc.getDocumentElement().getFirstChild().getNextSibling());
 
         // TODO: don't allow rewrites
         config = new SentenceVariablesFilter(context).visitNode(config);

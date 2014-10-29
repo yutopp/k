@@ -79,15 +79,12 @@ public class ProgramLoader {
         // ------------------------------------- import files in Stratego
         ASTNode out;
 
-        org.kframework.parser.concrete.KParser.ImportTblPgm(context.files.resolveKompiled("."));
-        String parsed = org.kframework.parser.concrete.KParser.ParseProgramString(content, startSymbol.toString());
+        String parsed = org.kframework.parser.concrete.DefinitionLocalKParser.ParseProgramString(content, startSymbol.toString(), context.files.resolveKompiled("."));
         Document doc = XmlLoader.getXMLDoc(parsed);
 
         XmlLoader.addSource(doc.getFirstChild(), source);
         XmlLoader.reportErrors(doc);
-        JavaClassesFactory.startConstruction(context);
-        out = JavaClassesFactory.getTerm((Element) doc.getDocumentElement().getFirstChild().getNextSibling());
-        JavaClassesFactory.endConstruction();
+        out = new  JavaClassesFactory(context).getTerm((Element) doc.getDocumentElement().getFirstChild().getNextSibling());
 
         out = new PriorityFilter(context).visitNode(out);
         out = new PreferAvoidFilter(context).visitNode(out);
@@ -120,14 +117,12 @@ public class ProgramLoader {
 
         ASTNode out;
         if (whatParser == ParserType.GROUND) {
-            org.kframework.parser.concrete.KParser.ImportTblGround(context.files.resolveKompiled("."));
             out = termLoader.parseCmdString(content, source, startSymbol, context);
             out = new RemoveBrackets(context).visitNode(out);
             out = new AddEmptyLists(context, kem).visitNode(out);
             out = new RemoveSyntacticCasts(context).visitNode(out);
             out = new FlattenTerms(context).visitNode(out);
         } else if (whatParser == ParserType.RULES) {
-            org.kframework.parser.concrete.KParser.ImportTblRule(context.files.resolveKompiled("."));
             out = termLoader.parsePattern(content, source, startSymbol, context);
             out = new RemoveBrackets(context).visitNode(out);
             out = new AddEmptyLists(context, kem).visitNode(out);

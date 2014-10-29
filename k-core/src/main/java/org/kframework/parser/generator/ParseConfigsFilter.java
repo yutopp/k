@@ -72,12 +72,12 @@ public class ParseConfigsFilter extends ParseForestTransformer {
                 String parsed = null;
                 if (ss.containsAttribute("kore")) {
                     long startTime = System.currentTimeMillis();
-                    parsed = org.kframework.parser.concrete.KParser.ParseKoreString(ss.getContent());
+                    parsed = org.kframework.parser.concrete.DefinitionLocalKParser.ParseKoreString(ss.getContent(), context.files.resolveKompiled("."));
                     if (context.globalOptions.verbose)
                         System.out.println("Parsing with Kore: " + ss.getSource() + ":" + ss.getLocation() + " - " + (System.currentTimeMillis() - startTime));
                 } else {
                     try {
-                        parsed = org.kframework.parser.concrete.KParser.ParseKConfigString(ss.getContent());
+                        parsed = org.kframework.parser.concrete.DefinitionLocalKParser.ParseKConfigString(ss.getContent(), context.files.resolveKompiled("."));
                     } catch (RuntimeException e) {
                         String msg = "SDF failed to parse a configuration by throwing: " + e.getCause().getLocalizedMessage();
                         throw new ParseFailedException(new KException(ExceptionType.ERROR, KExceptionGroup.CRITICAL, msg, ss.getSource(), ss.getLocation()));
@@ -91,7 +91,7 @@ public class ParseConfigsFilter extends ParseForestTransformer {
                 XmlLoader.addSource(xmlTerm, ss.getSource());
                 XmlLoader.reportErrors(doc, ss.getType());
 
-                Sentence st = (Sentence) JavaClassesFactory.getTerm((Element) xmlTerm);
+                Sentence st = (Sentence) new JavaClassesFactory(context).getTerm((Element) xmlTerm);
                 config = new Configuration(st);
                 assert st.getLabel().equals(""); // labels should have been parsed in Outer Parsing
                 st.setLabel(ss.getLabel());

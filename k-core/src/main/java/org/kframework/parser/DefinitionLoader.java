@@ -19,11 +19,11 @@ import org.kframework.kil.loader.AddAutoIncludedModulesVisitor;
 import org.kframework.kil.loader.CollectConfigCellsVisitor;
 import org.kframework.kil.loader.CollectModuleImportsVisitor;
 import org.kframework.kil.loader.Context;
-import org.kframework.kil.loader.JavaClassesFactory;
 import org.kframework.kil.loader.RemoveUnusedModules;
 import org.kframework.parser.generator.ParsersPerModule;
 import org.kframework.utils.errorsystem.ParseFailedException;
 import org.kframework.parser.concrete2.Grammar;
+import org.kframework.parser.concrete.DefinitionLocalKParser;
 import org.kframework.parser.concrete.disambiguate.NormalizeASTTransformer;
 import org.kframework.parser.generator.OuterParser;
 import org.kframework.parser.generator.CacheLookupFilter;
@@ -43,6 +43,7 @@ import org.kframework.utils.errorsystem.KException.ExceptionType;
 import org.kframework.utils.errorsystem.KException.KExceptionGroup;
 import org.kframework.utils.errorsystem.KExceptionManager;
 import org.kframework.utils.file.FileUtil;
+
 import com.google.inject.Inject;
 
 public class DefinitionLoader {
@@ -152,6 +153,7 @@ public class DefinitionLoader {
             sw.printIntermediate("Checks");
 
             // ------------------------------------- generate files
+            DefinitionLocalKParser.init(files.resolveKompiled("."));
             ResourceExtractor.ExtractDefSDF(files.resolveTemp("def"));
             ResourceExtractor.ExtractGroundSDF(files.resolveTemp("ground"));
 
@@ -232,13 +234,8 @@ public class DefinitionLoader {
                 sw.printIntermediate("Generate TBLDef");
             }
 
-            org.kframework.parser.concrete.KParser.ImportTblRule(files.resolveKompiled("."));
-
-            sw.printIntermediate("Importing Files");
             // ------------------------------------- parse configs
-            JavaClassesFactory.startConstruction(context);
             def = (Definition) new ParseConfigsFilter(context, kem).visitNode(def);
-            JavaClassesFactory.endConstruction();
             new CollectConfigCellsVisitor(context).visitNode(def);
 
             // sort List in streaming cells
@@ -247,7 +244,6 @@ public class DefinitionLoader {
             sw.printIntermediate("Parsing Configs");
 
             // ----------------------------------- parse rules
-            JavaClassesFactory.startConstruction(context);
             Map<String, CachedSentence> cachedDef;
             // load definition if possible
             try {
@@ -273,7 +269,6 @@ public class DefinitionLoader {
                 // save definition
                 loader.saveOrDie(cache, clf.getKept());
             }
-            JavaClassesFactory.endConstruction();
 
             // really important to do disambiguation after we save the cache to disk because
             // the objects in the sentences are mutable, and we risk altering them and miss
