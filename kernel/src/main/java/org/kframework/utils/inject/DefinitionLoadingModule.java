@@ -5,9 +5,11 @@ import java.io.File;
 import java.io.FilenameFilter;
 import java.util.Map;
 
+import org.kframework.kil.Definition;
 import org.kframework.kil.loader.Context;
 import org.kframework.kompile.KompileOptions;
 import org.kframework.main.GlobalOptions;
+import org.kframework.main.Tool;
 import org.kframework.utils.BinaryLoader;
 import org.kframework.utils.Stopwatch;
 import org.kframework.utils.errorsystem.KExceptionManager;
@@ -44,6 +46,15 @@ public class DefinitionLoadingModule extends AbstractModule {
         sw.printIntermediate("Initializing definition paths");
         return context;
     }
+
+    @Provides
+    Definition definition(Tool tool, BinaryLoader loader, FileUtil files) {
+        if (tool == Tool.KDOC) {
+            return loader.loadOrDie(Definition.class, files.resolveKompiled("definition-concrete.bin"));
+        }
+        return loader.loadOrDie(Definition.class, files.resolveKompiled("definition.bin"));
+    }
+
 
     @Provides
     KompileOptions kompileOptions(Context context, FileUtil files) {

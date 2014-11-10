@@ -8,23 +8,13 @@
     <groupId>org.kframework.k</groupId>
     <artifactId>parent</artifactId>
     <version>3.5-SNAPSHOT</version>
+    <relativePath>../pom.xml</relativePath>
   </parent>
   <artifactId>kore</artifactId>
   <packaging>jar</packaging>
 
   <name>K Framework KORE</name>
 
-  <properties>
-    <scala.version>2.10.4</scala.version>
-  </properties>
-
-  <dependencies>
-    <dependency>
-      <groupId>org.scala-lang</groupId>
-      <artifactId>scala-library</artifactId>
-      <version>${scala.version}</version>
-    </dependency>
-  </dependencies>
   <build>
     <plugins>
       <plugin>

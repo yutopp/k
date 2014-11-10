@@ -8,7 +8,11 @@ import org.kframework.kil.visitors.Visitor;
 import org.kframework.parser.DefinitionLoader;
 import org.kframework.utils.errorsystem.KExceptionManager;
 import org.kframework.utils.Poset;
+
+import com.google.inject.Inject;
+
 import java.io.File;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -28,10 +32,14 @@ public class Definition extends ASTNode implements Interfaces.MutableList<Defini
     private Map<String, Module> modulesMap;
     private String mainSyntaxModule;
     private Poset<String> modules = Poset.create();
+    public Map<String, ASTNode> locations = new HashMap<>();
 
     public Definition() {
         super();
     }
+
+    @Inject
+    public Definition(Void v) {}
 
     public Definition(Definition d) {
         super(d);
@@ -39,6 +47,7 @@ public class Definition extends ASTNode implements Interfaces.MutableList<Defini
         this.mainModule = d.mainModule;
         this.mainSyntaxModule = d.mainSyntaxModule;
         this.items = d.items;
+        this.locations = d.locations;
     }
 
     @Override
@@ -102,16 +111,15 @@ public class Definition extends ASTNode implements Interfaces.MutableList<Defini
         // Collect information
         // this.accept(new AddSymbolicVariablesDeclaration(context, this.getMainSyntaxModule()));
         new UpdateReferencesVisitor(context).visitNode(this);
-        new UpdateAssocVisitor(context).visitNode(this);
         new CollectProductionsVisitor(context).visitNode(this);
+        new UpdateAssocVisitor(context).visitNode(this);
         context.computeConses();
         new CollectBracketsVisitor(context).visitNode(this);
         new CollectSubsortsVisitor(context).visitNode(this);
         new CollectPrioritiesVisitor(context).visitNode(this);
         new CollectStartSymbolPgmVisitor(context).visitNode(this);
         new CollectConfigCellsVisitor(context).visitNode(this);
-        new CollectLocationsVisitor(context).visitNode(this);
-        new CountNodesVisitor(context).visitNode(this);
+        new CollectLocationsVisitor().visitNode(this);
         new CollectVariableTokens(context).visitNode(this);
 
         /* collect lexical token sorts */
@@ -124,9 +132,6 @@ public class Definition extends ASTNode implements Interfaces.MutableList<Defini
         context.setDataStructureSorts(dataStructureSortCollector.getSorts());
 
         context.makeFreshFunctionNamesMap(this.getSyntaxByTag(Attribute.FRESH_GENERATOR, context));
-
-        /* set the initialized flag */
-        context.initialized = true;
     }
 
     public Map<String, Module> getModulesMap() {
