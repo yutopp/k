@@ -1,12 +1,18 @@
 // Copyright (c) 2014 K Team. All Rights Reserved.
 package org.kframework.parser.utils;
 
+import org.apache.commons.io.FileUtils;
+import org.junit.Before;
+import org.junit.Test;
 import org.kframework.compile.sharing.TokenSortCollector;
 import org.kframework.kil.ASTNode;
+import org.kframework.kil.Definition;
 import org.kframework.kil.GeneratedSource;
 import org.kframework.kil.ProductionReference;
 import org.kframework.kil.Sort;
+import org.kframework.kil.Sources;
 import org.kframework.kil.loader.CollectPrioritiesVisitor;
+import org.kframework.kil.loader.CollectSubsortsVisitor;
 import org.kframework.kil.loader.Context;
 import org.kframework.kil.loader.UpdateReferencesVisitor;
 import org.kframework.kompile.KompileOptions;
@@ -15,16 +21,47 @@ import org.kframework.parser.ProgramLoader;
 import org.kframework.parser.concrete2.Grammar;
 import org.kframework.parser.concrete2.KSyntax2GrammarStatesFilter;
 import org.kframework.parser.generator.CollectTerminalsVisitor;
+import org.kframework.parser.outer.Outer;
+import org.kframework.utils.BaseTestCase;
 import org.kframework.utils.errorsystem.KExceptionManager;
 import org.kframework.utils.errorsystem.ParseFailedException;
+import org.kframework.utils.file.JarInfo;
 
-public class QuickParser {
+import java.io.File;
+
+/**
+ * Test a the kore definition using the new parser.
+ * KoreIT has to be run after the distribution has been built (apparently), therefore the name IT at the end.
+ */
+public class KoreIT extends BaseTestCase {
+
+    @Test
+    public void testKore() throws Exception {
+        //System.out.println(JarInfo.getKBase(false));
+        String quq = FileUtils.readFileToString(new File(JarInfo.getKBase(false) + "/samples/kast/quote-unquote.kore"));
+        String kore = FileUtils.readFileToString(new File(JarInfo.getKBase(false) + "/samples/kast/kore.k"));
+        Definition def = new Definition();
+        def.setItems(Outer.parse(Sources.generatedBy(KoreIT.class), kore, null));
+        ProductionReference pr = null;
+        try {
+            pr = parse(quq, Sort.of("KDefinition"), def, kem);
+        } catch (ParseFailedException e) {
+            System.err.println(e.getMessage() + " Line: " + e.getKException().getLocation().lineStart + " Column: " + e.getKException().getLocation().columnStart);
+            assert false;
+        }
+        //System.out.println(pr);
+
+        //Assert.assertEquals("Expected Nullable NTs", true, nc.isNullable(nt1.entryState) && nc.isNullable(nt1.exitState));
+        //Assert.assertEquals("Expected Nullable NTs", true, nc.isNullable(nt1));
+    }
+
     public static ProductionReference parse(String program, Sort startSymbol, ASTNode definition, KExceptionManager kem) throws ParseFailedException {
         Context context = new Context();
         context.kompileOptions = new KompileOptions();
         context.globalOptions = new GlobalOptions();
 
         new UpdateReferencesVisitor(context).visitNode(definition);
+        new CollectSubsortsVisitor(context).visitNode(definition);
         context.setTokenSorts(TokenSortCollector.collectTokenSorts(definition, context));
 
         // collect the syntax from those modules
@@ -37,7 +74,7 @@ public class QuickParser {
 
         new CollectPrioritiesVisitor(context).visitNode(definition);
 
-        ASTNode out = ProgramLoader.newParserParse(program, grammar.get(startSymbol.toString()), new GeneratedSource(QuickParser.class), context);
+        ASTNode out = ProgramLoader.newParserParse(program, grammar.get(startSymbol.toString()), new GeneratedSource(KoreIT.class), context);
         return (ProductionReference) out;
     }
 }
