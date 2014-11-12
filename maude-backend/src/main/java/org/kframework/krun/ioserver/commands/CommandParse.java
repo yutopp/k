@@ -4,6 +4,7 @@ package org.kframework.krun.ioserver.commands;
 import org.kframework.backend.maude.MaudeFilter;
 import org.kframework.kil.Sort;
 import org.kframework.kil.Term;
+import org.kframework.kil.loader.Constants;
 import org.kframework.kil.loader.Context;
 import org.kframework.krun.KRunOptions.ConfigurationCreationOptions;
 import org.kframework.krun.RunProcess;
@@ -45,7 +46,7 @@ public class CommandParse extends Command {
             mf.visitNode(kast);
             succeed(mf.getResult().toString());
         } catch (ParseFailedException e) {
-            fail("noparse");
+            fail(Constants.NOPARSE);
         }
     }
 }

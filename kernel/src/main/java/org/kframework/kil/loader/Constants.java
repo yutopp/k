@@ -82,6 +82,7 @@ public class Constants {
     public static final String STDIN = "stdin";
     public static final String STDOUT = "stdout";
     public static final String STDERR = "stderr";
+    public static final String NOPARSE = "noparse";
 
     // Generated stuff
     public static final String GENERATED_FILENAME = "File System";

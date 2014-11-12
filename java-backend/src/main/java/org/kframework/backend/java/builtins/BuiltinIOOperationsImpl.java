@@ -13,6 +13,7 @@ import org.kframework.backend.java.symbolic.KILtoBackendJavaKILTransformer;
 import org.kframework.kil.GeneratedSource;
 import org.kframework.kil.Sort;
 import org.kframework.kil.Source;
+import org.kframework.kil.loader.Constants;
 import org.kframework.kil.loader.Context;
 import org.kframework.utils.errorsystem.ParseFailedException;
 import org.kframework.krun.KRunOptions.ConfigurationCreationOptions;
@@ -154,7 +155,9 @@ public class BuiltinIOOperationsImpl implements BuiltinIOOperations {
             Term term = kilTransformer.transformAndEval(kast);
             return term;
         } catch (ParseFailedException e) {
-            return processIOException("noparse", termContext);
+            String line = "" + e.getKException().getLocation().lineStart;
+            String col  = "" + e.getKException().getLocation().columnStart;
+            return processIOException(Constants.NOPARSE, StringToken.of(e.getMessage() + " Line: " + line + " Column: " + col), termContext);
         }
     }
 
@@ -170,7 +173,9 @@ public class BuiltinIOOperationsImpl implements BuiltinIOOperations {
             term = term.evaluate(termContext);
             return term;
         } catch (ParseFailedException e) {
-            return processIOException("noparse", termContext);
+            String line = "" + e.getKException().getLocation().lineStart;
+            String col  = "" + e.getKException().getLocation().columnStart;
+            return processIOException(Constants.NOPARSE, StringToken.of(e.getMessage() + " Line: " + line + " Column: " + col), termContext);
         }
     }
 
