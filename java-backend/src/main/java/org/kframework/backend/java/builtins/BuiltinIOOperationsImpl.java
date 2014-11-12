@@ -154,9 +154,7 @@ public class BuiltinIOOperationsImpl implements BuiltinIOOperations {
             Term term = kilTransformer.transformAndEval(kast);
             return term;
         } catch (ParseFailedException e) {
-            String line = "" + e.getKException().getLocation().lineStart;
-            String col  = "" + e.getKException().getLocation().columnStart;
-            return processIOException("noparse", StringToken.of(e.getMessage() + " Line: " + line + " Column: " + col), termContext);
+            return processIOException("noparse", termContext);
         }
     }
 
@@ -172,9 +170,7 @@ public class BuiltinIOOperationsImpl implements BuiltinIOOperations {
             term = term.evaluate(termContext);
             return term;
         } catch (ParseFailedException e) {
-            String line = "" + e.getKException().getLocation().lineStart;
-            String col  = "" + e.getKException().getLocation().columnStart;
-            return processIOException("noparse", StringToken.of(e.getMessage() + " Line: " + line + " Column: " + col), termContext);
+            return processIOException("noparse", termContext);
         }
     }
 
