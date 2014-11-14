@@ -77,7 +77,7 @@ LD_LIBRARY_PATH=$LD_LIBRARY_PATH:<release>/lib/native/linux64`
 To develop K using Eclipse:
 1. `mvn install -DskipKTest`
 2. `cd` into the directory of the module you want to work on.
-3. `mvn eclipse:eclipse`
+3. `mvn eclipse:eclipse -Declipse.workspace=.`
 4. Import the project into Eclipse. From within Eclipse, go to `File->Import->General->Existing projects into workspace` and select the directory of the module. Follow the wizard steps.
 
 To work on more then one Eclipse module, import any other module you want to work on by following steps 2-4. Once imported, add a dependency between your two projects within Eclipse. For example, if you are working on both the kernel and the java-backend, you need a dependency from the java-backend on the kernel. To add the dependency:
