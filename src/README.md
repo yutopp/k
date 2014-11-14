@@ -74,11 +74,17 @@ LD_LIBRARY_PATH=$LD_LIBRARY_PATH:<release>/lib/native/linux32`
 LD_LIBRARY_PATH=$LD_LIBRARY_PATH:<release>/lib/native/linux64`
 
 ## Eclipse
-To autogenerate an Eclipse project for K, run `mvn install -DskipKTest; mvn eclipse:eclipse` on the
-command line. Then go to
-File->Import->General->Existing projects into workspace, and select
-the directory of the installation. You should only add the leaves to the workspace, because
-eclipse does not support hierarchical projects.
+To develop K using Eclipse:
+1. `mvn install -DskipKTest`
+2. `cd` into the directory of the module you want to work on.
+3. `mvn eclipse:eclipse`
+4. Import the project into Eclipse. From within Eclipse, go to `File->Import->General->Existing projects into workspace` and select the directory of the module. Follow the wizard steps.
+
+To work on more then one Eclipse module, import any other module you want to work on by following steps 2-4. Once imported, add a dependency between your two projects within Eclipse. For example, if you are working on both the kernel and the java-backend, you need a dependency from the java-backend on the kernel. To add the dependency:
+1. right click on the java-backend project
+2. select `Properties` (bottom)
+3. select the `Projects` tab
+4. and `Add...` the kernel project.
 
 ## IntelliJ IDEA
 
