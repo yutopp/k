@@ -86,6 +86,8 @@ To work on more then one Eclipse module, import any other module you want to wor
 3. select the `Projects` tab
 4. and `Add...` the kernel project.
 
+Note: if you want to run K from within Eclipse, you need to import the k-distribution module, and run it from there.
+
 ## IntelliJ IDEA
 
 IntelliJ IDEA comes with built-in maven integration. For more information, refer to
