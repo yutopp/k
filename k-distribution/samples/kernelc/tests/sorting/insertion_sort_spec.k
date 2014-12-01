@@ -37,12 +37,10 @@ rule [insertion-sort-loop-inv1]:
   =>
     .K
   ...</k>
-  // TODO: add back ... to the env cell when lookup and update for maps with
-  // frames work better
-  <env>
+  <env>...
     x |-> tv(struct listNode * *, object(LX:Int))
     y |-> tv(struct listNode * *, object(LY:Int))
-  </env>
+  ...</env>
   <heap>...
     object(LX) |-> tv (struct listNode *, X:Pointer => null)
     object(LY) |-> tv (struct listNode *, Y1:Pointer => ?Y2:Pointer)
@@ -67,14 +65,11 @@ rule [insertion-sort-loop-inv2]:
   =>
     .K
   ...</k>
-  // TODO: add back ... to the env cell when lookup and update for maps with
-  // frames work better
-  <env>
+  <env>...
     y |-> tv(struct listNode * *, object(LY:Int))
     z |-> tv(struct listNode * *, object(LZ:Int))
     n |-> tv(struct listNode * *, object(LN:Int))
-    x |-> _
-  </env>
+  ...</env>
   <heap>...
     object(LY) |-> tv(struct listNode *, Y:Pointer)
     object(LZ) |-> tv(struct listNode *, object(Z:Int) => ?_:Pointer)

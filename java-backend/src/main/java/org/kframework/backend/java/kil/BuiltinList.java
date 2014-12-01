@@ -387,6 +387,8 @@ public class BuiltinList extends Collection {
                 baseTermTypesBuilder.add(BaseTermType.PATTERN);
             } else if (term instanceof KItem && ((KLabel) ((KItem) term).kLabel()).isFunction()) {
                 baseTermTypesBuilder.add(BaseTermType.FUNCTION);
+            } else if (term instanceof ListUpdate) {
+                baseTermTypesBuilder.add(BaseTermType.FUNCTION);
             } else if (term instanceof Variable) {
                 baseTermTypesBuilder.add(BaseTermType.VARIABLE);
                 listVariablesBuilder.add((Variable) term);

@@ -239,21 +239,29 @@ public class Rule extends JavaSymbolicObject {
             /* add variables that occur in the key and value positions of data
              * structure lookup operations under read-write cells */
             for (Equality eq : lookups.equalities()) {
-                if (DataStructures.isLookup(eq.leftHandSide())) {
-                    if (!lhsOfReadOnlyCell.contains(DataStructures.getLookupBase(eq.leftHandSide()))) {
+                assert eq.leftHandSide() instanceof DataStructureLookupOrChoice;
+                if (eq.leftHandSide() instanceof DataStructureLookup) {
+                    DataStructureLookup lookup = (DataStructureLookup) eq.leftHandSide();
+                    Term value = eq.rightHandSide();
+
+                    if (!lhsOfReadOnlyCell.contains(lookup.base())) {
                         // do not double count base variable again
-                        lhsVariablesToReuse.addAll(VariableOccurrencesCounter.count(DataStructures.getLookupKey(eq.leftHandSide())));
-                        lhsVariablesToReuse.addAll(VariableOccurrencesCounter.count(eq.rightHandSide()));
+                        lhsVariablesToReuse.addAll(VariableOccurrencesCounter.count(lookup.key()));
+                        lhsVariablesToReuse.addAll(VariableOccurrencesCounter.count(value));
                     }
                 }
             }
         } else {
             lhsVariablesToReuse.addAll(VariableOccurrencesCounter.count(leftHandSide));
             for (Equality eq : lookups.equalities()) {
-                if (DataStructures.isLookup(eq.leftHandSide())) {
+                assert eq.leftHandSide() instanceof DataStructureLookupOrChoice;
+                if (eq.leftHandSide() instanceof DataStructureLookup) {
+                    DataStructureLookup lookup = (DataStructureLookup) eq.leftHandSide();
+                    Term value = eq.rightHandSide();
+
                     // do not double count base variable again
-                    lhsVariablesToReuse.addAll(VariableOccurrencesCounter.count(DataStructures.getLookupKey(eq.leftHandSide())));
-                    lhsVariablesToReuse.addAll(VariableOccurrencesCounter.count(eq.rightHandSide()));
+                    lhsVariablesToReuse.addAll(VariableOccurrencesCounter.count(lookup.key()));
+                    lhsVariablesToReuse.addAll(VariableOccurrencesCounter.count(value));
                 }
             }
         }

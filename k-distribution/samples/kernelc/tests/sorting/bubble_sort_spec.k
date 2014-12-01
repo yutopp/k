@@ -27,12 +27,10 @@ rule [bubble-sort-loop-inv1]:
   =>
     .K
   ...</k>
-  // TODO: add back ... to the env cell when lookup and update for maps with
-  // frames work better
-  <env>
+  <env>...
     x |-> tv(struct listNode * *, object(LX:Int))
     change |-> tv(int *, object(LC:Int))
-  </env>
+  ...</env>
   <heap>...
     object(LX) |-> tv (struct listNode *, X:Pointer)
     object(LC) |-> tv (int, C:Int => ?_:Int)
@@ -60,13 +58,11 @@ rule [bubble-sort-loop-inv2]:
   =>
     .K
   ...</k>
-  // TODO: add back ... to the env cell when lookup and update for maps with
-  // frames work better
-  <env>
+  <env>...
     x |-> tv(struct listNode * *, object(LX:Int))
     y |-> tv(struct listNode * *, object(LY:Int))
     change |-> tv(int *, object(LC:Int))
-  </env>
+  ...</env>
   <heap>...
     object(LX) |-> tv (struct listNode *, X:Pointer)
     object(LY) |-> tv (struct listNode *, object(Y1:Int) => object(?Y2:Int))
@@ -95,6 +91,5 @@ rule [bubble-sort-func-spec]:
     lseg(X1, null)(A1:List) => lseg(?X2, null)(?A2:List)
   ...</heap>
 ensures sorted(?A2) andBool list2set(A1) ==K list2set(?A2)
-  [trusted]
 endmodule
 
