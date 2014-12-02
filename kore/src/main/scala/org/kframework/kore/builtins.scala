@@ -2,6 +2,8 @@
 
 package org.kframework.kore
 
+import org.kframework._
+
 import KORE._
 import KBoolean._
 import scala.collection.mutable.Builder
@@ -10,7 +12,7 @@ import scala.collection.mutable.SetBuilder
 case class KBoolean(v: Boolean, att: Attributes = Attributes()) extends KToken {
   type This = KBoolean
   val sort = KBoolean
-  val s: KString = v.toString
+  val s: String = v.toString
 
   def copy(att: Attributes) = KBoolean(v, att)
 }
@@ -23,12 +25,24 @@ object KBoolean extends Sort with KLabel {
 case class KInt(n: Int, att: Attributes = Attributes()) extends KToken {
   type This = KInt
   val sort = KInt
-  val s: KString = n.toString
+  val s: String = n.toString
   def copy(att: Attributes) = KInt(n, att)
 }
 
 object KInt extends Sort with KLabel {
   implicit def toKInt(n: Int): KInt = KInt(n)
+
+  val name: String = "Int"
+}
+
+case class KString(s: String, att: Attributes = Attributes()) extends KToken {
+  type This = KString
+  val sort = KString
+  def copy(att: Attributes) = KString(s, att)
+}
+
+object KString extends Sort with KLabel {
+  implicit def toKString(s: String): KString = KString(s)
 
   val name: String = "Int"
 }
@@ -65,7 +79,7 @@ object KSet {
 }
 
 object KBag extends Sort with KLabel {
-  def newBuilder = KList.newBuilder mapResult { new KBag(_) }
+  def newBuilder = KList.newBuilder() mapResult { new KBag(_) }
 
   val name: String = "Bag"
 }
