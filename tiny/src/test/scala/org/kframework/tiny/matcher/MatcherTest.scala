@@ -7,7 +7,7 @@ import org.kframework.tiny._
 class MatcherTest extends AbstractTest {
 
   import cons._
-
+  import sugar._
 
   implicit class KWithMatcherMethods(k: K) {
     def matchAll(other: K, sideConditions: K = True): K = And(k.matcher(other), sideConditions).normalize match {

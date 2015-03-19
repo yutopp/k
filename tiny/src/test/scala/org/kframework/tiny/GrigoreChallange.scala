@@ -5,6 +5,8 @@ import org.junit.Assert._
 import org.kframework.attributes.Att
 import org.kframework.builtin.Sorts
 import org.kframework.definition._
+import org.kframework.kore.{ScalaSugar, KORE}
+import org.kframework.kore
 
 
 class GrigoreChallange {
@@ -25,6 +27,11 @@ class GrigoreChallange {
   //  show path 634 .
 
   import org.kframework.builtin.Sorts._
+
+  val scalaSugar = new ScalaSugar(KORE)
+
+  import scalaSugar._
+  import org.kframework.{builtin => m}
 
   val X = KVar("X")
   val Y = KVar("Y")
@@ -51,7 +58,7 @@ class GrigoreChallange {
 
   val R = KVar("R")
 
-  val argsAreInts = And('isInt(X), 'isInt(Y))
+  val argsAreInts = m.BoolModule.&&('isInt(X), 'isInt(Y))
 
   val completeModule = Module("T", Set(syntaxModule, logicModule), Set(
     Rule(X ~ Y ~ R ==> (X + Y) ~ R, argsAreInts, False),
@@ -64,14 +71,14 @@ class GrigoreChallange {
 
   @Test
   def shortTest {
-    val res = rewriter.rewrite((5: K) ~ 5 ~ 7)
+    val res = rewriter.rewrite((5: kore.K) ~ 5 ~ 7)
     println(res.mkString("\n"))
     println(res.size + " states.")
   }
 
   @Test
   def shortTestWithSearch {
-    assertEquals(Right(0: K), rewriter.search((5: K) ~ 5 ~ 7, 0))
+    assertEquals(Right(0: kore.K), rewriter.search((5: kore.K) ~ 5 ~ 7, 0: kore.K))
   }
 
   val completeModuleWithAnywhere = Module("T-ANYWHERE", Set(syntaxModule, logicModule), Set(
@@ -85,13 +92,13 @@ class GrigoreChallange {
 
   @Test
   def shortTestWithAnywhere {
-    val res = rewriterWithAnywhere.rewrite((5: K) ~ 5 ~ 7)
+    val res = rewriterWithAnywhere.rewrite((5: kore.K) ~ 5 ~ 7)
     println(res.mkString("\n"))
     println(res.size + " states.")
   }
 
   @Test
   def shortTestWithSearchAnywhere {
-    assertEquals(Right(0: K), rewriterWithAnywhere.search((5: K) ~ 5 ~ 7, 0))
+    assertEquals(Right(0: kore.K), rewriterWithAnywhere.search((5: kore.K) ~ 5 ~ 7, 0: kore.K))
   }
 }
