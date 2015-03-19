@@ -1,10 +1,10 @@
 package org.kframework.kore
 
-import org.kframework.attributes._
+import org.kframework.attributes.Att
 import org.kframework.definition.Module
+import org.kframework.kore
 
 import scala.collection.JavaConverters._
-import org.kframework.kore
 
 trait Constructors[K <: kore.K] {
   def module: Module
@@ -25,6 +25,7 @@ trait Constructors[K <: kore.K] {
   @annotation.varargs def KList(items: kore.K*): KList = KList(items.asJava)
   @annotation.varargs def KApply(klabel: KLabel, items: kore.K*): K = KApply(klabel, KList(items.asJava), Att())
   @annotation.varargs def KSequence(list: kore.K*): K = KSequence(list.toList.asJava, Att())
+  @annotation.varargs def KApply(klabelString: String, ks: K*): K = KApply(KLabel(klabelString), KList(ks.asJava), Att())
   def KVariable(name: String): KVariable with K = KVariable(name, Att())
 }
 

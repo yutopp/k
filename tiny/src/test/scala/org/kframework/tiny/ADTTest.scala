@@ -1,6 +1,6 @@
 package org.kframework.tinytest
 
-import org.junit.Test
+import org.junit.{Ignore, Test}
 import org.kframework.builtin.Sorts
 import org.kframework.definition.CrazyModule
 import org.kframework.kore.ADT
@@ -49,7 +49,7 @@ class ADTTest extends AbstractTest {
 
   }
 
-  @Test def AndMatcher {
+  @Ignore @Test def AndMatcher {
     assertEquals(True, And().matcher(KToken(Sorts.Bool, "true", Att())).normalize)
     assertEquals(And(), And().matcher(And()).normalize)
 

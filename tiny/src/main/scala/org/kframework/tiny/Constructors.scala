@@ -18,19 +18,19 @@ class Constructors(val module: definition.Module) extends kore.Constructors[K] {
   def hookMappings(hook: String, label: kore.KLabel): Label = hook match {
     case "#K-EQUAL:_==K_" => Equals
     case "#BOOL:notBool_" => Not //NativeUnaryOpLabel("notBool_", Att(), (x: Boolean) => !x, Sorts.Bool)
-    case "#INT:_+Int_" => NativeBinaryOpLabel(label, Att(), (x: Int, y: Int) => x + y, Sorts.Int)
-    case "#INT:_-Int_" => NativeBinaryOpLabel(label, Att(), (x: Int, y: Int) => x - y, Sorts.Int)
-    case "#INT:_*Int_" => NativeBinaryOpLabel(label, Att(), (x: Int, y: Int) => x * y, Sorts.Int)
-    case "#INT:_/Int_" => NativeBinaryOpLabel(label, Att(), (x: Int, y: Int) => x / y, Sorts.Int)
-    case "#INT:_<=Int_" => NativeBinaryOpLabel(label, Att(), (x: Int, y: Int) => x <= y, Sorts.Bool)
+    case "#INT:_+_" => NativeBinaryOpLabel(label, Att(), (x: Int, y: Int) => x + y, Sorts.Int)
+    case "#INT:_-_" => NativeBinaryOpLabel(label, Att(), (x: Int, y: Int) => x - y, Sorts.Int)
+    case "#INT:_*_" => NativeBinaryOpLabel(label, Att(), (x: Int, y: Int) => x * y, Sorts.Int)
+    case "#INT:_/_" => NativeBinaryOpLabel(label, Att(), (x: Int, y: Int) => x / y, Sorts.Int)
+    case "#INT:_<=_" => NativeBinaryOpLabel(label, Att(), (x: Int, y: Int) => x <= y, Sorts.Bool)
     case "Map:.Map" => KMapAppLabel(label)
     case "Map:__" => KMapAppLabel(label)
     case "Map:_|->_" => RegularKAppLabel(org.kframework.builtin.Tuple._2, Att())
     case "Map:keys" => MapKeys
     case "Set:in" => RegularKAppLabel(label, Att())
-    case "#BOOL:_andBool_" => And //NativeBinaryOpLabel("_andBool_", Att(), (x: Boolean, y: Boolean) => x && y, Sorts
+    case "#BOOL:_&&_" => And //NativeBinaryOpLabel("_andBool_", Att(), (x: Boolean, y: Boolean) => x && y, Sorts
     // .Bool)
-    case "#BOOL:_orBool_" => Or //NativeBinaryOpLabel("_orBool_", Att(), (x: Boolean, y: Boolean) => x || y, Sorts.Int)
+    case "#BOOL:_||_" => Or //NativeBinaryOpLabel("_orBool_", Att(), (x: Boolean, y: Boolean) => x || y, Sorts.Int)
   }
 
   val uniqueLabelCache = collection.mutable.Map[String, Label]()

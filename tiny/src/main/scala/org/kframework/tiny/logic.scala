@@ -3,8 +3,8 @@ package org.kframework.tiny
 import org.kframework.attributes.Att
 import org.kframework.builtin.BoolModule
 import org.kframework.definition.CrazyModule
-import org.kframework.kore.{ADT, Unapply}
-import org.kframework.tiny.matcher.{MatcherLabel, EqualsMatcher, Matcher}
+import org.kframework.kore.{ADT, KLabel, Unapply}
+import org.kframework.tiny.matcher.{EqualsMatcher, Matcher, MatcherLabel}
 
 object Or extends KAssocAppLabel with EmptyAtt {
   override def constructFromFlattened(l: Seq[K], att: Att): KAssocApp = new Or(l.toSet, att)
@@ -213,23 +213,26 @@ case class SortPredicate(klabel: SortPredicateLabel, k: K, att: Att = Att())
   extends KProduct {
   override protected[this] def normalizeInner(implicit theory: Theory): K =
     if (!k.isInstanceOf[KVar]) {
-      val actualSort = k match {
-        case KApp(l, _, _) => theory.asInstanceOf[TheoryWithUpDown].module.sortFor(l)
-        case Unapply.KToken(s, _) => s
-      }
-      if (actualSort == klabel.sort ||
-        theory.asInstanceOf[TheoryWithUpDown].module.subsorts.<(actualSort, klabel.sort))
+      if (actualSort(k) == klabel.sort ||
+        theory.asInstanceOf[TheoryWithUpDown].module.subsorts.<=(actualSort(k), klabel.sort))
         True
       else
         False
     } else {
       this
     }
+
+  def actualSort(k: K)(implicit theory: Theory): Sort = {
+    k match {
+      case KApp(l, _, _) => theory.asInstanceOf[TheoryWithUpDown].module.sortFor(l)
+      case Unapply.KToken(s, _) => s
+    }
+  }
 }
 
 object SortPredicate extends org.kframework.definition.Module("SORT-PREDICATE", Set(), Set()) {
   def apply(s: Sort, k: K) = SortPredicateLabel(s)(k)
-  def KLabel(s: Sort) = ???
+  def KLabel(s: Sort): KLabel = KLabel("is" + s.name)
 }
 
 case class SortPredicateLabel(sort: Sort) extends KRegularAppLabel {

@@ -1,12 +1,12 @@
 package org.kframework.tiny
 
-import org.junit.Test
 import org.junit.Assert._
+import org.junit.Test
 import org.kframework.attributes.Att
 import org.kframework.builtin.Sorts
 import org.kframework.definition._
-import org.kframework.kore.{ScalaSugar, KORE}
 import org.kframework.kore
+import org.kframework.kore.ScalaSugar
 
 
 class GrigoreChallange {
@@ -27,10 +27,6 @@ class GrigoreChallange {
   //  show path 634 .
 
   import org.kframework.builtin.Sorts._
-
-  val scalaSugar = new ScalaSugar(KORE)
-
-  import scalaSugar._
   import org.kframework.{builtin => m}
 
   val X = KVar("X")
@@ -44,23 +40,25 @@ class GrigoreChallange {
 
   val intPair = Seq(NonTerminal(Int), NonTerminal(Int))
 
-  val syntaxModule = Module("T-SYNTAX", Set(), Set(
-    Production("+", Int, intPair, Att() + ("hook" -> "#INT:_+Int_")),
-    Production("-", Int, intPair, Att() + ("hook" -> "#INT:_-Int_")),
-    Production("/", Int, intPair, Att() + ("hook" -> "#INT:_/Int_")),
-    Production("*", Int, intPair, Att() + ("hook" -> "#INT:_*Int_")),
+  val syntaxModule = Module("T-SYNTAX", Set(logicModule), Set(
+    Production("+", Int, intPair, Att() + ("hook" -> "#INT:_+_")),
+    Production("-", Int, intPair, Att() + ("hook" -> "#INT:_-_")),
+    Production("/", Int, intPair, Att() + ("hook" -> "#INT:_/_")),
+    Production("*", Int, intPair, Att() + ("hook" -> "#INT:_*_")),
     Production("~", K, intPair, Att() + "assoc" + "comm")
   ), Att())
 
   val cons = new Constructors(syntaxModule)
 
-  import cons._
+  val scalaSugar = new ScalaSugar(cons)
+  import scalaSugar._
+
 
   val R = KVar("R")
 
   val argsAreInts = m.BoolModule.&&('isInt(X), 'isInt(Y))
 
-  val completeModule = Module("T", Set(syntaxModule, logicModule), Set(
+  val completeModule = Module("T", Set(syntaxModule), Set(
     Rule(X ~ Y ~ R ==> (X + Y) ~ R, argsAreInts, False),
     Rule(X ~ Y ~ R ==> (X - Y) ~ R, argsAreInts, False),
     Rule(X ~ Y ~ R ==> (X / Y) ~ R, argsAreInts, False),
@@ -71,14 +69,14 @@ class GrigoreChallange {
 
   @Test
   def shortTest {
-    val res = rewriter.rewrite((5: kore.K) ~ 5 ~ 7)
+    val res = rewriter.rewrite((5: K) ~ 5 ~ 7)
     println(res.mkString("\n"))
     println(res.size + " states.")
   }
 
   @Test
   def shortTestWithSearch {
-    assertEquals(Right(0: kore.K), rewriter.search((5: kore.K) ~ 5 ~ 7, 0: kore.K))
+    assertEquals(Right(0: kore.K), rewriter.search((5: K) ~ 5 ~ 7, 0: K))
   }
 
   val completeModuleWithAnywhere = Module("T-ANYWHERE", Set(syntaxModule, logicModule), Set(
@@ -92,13 +90,13 @@ class GrigoreChallange {
 
   @Test
   def shortTestWithAnywhere {
-    val res = rewriterWithAnywhere.rewrite((5: kore.K) ~ 5 ~ 7)
+    val res = rewriterWithAnywhere.rewrite((5: K) ~ 5 ~ 7)
     println(res.mkString("\n"))
     println(res.size + " states.")
   }
 
   @Test
   def shortTestWithSearchAnywhere {
-    assertEquals(Right(0: kore.K), rewriterWithAnywhere.search((5: kore.K) ~ 5 ~ 7, 0: kore.K))
+    assertEquals(Right(0: K), rewriterWithAnywhere.search((5: K) ~ 5 ~ 7, 0: K))
   }
 }

@@ -1,9 +1,7 @@
 package org.kframework.kore
 
 import org.kframework.attributes.Att
-import org.kframework.builtin
 import org.kframework.builtin.Sorts
-import org.kframework.definition.CrazyModule
 import org.kframework.kore
 
 import scala.collection.JavaConverters._
@@ -26,17 +24,17 @@ class ScalaSugar[K <: kore.K](cons: Constructors[K]) {
   }
 
   implicit class EnhancedK(k: K) {
-    def ~>(other: K) = KSequence(Seq(k, other).asJava, Att())
+    def ~>(other: kore.K) = KSequence(Seq(k, other).asJava, Att())
     def ==>(other: K) = KRewrite(k, other, Att())
-    def +(other: K) = builtin.Int.+(k, other)
-    def -(other: K) = builtin.Int.-(k, other)
-    def *(other: K) = builtin.Int.*(k, other)
-    def /(other: K): K = builtin.Int./(k, other)
-    def ~(other: K): K = ADT.KLabel("~", CrazyModule)(k, other)
-    def &&(other: K) = builtin.BoolModule.&&(k, other)
-    def ||(other: K) = builtin.BoolModule.||(k, other)
+    def +(other: K) = cons.KLabel("+")(k, other)
+    def -(other: K) = cons.KLabel("-")(k, other)
+    def *(other: K) = cons.KLabel("*")(k, other)
+    def /(other: K): K = cons.KLabel("/")(k, other)
+    def ~(other: K): K = cons.KLabel("~")(k, other)
+    def &&(other: K) = cons.KLabel("&&")(k, other)
+    def ||(other: K) = cons.KLabel("||")(k, other)
   }
 
   def KList[KK <: K](ks: Seq[KK]): KList = cons.KList(ks.asJava)
-//  def KApply[KK <: K](klabel: KLabel, ks: Seq[KK], att: Att = Att()): K = cons.KApply(klabel, KList(ks), att)
+  //  def KApply[KK <: K](klabel: KLabel, ks: Seq[KK], att: Att = Att()): K = cons.KApply(klabel, KList(ks), att)
 }

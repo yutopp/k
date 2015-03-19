@@ -16,12 +16,17 @@ object Sugar {
     def |(s: String) = BuildingProduction(seq, att + s)
   }
 
-  def makeKLabel(items: Seq[ProductionItem]): String = items map {
-    case NonTerminal(sort) => "_"
-    case Terminal(string) => string
-    //TODO(cos): remove this
-    case RegexTerminal(regex) => "regexp"
-  } mkString
+  def makeKLabel(items: Seq[ProductionItem]): String = items match {
+    case Seq(_: NonTerminal, Terminal(string)) => string
+    case Seq(_: NonTerminal, Terminal(string), _: NonTerminal) => string
+    case items => items map {
+      case NonTerminal(sort) => "_"
+      case Terminal(string) => string
+      //TODO(cos): remove this
+      case RegexTerminal(regex) => "regexp"
+    } mkString
+  }
+
 
   implicit def SortWithBuildingProduction(sort: Sort) = BuildingProduction(Seq(NonTerminal(sort)), Att())
   implicit def SortWithBuildingProduction(s: String) = BuildingProduction(Seq(Terminal(s)), Att())
@@ -65,9 +70,9 @@ object BoolModule extends Module("BOOLEAN", Set(), Set(
   Bool ::= Bool + "||" + Bool | "hook" -> "#BOOL:_||_",
   Bool ::= "!" + Bool | "hook" -> "#BOOL:!_"
 )) {
-  val && = KLabel("_&&_")
-  val || = KLabel("_||_")
-  val ! = KLabel("!_")
+  val && = KLabel("&&")
+  val || = KLabel("||")
+  val ! = KLabel("!")
 }
 
 object Int extends Module("INT", Set(), Set(
@@ -92,7 +97,7 @@ object KModule extends Module("K", Set(), Set(
 object KSeq extends Module("K-SEQ", Set(), Set(
   K ::= K + "~>" + K
 )) {
-  val KSeq = KLabel("_~>_")
+  val KSeq = KLabel("~>")
 }
 
 object KAST extends Module("KAST", Set(), Set())

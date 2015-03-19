@@ -30,6 +30,8 @@ object KORE extends Constructors[K] {
 
   def KApply(klabel: KLabel, klist: KList): KApply = KApply(klabel, klist, Attributes())
 
+  def KApply(klabelString: String, klist: KList): KApply = KApply(KLabel(klabelString), klist, Attributes())
+
   def KToken(sort: Sort, string: String): KToken = KToken(sort, string, Attributes())
 
   def KSequence(ks: java.util.List[K]): KSequence = KSequence(ks, Att())
@@ -74,4 +76,5 @@ object KORE extends Constructors[K] {
   @annotation.varargs def Att(ks: K*) = org.kframework.attributes.Att(ks: _*)
 
   def self = this
+
 }

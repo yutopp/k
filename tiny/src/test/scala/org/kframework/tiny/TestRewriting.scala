@@ -131,7 +131,7 @@ class TestRewriting extends AbstractTest {
       'foo(1, 'bar(2, 3)).searchFor('foo(1, 'bar(2, X) ==> X)))
   }
 
-  @Test def testAnywhere {
+  @Ignore @Test def testAnywhere {
     assertEquals(Set('bar('foo(0)), 'foo('bar(0))),
       'foo('bar('foo(0))).searchFor(Anywhere("ONE", 'foo(X) ==> X)))
   }
