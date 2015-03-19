@@ -12,6 +12,7 @@ import org.kframework.parser.concrete2kore.disambiguation.PreferAvoidVisitor;
 import org.kframework.parser.concrete2kore.disambiguation.PriorityVisitor;
 import org.kframework.parser.concrete2kore.disambiguation.RemoveBracketVisitor;
 import org.kframework.parser.concrete2kore.disambiguation.TreeCleanerVisitor;
+import org.kframework.parser.concrete2kore.disambiguation.TypeInferenceSupremumFilter;
 import org.kframework.parser.concrete2kore.disambiguation.VariableTypeInferenceFilter;
 import org.kframework.parser.concrete2kore.kernel.Grammar;
 import org.kframework.parser.concrete2kore.kernel.KSyntax2GrammarStatesFilter;
@@ -70,12 +71,14 @@ public class ParseInModule implements Serializable {
         rez = new PriorityVisitor(module.priorities(), module.leftAssoc(), module.rightAssoc()).apply(rez.right().get());
         if (rez.isLeft())
             return new Tuple2<>(rez, warn);
-        Tuple2<Either<Set<ParseFailedException>, Term>, Set<ParseFailedException>> rez2 = new VariableTypeInferenceFilter(module.subsorts(), module.definedSorts()).apply(rez.right().get());
+
+        Term rez3 = new TypeInferenceSupremumFilter(module.subsorts()).apply(rez.right().get());
+        Tuple2<Either<Set<ParseFailedException>, Term>, Set<ParseFailedException>> rez2 = new VariableTypeInferenceFilter(module.subsorts(), module.definedSorts()).apply(rez3);
         if (rez2._1().isLeft())
             return rez2;
         warn = rez2._2();
 
-        Term rez3 = new PreferAvoidVisitor().apply(rez2._1().right().get());
+        rez3 = new PreferAvoidVisitor().apply(rez2._1().right().get());
         rez2 = new AmbFilter().apply(rez3);
         warn = new AmbFilter().mergeWarnings(rez2._2(), warn);
         rez3 = new RemoveBracketVisitor().apply(rez2._1().right().get());

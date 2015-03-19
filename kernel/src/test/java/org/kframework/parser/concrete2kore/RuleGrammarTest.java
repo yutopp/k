@@ -181,4 +181,17 @@ public class RuleGrammarTest {
         Assert.assertTrue("Expected no errors here: ", rule._1().isRight());
         printout(rule);
     }
+
+    @Test
+    public void test9() {
+        String def = "" +
+                "module TEST " +
+                "syntax Exps ::= List{Exp,\",\"} " +
+                "syntax Exp  ::= r\"[0-9]+\" [token] " +
+                "endmodule";
+        Tuple2<Either<Set<ParseFailedException>, Term>, Set<ParseFailedException>> rule = parseRule(def, "A(B, C)");
+        printout(rule);
+        Assert.assertEquals("Expected 3 warnings: ", 3, rule._2().size());
+        Assert.assertTrue("Expected no errors here: ", rule._1().isRight());
+    }
 }
