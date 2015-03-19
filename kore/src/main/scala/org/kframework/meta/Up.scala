@@ -8,7 +8,7 @@ import org.kframework.kore._
 
 import scala.collection.JavaConverters._
 
-class Up[K <: kore.K](cons: Constructors[K]) extends (Any => K) {
+class Up[K <: kore.K](cons: Constructors[K]) {
 
   val scalaSugar = new ScalaSugar(cons)
 
