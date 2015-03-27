@@ -30,6 +30,17 @@ public class TstTinyOnKORE {
         // Eclipse runs tests within k/k-distribution, IntelliJ within /k
     }
 
+    @Test
+    public void testCSemantics() throws IOException, URISyntaxException {
+        String filename = "/home/dwightguth/c-semantics/semantics/c11-translation.k";
+        Tuple2<Module, Function<String, K>> rwModuleAndProgramParser = Kompile.getStuff(new File(filename),
+                "C11-TRANSLATION", "C11-TRANSLATION");
+        System.out.println(rwModuleAndProgramParser._1());;
+        K program = rwModuleAndProgramParser._2().apply("t(.Set, int) ==Type t(.Set, int)");
+        Rewriter rewriter = Kompile.getRewriter(rwModuleAndProgramParser._1());
+        K result = rewriter.execute(program);
+        System.out.println(result);
+    }
 
     @Test
     public void kore_imp_tiny() throws IOException, URISyntaxException {

@@ -1,6 +1,7 @@
 // Copyright (c) 2015 K Team. All Rights Reserved.
 package org.kframework.parser.concrete2kore;
 
+import org.kframework.attributes.Source;
 import org.kframework.definition.Module;
 import org.kframework.parser.Ambiguity;
 import org.kframework.parser.Term;
@@ -47,12 +48,12 @@ public class ParseInModule implements Serializable {
     // TODO: figure out how to handle parsing errors
     public Tuple2<Either<Set<ParseFailedException>, Term>, Set<ParseFailedException>>
             parseString(CharSequence input, String startSymbol) {
-        return parseString(input, startSymbol, 1, 1);
+        return parseString(input, startSymbol, null, 1, 1);
     }
 
     public Tuple2<Either<Set<ParseFailedException>, Term>, Set<ParseFailedException>>
-            parseString(CharSequence input, String startSymbol, int startLine, int startColumn) {
-        Parser parser = new Parser(input, startLine, startColumn);
+            parseString(CharSequence input, String startSymbol, Source source, int startLine, int startColumn) {
+        Parser parser = new Parser(input, source, startLine, startColumn);
         Term parsed = parser.parse(grammar.get(startSymbol), 0);
 
         if (parsed.equals(Ambiguity.apply())) {

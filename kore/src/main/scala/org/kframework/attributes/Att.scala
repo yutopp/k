@@ -48,6 +48,8 @@ case class Att(att: Set[K]) extends AttributesToString {
 
   def stream = att.asJava.stream
   def addAll(that: Att) = this ++ that
+
+  def remove(k: String): Att = new Att(att filter { case KApply(KLabel(k), _) => false; case _ => true })
 }
 
 trait KeyWithType

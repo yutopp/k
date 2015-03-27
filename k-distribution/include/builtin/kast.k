@@ -68,7 +68,7 @@ endmodule
 
 module CONFIG-CELLS
   imports KCELLS
-  syntax #CellName ::= r"[a-zA-Z0-9]+"  [token]
+  syntax #CellName ::= r"[a-zA-Z0-9\\-]+"  [token]
   syntax Cell ::= "<" #CellName #CellProperties ">" K "</" #CellName ">" [klabel(#configCell)]
   syntax #CellProperties ::= #CellProperty #CellProperties [klabel(#cellPropertyList)]
                            | ""                            [klabel(#cellPropertyListTerminator)]
@@ -93,6 +93,7 @@ module K
   imports REQUIRES-ENSURES
   syntax KBott     ::= K "=>" K     [klabel(#KRewrite), hook(org.kframework.kore.KRewrite), non-assoc]
   syntax non-assoc #KRewrite
+  syntax KBott     ::= "HOLE"         [klabel([])]
 
 endmodule
 

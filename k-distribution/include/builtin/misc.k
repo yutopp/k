@@ -44,6 +44,17 @@ module INT
   syntax Bool ::= "isInt" "(" K ")"         [klabel(isKResult), function]
 endmodule
 
+module STRING
+  syntax String ::= r"[\\\"](([^\\\"\\n\\r\\\\])|([\\\\][nrtf\\\"\\\\])|([\\\\][x][0-9a-fA-F]{2})|([\\\\][u][0-9a-fA-F]{4})|([\\\\][U][0-9a-fA-F]{8}))*[\\\"]" [token]
+endmodule
+
+module FLOAT
+  syntax Float ::= r"([\\+-]?\\d+(\\.\\d*)?|\\.\\d+)([eE][\\+-]?(\\d+(\\.\\d*)?|\\.\\d+))?([fFdD]|([pP]\\d+[xX]\\d+))?" [token]
+  syntax Float ::= r"[\\+-]?Infinity([fFdD]|([pP]\\d+[xX]\\d+))?" [token]
+  syntax Float ::= r"NaN([fFdD]|([pP]\\d+[xX]\\d+))?" [token]
+
+endmodule
+
 module LOGIC
   syntax Boolean ::= "true"           [klabel(_andBool_), function, hook(#BOOL:_andBool_)]
                    | "false"          [klabel(_orBool_), function, hook(#BOOL:_orBool_)]
@@ -58,10 +69,6 @@ module K-RESULT
 
   syntax KResult
   syntax Bool ::= isKResult(K) [function,klabel(isKResult)]
-endmodule
-
-module STRICTNESS
-  syntax KBott  ::= "[]"           [klabel([])]
 endmodule
 
 module MAP
@@ -80,7 +87,25 @@ module SET
   imports BOOL
   imports K
 
-  syntax Set
+  syntax Set ::= Set Set                  [left, function, hook(Set:__), klabel('_Set_)]
+  syntax Set ::= ".Set"                   [function, hook(Set:.Set)]
+  syntax Set ::= SetItem(K)               [function, hook(Set:SetItem)]
 
-  syntax Bool ::= K "in" Set            [klabel('_in_), function, hook(Set:in)]
+  syntax Set ::= intersectSet(Set, Set)   [function, hook(Set:intersection)]
+  syntax Set ::= Set "-Set" Set           [function, hook(Set:difference), latex({#1}-_{\it Set}{#2})]
+  syntax Bool ::= K "in" Set              [function, hook(Set:in), klabel('_in_)]
+  syntax Bool ::= Set "<=Set" Set         [function, hook(Set:inclusion)]
+  syntax Int ::= size(Set)                [function, hook(Collection:size)]
+  syntax K ::= choice(Set)                [function, hook(Set:choice), klabel(Set:choice)]
+endmodule
+
+module LIST
+  syntax List ::= List List               [left, function, hook(List:__), klabel('_List_), smtlib(smt_seq_concat)]
+  syntax List ::= ".List"                 [function, hook(List:.List), smtlib(smt_seq_nil)]
+  syntax List ::= ListItem(K)             [function, hook(List:ListItem), smtlib(smt_seq_elem)]
+
+  syntax K ::= List "[" Int "]"           [function, hook(List:get), klabel(List:get)]
+  syntax List ::= range(List, Int, Int)   [function, hook(List:range), klabel(List:range)]
+  syntax Bool ::= K "in" List             [function, hook(List:in), klabel('_inList_)]
+  syntax Int ::= size(List)               [function, hook(Collection:size), klabel ('sizeList), smtlib(smt_seq_len)]
 endmodule

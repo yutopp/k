@@ -68,7 +68,7 @@ public class CorrectKSeqPriorityVisitor extends SetsTransformerWithErrors<ParseF
             if (tc.production().klabel().isDefined() && tc.production().klabel().get().name().equals("#KSequence")) {
                 String msg = "~> is not allowed to be an immediate child of " + parent.production().klabel().get() +
                         "    Use parentheses: (x)~>(y) to set the proper scope of the operations.";
-                KException kex = new KException(KException.ExceptionType.ERROR, KException.KExceptionGroup.CRITICAL, msg, null, tc.location().get());
+                KException kex = new KException(KException.ExceptionType.ERROR, KException.KExceptionGroup.CRITICAL, msg, tc.source().get(), tc.location().get());
                 return Left.apply(Sets.newHashSet(new PriorityException(kex)));
             }
             return Right.apply(tc);

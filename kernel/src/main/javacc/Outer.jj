@@ -158,7 +158,7 @@ import org.kframework.kil.Lexical;
 import org.kframework.kil.LiterateComment.LiterateCommentType;
 import org.kframework.kil.LiterateDefinitionComment;
 import org.kframework.kil.LiterateModuleComment;
-import org.kframework.kil.Location;
+import org.kframework.attributes.Location;
 import org.kframework.kil.Module;
 import org.kframework.kil.ModuleItem;
 import org.kframework.kil.PriorityBlock;
@@ -171,7 +171,7 @@ import org.kframework.kil.Require;
 import org.kframework.kil.Restrictions;
 import org.kframework.kil.NonTerminal;
 import org.kframework.kil.Sort;
-import org.kframework.kil.Source;
+import org.kframework.attributes.Source;
 import org.kframework.kil.StringSentence;
 import org.kframework.kil.Syntax;
 import org.kframework.kil.Terminal;
@@ -261,9 +261,7 @@ public class Outer {
   uses of this function).
   */
   private <T extends ASTNode> T markLoc(Location locPrefix, T node) {
-    locPrefix.lineEnd = token.endLine;
-    locPrefix.columnEnd = token.endColumn;
-    return markLocExplicit(locPrefix, node);
+    return markLocExplicit(Location.apply(locPrefix.startLine(), locPrefix.startColumn(), token.endLine, token.endColumn), node);
   }
 
   /** Marks 'node' with the location in 'loc'.Returns 'node' (which

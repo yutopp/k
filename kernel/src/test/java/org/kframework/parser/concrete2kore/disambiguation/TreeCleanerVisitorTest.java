@@ -5,6 +5,7 @@ package org.kframework.parser.concrete2kore.disambiguation;
 import org.junit.Test;
 import static org.junit.Assert.*;
 
+import org.kframework.attributes.Source;
 import org.kframework.attributes.Location;
 import org.kframework.parser.Ambiguity;
 import org.kframework.parser.Constant;
@@ -50,7 +51,7 @@ public class TreeCleanerVisitorTest {
 
     @Test(expected = ParseFailedException.class)
     public void testNoKLabel() throws Exception {
-        throwFirstLeftException(TermCons.apply(Arrays.asList(foo, bar), noKLabelProduction, new Location(0, 0, 0, 0)));
+        throwFirstLeftException(TermCons.apply(Arrays.asList(foo, bar), noKLabelProduction, new Location(0, 0, 0, 0), new Source("")));
     }
 
     @Test

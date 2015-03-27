@@ -3,8 +3,8 @@ package org.kframework.parser.concrete2kore.kernel;
 
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
-import org.kframework.kil.Location;
-import org.kframework.kil.Source;
+import org.kframework.attributes.Location;
+import org.kframework.attributes.Source;
 import org.kframework.definition.Production;
 import org.kframework.parser.Ambiguity;
 import org.kframework.parser.Constant;
@@ -27,11 +27,9 @@ import org.kframework.utils.errorsystem.KException.ExceptionType;
 import org.kframework.utils.errorsystem.KException.KExceptionGroup;
 import org.kframework.utils.errorsystem.ParseFailedException;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.regex.Pattern;
@@ -668,13 +666,16 @@ public class Parser {
     ////////////////
 
     private final ParseState s;
+    private final Source source;
 
     public Parser(CharSequence input) {
         s = new ParseState(input, 1, 1);
+        this.source = null;
     }
 
-    public Parser(CharSequence input, int startLine, int startColumn) {
+    public Parser(CharSequence input, Source source, int startLine, int startColumn) {
         s = new ParseState(input, startLine, startColumn);
+        this.source = source;
     }
 
     /**
@@ -710,8 +711,9 @@ public class Parser {
                     "Parse error: unexpected character '" + content.charAt(perror.position) + "'.";
             Location loc = new Location(perror.line, perror.column,
                     perror.line, perror.column + 1);
+            Source source = perror.source;
             throw new ParseFailedException(new KException(
-                    ExceptionType.ERROR, KExceptionGroup.INNER_PARSER, msg, (Source) null, loc));
+                    ExceptionType.ERROR, KExceptionGroup.INNER_PARSER, msg, source, loc));
         }
 
         return result;
@@ -736,7 +738,7 @@ public class Parser {
                     ((RegExState) key.state).prd, ((RegExState) key.state).pattern));
             }
         }
-        return new ParseError(current, s.lines[current], s.columns[current], tokens);
+        return new ParseError(source, current, s.lines[current], s.columns[current], tokens);
     }
 
     /**
@@ -745,6 +747,7 @@ public class Parser {
     public static class ParseError {
         // TODO: replace the fields below with Location class
         /// The character offset of the error
+        public final Source source;
         public final int position;
         /// The column of the error
         public final int column;
@@ -753,8 +756,9 @@ public class Parser {
         /// Pairs of Sorts and RegEx patterns that the parsed expected to occur next
         public final Set<Pair<Production, Pattern>> tokens;
 
-        public ParseError(int position, int line, int column, Set<Pair<Production, Pattern>> tokens) {
+        public ParseError(Source source, int position, int line, int column, Set<Pair<Production, Pattern>> tokens) {
             assert tokens != null;
+            this.source = source;
             this.position = position;
             this.tokens = tokens;
             this.column = column;
@@ -801,7 +805,7 @@ public class Parser {
             int endPosition = stateReturn.key.stateEnd;
             return stateReturn.function.addRule(stateReturn.key.stateCall.function,
                 ((RuleState) stateReturn.key.stateCall.key.state).rule, stateReturn,
-                new Rule.MetaData(
+                new Rule.MetaData(source,
                     new Rule.MetaData.Location(startPosition, s.lines[startPosition], s.columns[startPosition]),
                     new Rule.MetaData.Location(endPosition, s.lines[endPosition], s.columns[endPosition]),
                     s.input));

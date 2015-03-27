@@ -30,7 +30,7 @@ public class TreeCleanerVisitor extends SetsTransformerWithErrors<ParseFailedExc
         } else if (!tc.production().att().contains("bracket") && tc.production().klabel().isEmpty()) {
             return Left.apply(Sets.newHashSet(new ParseFailedException(new KException(
                     KException.ExceptionType.ERROR, KException.KExceptionGroup.INNER_PARSER,
-                    "Only subsort productions are allowed to have no #klabel attribute", null, tc.location().get()))));
+                    "Only subsort productions are allowed to have no #klabel attribute", tc.source().get(), tc.location().get()))));
             //TODO: add source and location to error
         } else {
             // invalidate the hashCode cache

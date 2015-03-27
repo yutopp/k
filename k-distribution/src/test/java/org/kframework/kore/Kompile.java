@@ -9,7 +9,7 @@ import org.kframework.definition.Bubble;
 import org.kframework.definition.Definition;
 import org.kframework.definition.Module;
 import org.kframework.definition.Sentence;
-import org.kframework.kil.Sources;
+import org.kframework.attributes.Source;
 import org.kframework.kore.K;
 import org.kframework.parser.TreeNodesToKORE;
 import org.kframework.parser.concrete2kore.ParseInModule;
@@ -30,7 +30,9 @@ import java.util.function.Function;
 
 public class Kompile {
 
-    public static final File BUILTIN_DIRECTORY = new File("k-distribution/include/builtin").getAbsoluteFile();
+    public static final File BUILTIN_DIRECTORY = new File(new File("k-distribution/include/builtin").getAbsoluteFile()
+            .toString().replace("k-distribution" + File.separator + "k-distribution", "k-distribution"));
+    private static final String REQUIRE_KAST_K = "requires \"kast.k\"\n";
     private static final String mainModule = "K";
     private static final String startSymbol = "RuleContent";
 
@@ -46,7 +48,7 @@ public class Kompile {
         //Definition baseK = ParserUtils.parseMainModuleOuterSyntax(definitionText, mainModule);
         java.util.Set<Module> modules =
                 ParserUtils.loadModules(definitionText,
-                        Sources.fromFile(definitionFile),
+                        Source.apply(definitionFile.getAbsolutePath()),
                         definitionFile.getParentFile(),
                         Lists.newArrayList(BUILTIN_DIRECTORY));
 
@@ -66,8 +68,8 @@ public class Kompile {
 //        Module mainModuleWithBubble = ParserUtils.parseMainModuleOuterSyntax(definitionString, "TEST");
 
         java.util.Set<Module> modules =
-                ParserUtils.loadModules(definitionString,
-                        Sources.fromFile(definitionFile),
+                ParserUtils.loadModules(REQUIRE_KAST_K + "require \"misc.k\"\n" + definitionString,
+                        Source.apply(definitionFile.getAbsolutePath()),
                         definitionFile.getParentFile(),
                         Lists.newArrayList(BUILTIN_DIRECTORY));
 
@@ -78,13 +80,14 @@ public class Kompile {
         RuleGrammarGenerator gen = makeRuleGrammarGenerator();
         ParseInModule ruleParser = gen.getRuleGrammar(mainModuleWithBubble);
 
-        Set<Sentence> ruleSet = stream(mainModuleWithBubble.localSentences())
+        Set<Sentence> ruleSet = stream(mainModuleWithBubble.sentences())
                 .filter(s -> s instanceof Bubble)
                 .map(b -> (Bubble) b)
                 .map(b -> {
                     int startLine = b.att().<Integer>get("contentStartLine").get();
                     int startColumn = b.att().<Integer>get("contentStartColumn").get();
-                    return ruleParser.parseString(b.contents(), startSymbol, startLine, startColumn);
+                    String source = b.att().<String>get("Source").get();
+                    return ruleParser.parseString(b.contents(), startSymbol, Source.apply(source), startLine, startColumn);
                 })
                 .map(result -> {
                     System.out.println("warning = " + result._2());
@@ -120,8 +123,8 @@ public class Kompile {
         Module afterHeatingCooling = StrictToHeatingCooling.apply(mainModule);
 
         Definition kastDefintion = Definition(immutable(
-                ParserUtils.loadModules("requires \"kast.k\"",
-                        Sources.fromFile(BUILTIN_DIRECTORY.toPath().resolve("kast.k").toFile()),
+                ParserUtils.loadModules(REQUIRE_KAST_K,
+                        Source.apply(BUILTIN_DIRECTORY.toPath().resolve("kast.k").toFile().getAbsolutePath()),
                         definitionFile.getParentFile(),
                         Lists.newArrayList(BUILTIN_DIRECTORY))));
 

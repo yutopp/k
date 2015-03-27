@@ -86,17 +86,17 @@ public class PriorityVisitor extends SetsTransformerWithErrors<ParseFailedExcept
             // TODO: add location information
             if (priorities.lessThen(parentLabel, localLabel)) {
                 String msg = "Priority filter exception. Cannot use " + localLabel + " as a child of " + parentLabel;
-                KException kex = new KException(KException.ExceptionType.ERROR, KException.KExceptionGroup.CRITICAL, msg, null, tc.location().get());
+                KException kex = new KException(KException.ExceptionType.ERROR, KException.KExceptionGroup.CRITICAL, msg, tc.source().get(), tc.location().get());
                 return Left.apply(Sets.newHashSet(new PriorityException(kex)));
             }
             if (leftAssoc.contains(new Tuple2<>(parentLabel, localLabel)) && Side.RIGHT == side) {
                 String msg = "Associativity filter exception. Cannot use " + localLabel + " as a right child of " + parentLabel;
-                KException kex = new KException(KException.ExceptionType.ERROR, KException.KExceptionGroup.CRITICAL, msg, null, tc.location().get());
+                KException kex = new KException(KException.ExceptionType.ERROR, KException.KExceptionGroup.CRITICAL, msg, tc.source().get(), tc.location().get());
                 return Left.apply(Sets.newHashSet(new PriorityException(kex)));
             }
             if (rigthAssoc.contains(new Tuple2<>(parentLabel, localLabel)) && Side.LEFT == side) {
                 String msg = "Associativity filter exception. Cannot use " + localLabel + " as a left child of " + parentLabel;
-                KException kex = new KException(KException.ExceptionType.ERROR, KException.KExceptionGroup.CRITICAL, msg, null, tc.location().get());
+                KException kex = new KException(KException.ExceptionType.ERROR, KException.KExceptionGroup.CRITICAL, msg, tc.source().get(), tc.location().get());
                 return Left.apply(Sets.newHashSet(new PriorityException(kex)));
             }
 

@@ -2,6 +2,8 @@
 package org.kframework.backend.java.kil;
 
 import org.kframework.attributes.Att;
+import org.kframework.attributes.Source;
+import org.kframework.attributes.Location;
 import org.kframework.backend.java.indexing.IndexingPair;
 import org.kframework.backend.java.symbolic.BottomUpVisitor;
 import org.kframework.backend.java.symbolic.CopyOnShareSubstAndEvalTransformer;
@@ -11,8 +13,6 @@ import org.kframework.backend.java.symbolic.SubstituteAndEvaluateTransformer;
 import org.kframework.backend.java.symbolic.Transformable;
 import org.kframework.backend.java.symbolic.Unifiable;
 import org.kframework.backend.java.util.Utils;
-import org.kframework.kil.Location;
-import org.kframework.kil.Source;
 
 import java.util.ArrayList;
 import java.util.Collections;

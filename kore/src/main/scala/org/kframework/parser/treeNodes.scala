@@ -2,7 +2,7 @@
 
 package org.kframework.parser
 
-import org.kframework.attributes.Location
+import org.kframework.attributes.{Source, Location}
 import org.kframework.definition.Production
 import java.util._
 import java.lang.Iterable
@@ -10,9 +10,9 @@ import collection.JavaConverters._
 import org.apache.commons.lang3.StringEscapeUtils
 
 trait Term {
-  // TODO: add source
   var location: Optional[Location] = Optional.empty()
-  def shallowCopy(l: Location): Term
+  var source: Optional[Source] = Optional.empty()
+  def shallowCopy(l: Location, s: Source): Term
 }
 
 trait ProductionReference extends Term {
@@ -25,13 +25,13 @@ trait HasChildren {
 }
 
 case class Constant private(value: String, production: Production) extends ProductionReference {
-  def shallowCopy(location: Location) = Constant(value, production, location)
+  def shallowCopy(location: Location, source: Source) = Constant(value, production, location, source)
   override def toString = "#token(" + production.sort + ",\"" + StringEscapeUtils.escapeJava(value) + "\")"
 }
 
 case class TermCons private(items: List[Term], production: Production)
   extends ProductionReference with HasChildren {
-  def shallowCopy(location: Location) = TermCons(items, production, location)
+  def shallowCopy(location: Location, source: Source) = TermCons(items, production, location, source)
 
   def replaceChildren(newChildren: Collection[Term]) = {
     items.clear(); items.addAll(newChildren);
@@ -55,7 +55,7 @@ case class TermCons private(items: List[Term], production: Production)
 
 case class Ambiguity(items: Set[Term])
   extends Term with HasChildren {
-  def shallowCopy(location: Location) = Ambiguity(items, location)
+  def shallowCopy(location: Location, source: Source) = Ambiguity(items, location, source)
   def replaceChildren(newChildren: Collection[Term]) = {
     items.clear(); items.addAll(newChildren);
     this
@@ -66,7 +66,7 @@ case class Ambiguity(items: Set[Term])
 case class KList(items: List[Term])
   extends Term with HasChildren {
   def add(t: Term) { items.add(t) }
-  def shallowCopy(l: Location) = KList(items, l)
+  def shallowCopy(l: Location, source: Source) = KList(items, l, source)
   def replaceChildren(newChildren: Collection[Term]) = {
     items.clear(); items.addAll(newChildren);
     this
@@ -75,17 +75,19 @@ case class KList(items: List[Term])
 }
 
 object Constant {
-  def apply(value: String, production: Production, location: Location):Constant = {
+  def apply(value: String, production: Production, location: Location, source: Source):Constant = {
     val res = Constant(value, production)
     res.location = Optional.of(location)
+    res.source = Optional.of(source)
     res
   }
 }
 
 object TermCons {
-  def apply(items: List[Term], production: Production, location: Location):TermCons = {
+  def apply(items: List[Term], production: Production, location: Location, source: Source):TermCons = {
     val res = TermCons(items, production)
     res.location = Optional.of(location)
+    res.source = Optional.of(source)
     res
   }
 }
@@ -93,18 +95,20 @@ object TermCons {
 object KList {
   @annotation.varargs def apply(ts: Term*): KList = KList(new ArrayList(ts.asJava))
   def apply(toCopy: KList): KList = KList(new ArrayList(toCopy.items)) // change when making the classes mutable
-  def apply(items: List[Term], location: Location):KList = {
+  def apply(items: List[Term], location: Location, source: Source):KList = {
     val res = KList(items)
     res.location = Optional.of(location)
+    res.source = Optional.of(source)
     res
   }
 }
 
 object Ambiguity {
   @annotation.varargs def apply(items: Term*): Ambiguity = Ambiguity(items.toSet.asJava)
-  def apply(items: Set[Term], location: Location):Ambiguity = {
+  def apply(items: Set[Term], location: Location, source: Source):Ambiguity = {
     val res = Ambiguity(items)
     res.location = Optional.of(location)
+    res.source = Optional.of(source)
     res
   }
 }
