@@ -78,6 +78,29 @@ public class Kompile {
         Module mainModuleWithBubble = stream(definition.modules()).filter(m -> m.name().equals(mainModuleName)).findFirst().get();
 
         RuleGrammarGenerator gen = makeRuleGrammarGenerator();
+        ParseInModule configParser = gen.getConfigGrammar(mainModuleWithBubble);
+
+        K configContents = stream(mainModuleWithBubble.sentences())
+                .filter(s -> s instanceof Bubble)
+                .map(b -> (Bubble) b)
+                .filter(b -> b.sentenceType().equals("config"))
+                .map(b -> {
+                    int startLine = b.att().<Integer>get("contentStartLine").get();
+                    int startColumn = b.att().<Integer>get("contentStartColumn").get();
+                    String source = b.att().<String>get("Source").get();
+                    return configParser.parseString(b.contents(), startSymbol, Source.apply(source), startLine, startColumn);
+                }).map(result -> {
+                    System.out.println("warning = " + result._2());
+                    if (result._1().isRight())
+                        return result._1().right().get();
+                    else {
+                        throw new AssertionError("Found error: " + result._1().left().get());
+                    }
+                })
+                .map(TreeNodesToKORE::apply)
+                .map(TreeNodesToKORE::down)
+                .findFirst().get();
+
         ParseInModule ruleParser = gen.getRuleGrammar(mainModuleWithBubble);
 
         Set<Sentence> ruleSet = stream(mainModuleWithBubble.sentences())
