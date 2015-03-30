@@ -82,7 +82,7 @@ public class Kompile {
 //        Module mainModuleWithBubble = ParserUtils.parseMainModuleOuterSyntax(definitionString, "TEST");
 
         java.util.Set<Module> modules =
-                ParserUtils.loadModules(REQUIRE_KAST_K + "require \"misc.k\"\n" + definitionString,
+                ParserUtils.loadModules(REQUIRE_KAST_K + definitionString,
                         Source.apply(definitionFile.getAbsolutePath()),
                         definitionFile.getParentFile(),
                         Lists.newArrayList(BUILTIN_DIRECTORY));
@@ -107,6 +107,7 @@ public class Kompile {
         }
 
         Configuration configDecl = stream(configDecls)
+                .parallel()
                 .map(b -> {
                     int startLine = b.att().<Integer>get("contentStartLine").get();
                     int startColumn = b.att().<Integer>get("contentStartColumn").get();
@@ -144,8 +145,10 @@ public class Kompile {
         ParseInModule ruleParser = gen.getRuleGrammar(mainModuleBubblesWithConfig);
 
         Set<Sentence> ruleSet = stream(mainModuleBubblesWithConfig.sentences())
+                .parallel()
                 .filter(s -> s instanceof Bubble)
                 .map(b -> (Bubble) b)
+                .filter(b -> !b.sentenceType().equals("config"))
                 .map(b -> {
                     int startLine = b.att().<Integer>get("contentStartLine").get();
                     int startColumn = b.att().<Integer>get("contentStartColumn").get();

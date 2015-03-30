@@ -3,7 +3,7 @@
 // Module defining only the sorts K and KString, useful for modularity
 module BASIC-K
   syntax K
-  syntax KString ::= r"[\\\"]([^\\\"\\n\\r\\\\]|[\\\\][nrtf\\\"\\\\])*[\\\"]"      [token, hook(org.kframework.kore.KString)]
+  syntax KString ::= r"[\\\"](([^\\\"\\n\\r\\\\])|([\\\\][nrtf\\\"\\\\])|([\\\\][x][0-9a-fa-f]{2})|([\\\\][u][0-9a-fa-f]{4})|([\\\\][u][0-9a-fa-f]{8}))*[\\\"]"      [token, hook(org.kframework.kore.KString)]
     // optionally qualified strings, like in Scala "abc", i"abc", r"a*bc", etc.
   syntax KLabel
 endmodule
@@ -24,7 +24,7 @@ module KAST
 
   syntax KList ::= K
                  | ".KList"           [klabel(#EmptyKList), hook(org.kframework.kore.EmptyKList)]
-                 | KList "," KList      [klabel(#dotKList), left, assoc, unit(#EmptyKList), hook(org.kframework.kore.KList), prefer]
+                 | KList ",," KList   [klabel(#KList), left, assoc, unit(#EmptyKList), hook(org.kframework.kore.KList), prefer]
 endmodule
 
 
@@ -50,7 +50,7 @@ module KCELLS
   imports KAST
 
   syntax Cell
-  syntax Bag ::= Bag Bag  [left, assoc, klabel(#cells)]
+  syntax Bag ::= Bag Bag  [left, assoc, klabel(#cells), unit(#EmptyBag)]
                | ".Bag" [klabel(#EmptyBag)]
                | Cell
   syntax K ::= Bag

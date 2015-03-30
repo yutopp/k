@@ -16,10 +16,11 @@ module BOOL
   syntax Bool ::= "true"           [klabel(_andBool_), function, hook(#BOOL:_andBool_)]
   syntax Bool ::= "false"          [klabel(_orBool_), function, hook(#BOOL:_orBool_)]
 
-  syntax Bool ::= "notBool" "(" Bool ")"    [klabel(notBool_),  function, hook(#BOOL:notBool_)]
-  syntax Bool ::= Bool "andBool" Bool       [klabel('_andBool_), function, hook(#BOOL:_andBool_), left]
+  syntax Bool ::= "notBool" Bool    [klabel(notBool_),  function, hook(#BOOL:notBool_), boolOperation]
+  syntax Bool ::= Bool "andBool" Bool       [klabel(_andBool_), function, hook(#BOOL:_andBool_), left, boolOperation]
+  syntax Bool ::= Bool "orBool" Bool        [klabel(_orBool_), function, hook(#BOOL:_orBool_), left, boolOperation]
 
-  syntax priority 'notBool_ > '_andBool_
+  syntax priority notBool_ > _andBool_
 endmodule
 
 module INT
@@ -39,13 +40,64 @@ module INT
   syntax Bool ::= Int ">=Int" Int       [klabel('_>=Int_), function, hook(#INT:_>=Int_), left]
   syntax Bool ::= Int ">Int" Int        [klabel('_>Int_),  function, hook(#INT:_>Int_),  left]
 
+  syntax Int ::= Int ">>Int
+
   syntax priority '_*Int_ '_/Int_ '_%Int_ > '_+Int_ '_-Int_
+
+
+  syntax Int ::= "~Int" Int                     [function, latex(\mathop{\sim_{\scriptstyle\it Int}}{#1}), hook(#INT:~Int_)]
+  syntax Int ::= Int "^Int" Int                 [function, left, latex({#1}\mathrel{{\char`\^}_{\!\scriptstyle\it Int}}{#2}), hook(#INT:_^Int_), left]
+  syntax Int ::= Int "*Int" Int                 [function, left, smtlib(*), latex({#1}\mathrel{\ast_{\scriptstyle\it Int}}{#2}), hook(#INT:_*Int_)]
+  syntax Int ::= Int "/Int" Int                 [function, left, smtlib(div), latex({#1}\mathrel{\div_{\scriptstyle\it Int}}{#2}), hook(#INT:_/Int_)]
+               | Int "%Int" Int                 [function, left, smtlib(mod), latex({#1}\mathrel{\%_{\scriptstyle\it Int}}{#2}), hook(#INT:_%Int_)]
+               /* divInt and modInt implement e-division */
+               //| Int "divInt" Int               [function, left, smtlib(div), hook(#INT:_divInt_)] // TODO: (andreis) link me
+               | Int "divInt" Int               [function, left, smtlib(div)]
+               | Int "modInt" Int               [function, left, smtlib(mod), hook(#INT:_modInt_)]
+               > left:
+                 Int "+Int" Int                 [function, left, smtlib(+), latex({#1}\mathrel{+_{\scriptstyle\it Int}}{#2}), hook(#INT:_+Int_)]
+               | Int "-Int" Int                 [function, left, smtlib(-), latex({#1}\mathrel{-_{\scriptstyle\it Int}}{#2}), hook(#INT:_-Int_)]
+               > left:
+                 Int ">>Int" Int                [function, left, latex({#1}\mathrel{\gg_{\scriptstyle\it Int}}{#2}), hook(#INT:_>>Int_)]
+               | Int "<<Int" Int                [function, left, latex({#1}\mathrel{\ll_{\scriptstyle\it Int}}{#2}), hook(#INT:_<<Int_)]
+               > left:
+                 Int "&Int" Int                 [function, left, latex({#1}\mathrel{\&_{\scriptstyle\it Int}}{#2}), hook(#INT:_&Int_)]
+               > left:
+                 Int "xorInt" Int               [function, left, latex({#1}\mathrel{\oplus_{\scriptstyle\it Int}}{#2}), hook(#INT:_xorInt_)]
+               > left:
+                 Int "|Int" Int                 [function, left, latex({#1}\mathrel{|_{\scriptstyle\it Int}}{#2}), hook(#INT:_|Int_)]
+               > "minInt" "(" Int "," Int ")"   [function, smtlib(int_min), hook(#INT:minInt)]
+               | "maxInt" "(" Int "," Int ")"   [function, smtlib(int_max), hook(#INT:maxInt)]
+               | "absInt" "(" Int ")"           [function, smtlib(int_abs), klabel(absInt), hook(#INT:absInt)]
+
+  rule I1:#Int divInt I2:#Int => (I1 -Int (I1 modInt I2)) /Int I2
+  when I2 =/=Int 0
+  rule
+    I1:#Int modInt I2:#Int
+  =>
+    ((I1 %Int absInt(I2)) +Int absInt(I2)) %Int absInt(I2)
+  when I2 =/=Int 0
+
+  syntax Bool ::= Int "<=Int" Int         [function, left, smtlib(<=), latex({#1}\mathrel{\leq_{\scriptstyle\it Int}}{#2}), hook(#INT:_<=Int_)]
+                | Int "<Int" Int          [function, left, smtlib(<), latex({#1}\mathrel{<_{\scriptstyle\it Int}}{#2}), hook(#INT:_<Int_)]
+                | Int ">=Int" Int         [function, left, smtlib(>=), latex({#1}\mathrel{\geq_{\scriptstyle\it Int}}{#2}), hook(#INT:_>=Int_)]
+                | Int ">Int" Int          [function, left, smtlib(>), latex({#1}\mathrel{>_{\scriptstyle\it Int}}{#2}), hook(#INT:_>Int_)]
+                | Int "==Int" Int         [function, left, smtlib(=), latex({#1}\mathrel{{=}{=}_{\scriptstyle\it Int}}{#2}), hook(#INT:_==Int_)]
+                | Int "=/=Int" Int        [function, left, smtlib(distinct), latex({#1}\mathrel{{=}{/}{=}_{\scriptstyle\it Int}}{#2}), hook(#INT:_=/=Int_)]
+                | Int "=Int" Int          [equality, function, hook(#INT:_==Int_)]
+                | Int "dividesInt" Int    [function]
+
+
 
   syntax Bool ::= "isInt" "(" K ")"         [klabel(isKResult), function]
 endmodule
 
 module STRING
-  syntax String ::= r"[\\\"](([^\\\"\\n\\r\\\\])|([\\\\][nrtf\\\"\\\\])|([\\\\][x][0-9a-fA-F]{2})|([\\\\][u][0-9a-fA-F]{4})|([\\\\][U][0-9a-fA-F]{8}))*[\\\"]" [token]
+  imports BASIC-K
+
+  syntax String ::= KString
+
+  syntax String ::= String "+String" String    [function, left, latex({#1}+_{\scriptstyle\it String}{#2}), hook(#STRING:_+String_)]
 endmodule
 
 module FLOAT
@@ -116,7 +168,7 @@ syntax Bool ::= left:
                 | K "=/=K" K          [function, smtlib(distinct), hook(#K-EQUAL:_=/=K_), latex({#1}\mathrel{\neq_K}{#2}), notEqualEqualK]
 
   syntax priorities equalEqualK notEqualEqualK > boolOperation
-  rule K1:K =/=K K2:K => notBool(K1 ==K K2)
+  rule K1:K =/=K K2:K => notBool `K1 ==K K2`
 
   syntax K     ::= "#if" Bool "#then" K "#else" K "#fi"   [function, hook(KEqual:ite)]
   rule #if true #then K:K #else _:K #fi => K

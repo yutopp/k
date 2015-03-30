@@ -89,7 +89,7 @@ public class GenerateSentencesFromConfigDecl {
                     K generatedTop = KApply(KLabel("#configCell"), cellLabel, KApply(KLabel("#cellPropertyListTerminator")), body, cellLabel);
                     return gen(generatedTop, ensures, att, m);
                 }
-                List<K> cells = Assoc.flatten(kapp, m);
+                List<K> cells = Assoc.flatten(kapp.klabel(), kapp.klist().items(), m);
                 Set<Sentence> accumSentences = Set();
                 List<Sort> sorts = Lists.newArrayList();
                 for (K cell : cells) {
