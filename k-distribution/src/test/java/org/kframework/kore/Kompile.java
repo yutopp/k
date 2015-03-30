@@ -1,6 +1,7 @@
 package org.kframework.kore;
 
 import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 import org.apache.commons.io.FileUtils;
 import org.kframework.Collections;
 import org.kframework.attributes.Att;
@@ -24,6 +25,7 @@ import org.kframework.parser.concrete2kore.generator.RuleGrammarGenerator;
 import org.kframework.tiny.*;
 import org.kframework.utils.StringUtil;
 import org.kframework.utils.errorsystem.KExceptionManager;
+import org.kframework.utils.errorsystem.ParseFailedException;
 import scala.Option;
 import scala.Tuple2;
 import scala.collection.Seq;
@@ -37,6 +39,8 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.List;
+import java.util.Optional;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -76,7 +80,7 @@ public class Kompile {
     }
 
     // todo: rename and refactor this
-    public static Tuple2<Module, Function<String, K>> getStuff(File definitionFile, String mainModuleName, String mainProgramsModule) throws IOException, URISyntaxException {
+    public static Tuple2<Module, BiFunction<String, Source, K>> getStuff(File definitionFile, String mainModuleName, String mainProgramsModule) throws IOException, URISyntaxException {
         String definitionString = FileUtils.readFileToString(definitionFile);
 
 //        Module mainModuleWithBubble = ParserUtils.parseMainModuleOuterSyntax(definitionString, "TEST");
@@ -106,7 +110,9 @@ public class Kompile {
             configDecls = Set(Bubble("config", "<k> $PGM:K </k>", Att()));
         }
 
-        Configuration configDecl = stream(configDecls)
+        java.util.Set<ParseFailedException> errors = Sets.newHashSet();
+
+        Optional<Configuration> configDeclOpt = stream(configDecls)
                 .parallel()
                 .map(b -> {
                     int startLine = b.att().<Integer>get("contentStartLine").get();
@@ -114,12 +120,13 @@ public class Kompile {
                     String source = b.att().<String>get("Source").get();
                     return configParser.parseString(b.contents(), startSymbol, Source.apply(source), startLine, startColumn);
                 })
-                .map(result -> {
+                .flatMap(result -> {
                     System.out.println("warning = " + result._2());
                     if (result._1().isRight())
-                        return result._1().right().get();
+                        return Stream.of(result._1().right().get());
                     else {
-                        throw new AssertionError("Found error: " + result._1().left().get());
+                        errors.addAll(result._1().left().get());
+                        return Stream.empty();
                     }
                 })
                 .map(TreeNodesToKORE::apply)
@@ -136,7 +143,13 @@ public class Kompile {
                         throw new AssertionError("Wrong KLabel for rule content");
                     }
                 })
-                .findFirst().get();
+                .findFirst();
+
+        if (!errors.isEmpty()) {
+            throw new AssertionError("Had " + errors.size() + " parsing errors: " + errors);
+        }
+
+        Configuration configDecl = configDeclOpt.get();
 
         Set<Sentence> configDeclProductions = GenerateSentencesFromConfigDecl.gen(configDecl.body(), configDecl.ensures(), configDecl.att(), configParser.module())._1();
         Module mainModuleBubblesWithConfig = Module(mainModuleName, Set(),
@@ -155,12 +168,13 @@ public class Kompile {
                     String source = b.att().<String>get("Source").get();
                     return ruleParser.parseString(b.contents(), startSymbol, Source.apply(source), startLine, startColumn);
                 })
-                .map(result -> {
-                    System.out.println("warning = " + result._2());
-                    if (result._1().isRight())
-                        return result._1().right().get();
-                    else {
-                        throw new AssertionError("Found error: " + result._1().left().get());
+                .flatMap(result -> {
+                    if (result._1().isRight()) {
+                        System.out.println("warning = " + result._2());
+                        return Stream.of(result._1().right().get());
+                    } else {
+                        errors.addAll(result._1().left().get());
+                        return Stream.empty();
                     }
                 })
                 .map(TreeNodesToKORE::apply)
@@ -183,6 +197,10 @@ public class Kompile {
                 })
                 .collect(Collections.toSet());
 
+        if (!errors.isEmpty()) {
+            throw new AssertionError("Had " + errors.size() + " parsing errors: " + errors);
+        }
+
         Module mainModule = Module(mainModuleName, Set(),
                 (Set<Sentence>) mainModuleBubblesWithConfig.sentences().$bar(ruleSet), Att());
 
@@ -204,8 +222,8 @@ public class Kompile {
         Module moduleForPrograms = definition.getModule(mainProgramsModule).get();
         ParseInModule parseInModule = RuleGrammarGenerator.getProgramsGrammar(moduleForPrograms);
 
-        final Function<String, K> pp = s -> {
-            return TreeNodesToKORE.down(TreeNodesToKORE.apply(parseInModule.parseString(s, "K")._1().right().get()));
+        final BiFunction<String, Source, K> pp = (s, source) -> {
+            return TreeNodesToKORE.down(TreeNodesToKORE.apply(parseInModule.parseString(s, "K", source)._1().right().get()));
         };
 
         return Tuple2.apply(withKSeq, pp);

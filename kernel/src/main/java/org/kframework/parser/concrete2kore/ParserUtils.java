@@ -40,29 +40,31 @@ public class ParserUtils {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-        return parseWithString(theTextToParse, Source.apply(definitionFile.getAbsolutePath()), mainModule, startSymbol, definitionText);
+        return parseWithString(theTextToParse, mainModule, startSymbol, Source.apply(definitionFile.getAbsolutePath()), definitionText);
     }
 
     public static K parseWithString(CharSequence theTextToParse,
-                                    Source source,
                                     String mainModule,
                                     String startSymbol,
+                                    Source source,
                                     String definitionText) {
         Module kastModule = parseMainModuleOuterSyntax(definitionText, source, mainModule);
-        return parseWithModule(theTextToParse, startSymbol, kastModule);
+        return parseWithModule(theTextToParse, startSymbol, source, kastModule);
     }
 
     public static K parseWithModule(CharSequence theTextToParse,
                                     String startSymbol,
+                                    Source source,
                                     org.kframework.definition.Module kastModule) {
         ParseInModule parser = new ParseInModule(kastModule);
-        return parseWithModule(theTextToParse, startSymbol, parser);
+        return parseWithModule(theTextToParse, startSymbol, source, parser);
     }
 
     public static K parseWithModule(CharSequence theTextToParse,
                                     String startSymbol,
+                                    Source source,
                                     ParseInModule kastModule) {
-        Term cleaned = kastModule.parseString(theTextToParse, startSymbol)._1().right().get();
+        Term cleaned = kastModule.parseString(theTextToParse, startSymbol, source)._1().right().get();
         return TreeNodesToKORE.apply(cleaned);
     }
 

@@ -142,7 +142,7 @@ public class ProgramLoader {
             Module synMod = new KILtoKORE(context, true, false).apply(def).getModule(def.getMainSyntaxModule()).get();
             ParseInModule parser = RuleGrammarGenerator.getProgramsGrammar(synMod);
             Tuple2<Either<Set<ParseFailedException>, org.kframework.parser.Term>, Set<ParseFailedException>> parsed
-                    = parser.parseString(FileUtil.read(content), startSymbol.getName());
+                    = parser.parseString(FileUtil.read(content), startSymbol.getName(), source);
             if (parsed._1().isLeft()) {
                 for (ParseFailedException k : parsed._1().left().get())
                     kem.addKException(k.getKException());
