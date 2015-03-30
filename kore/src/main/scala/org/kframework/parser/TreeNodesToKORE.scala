@@ -36,7 +36,7 @@ object TreeNodesToKORE {
 
 
     case t@KApply(KLabel("#KApply"), items) =>
-      KApply(KLabel(unquote(items)),
+      KApply(downKLabel(items(0)),
         KList(downList(items.tail.head.asInstanceOf[KApply].klist.items.asScala)), t.att)
 
     case t@KApply(KLabel("#KToken"), items) =>
@@ -49,13 +49,25 @@ object TreeNodesToKORE {
       KApply(l, KList((items map down _).asJava), t.att)
   }
 
-  def unquote(items: List[K]): String = {
-    items(0).asInstanceOf[KToken].s.stripPrefix("`").stripSuffix("`")
+  def unquote(t: K): String = {
+    t.asInstanceOf[KToken].s.stripPrefix("`").stripSuffix("`")
   }
 
   def downList(items: Seq[K]): Seq[K] = {
     items map down _
   }
+
+  def downKLabel(t: K): KLabel = t match {
+    case t@KToken(sort, s) if sort == Sorts.KVariable =>
+      KVariable(s.trim, t.att)
+
+    case t@KToken(sort, s) if sort == Sorts.KLabel =>
+      KLabel(unquote(t))
+
+    case t@KApply(KLabel("#SemanticCast"), items) =>
+      downKLabel(items.head)
+  }
+
   val up = new Up(KORE, Set())
 
   def locationToAtt(l: Location, s: Source): Att =

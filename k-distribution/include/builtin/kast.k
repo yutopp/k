@@ -23,7 +23,7 @@ module KAST
                        // something that doesn't collide with meta-variables
 
   syntax KList ::= K
-                 | ".::KList"           [klabel(#EmptyKList), hook(org.kframework.kore.EmptyKList)]
+                 | ".KList"           [klabel(#EmptyKList), hook(org.kframework.kore.EmptyKList)]
                  | KList "," KList      [klabel(#dotKList), left, assoc, unit(#EmptyKList), hook(org.kframework.kore.KList), prefer]
 endmodule
 
@@ -31,7 +31,7 @@ endmodule
 // To be used when parsing/pretty-printing ground configurations
 module KSEQ
   imports KAST
-  syntax KBott ::= ".::K"    [klabel(#EmptyK), hook(org.kframework.kore.EmptyK)]
+  syntax KBott ::= ".K"    [klabel(#EmptyK), hook(org.kframework.kore.EmptyK)]
                  | K "~>" K  [klabel(#KSequence), left, assoc, unit(#EmptyK), hook(org.kframework.kore.KSequence)]
   syntax left #KSequence
   syntax KBott     ::= "`" K "`"    [bracket]
@@ -51,7 +51,7 @@ module KCELLS
 
   syntax Cell
   syntax Bag ::= Bag Bag  [left, assoc, klabel(#cells)]
-               | ".::Bag" [klabel(#EmptyBag)]
+               | ".Bag" [klabel(#EmptyBag)]
                | Cell
   syntax K ::= Bag
   syntax Bag ::= KBott

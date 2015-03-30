@@ -109,3 +109,16 @@ module LIST
   syntax Bool ::= K "in" List             [function, hook(List:in), klabel('_inList_)]
   syntax Int ::= size(List)               [function, hook(Collection:size), klabel ('sizeList), smtlib(smt_seq_len)]
 endmodule
+
+module K-EQUAL
+syntax Bool ::= left:
+                  K "==K" K           [function, smtlib(=), hook(#K-EQUAL:_==K_), latex({#1}\mathrel{=_K}{#2}), equalEqualK]
+                | K "=/=K" K          [function, smtlib(distinct), hook(#K-EQUAL:_=/=K_), latex({#1}\mathrel{\neq_K}{#2}), notEqualEqualK]
+
+  syntax priorities equalEqualK notEqualEqualK > boolOperation
+  rule K1:K =/=K K2:K => notBool(K1 ==K K2)
+
+  syntax K     ::= "#if" Bool "#then" K "#else" K "#fi"   [function, hook(KEqual:ite)]
+  rule #if true #then K:K #else _:K #fi => K
+  rule #if false #then _:K #else K:K #fi => K
+endmodule
