@@ -1,25 +1,36 @@
 package org.kframework.kore;
 
-import com.beust.jcommander.internal.Lists;
+import com.google.common.collect.Lists;
 import org.apache.commons.io.FileUtils;
 import org.kframework.Collections;
+import org.kframework.attributes.Att;
+import org.kframework.builtin.Sorts;
+import org.kframework.compile.ConfigurationInfo;
 import org.kframework.compile.ConfigurationInfoFromModule;
 import org.kframework.compile.StrictToHeatingCooling;
 import org.kframework.definition.Bubble;
+import org.kframework.definition.Configuration;
 import org.kframework.definition.Definition;
 import org.kframework.definition.Module;
+import org.kframework.definition.ProductionItem;
 import org.kframework.definition.Sentence;
 import org.kframework.attributes.Source;
 import org.kframework.kore.K;
+import org.kframework.kore.compile.GenerateSentencesFromConfigDecl;
 import org.kframework.parser.TreeNodesToKORE;
 import org.kframework.parser.concrete2kore.ParseInModule;
 import org.kframework.parser.concrete2kore.ParserUtils;
 import org.kframework.parser.concrete2kore.generator.RuleGrammarGenerator;
 import org.kframework.tiny.*;
+import org.kframework.utils.StringUtil;
+import org.kframework.utils.errorsystem.KExceptionManager;
+import scala.Option;
 import scala.Tuple2;
+import scala.collection.Seq;
 import scala.collection.immutable.Set;
 
 import static org.kframework.Collections.*;
+import static org.kframework.kore.KORE.*;
 import static org.kframework.definition.Constructors.*;
 
 import java.io.File;
@@ -27,6 +38,9 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.List;
 import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 public class Kompile {
 
@@ -80,16 +94,26 @@ public class Kompile {
         RuleGrammarGenerator gen = makeRuleGrammarGenerator();
         ParseInModule configParser = gen.getConfigGrammar(mainModuleWithBubble);
 
-        K configContents = stream(mainModuleWithBubble.sentences())
+        Set<Bubble> configDecls = stream(mainModuleWithBubble.sentences())
                 .filter(s -> s instanceof Bubble)
                 .map(b -> (Bubble) b)
                 .filter(b -> b.sentenceType().equals("config"))
+                .collect(Collections.toSet());
+        if (configDecls.size() > 1) {
+            throw KExceptionManager.compilerError("Found more than one configuration in definition: " + configDecls);
+        }
+        if (configDecls.size() == 0) {
+            configDecls = Set(Bubble("config", "<k> $PGM:K </k>", Att()));
+        }
+
+        Configuration configDecl = stream(configDecls)
                 .map(b -> {
                     int startLine = b.att().<Integer>get("contentStartLine").get();
                     int startColumn = b.att().<Integer>get("contentStartColumn").get();
                     String source = b.att().<String>get("Source").get();
                     return configParser.parseString(b.contents(), startSymbol, Source.apply(source), startLine, startColumn);
-                }).map(result -> {
+                })
+                .map(result -> {
                     System.out.println("warning = " + result._2());
                     if (result._1().isRight())
                         return result._1().right().get();
@@ -99,11 +123,27 @@ public class Kompile {
                 })
                 .map(TreeNodesToKORE::apply)
                 .map(TreeNodesToKORE::down)
+                .map(contents -> {
+                    KApply ruleContents = (KApply) contents;
+                    List<org.kframework.kore.K> items = ruleContents.klist().items();
+                    switch (ruleContents.klabel().name()) {
+                    case "#ruleNoConditions":
+                        return Configuration(items.get(0), Or.apply(), Att.apply());
+                    case "#ruleEnsures":
+                        return Configuration(items.get(0), items.get(1), Att.apply());
+                    default:
+                        throw new AssertionError("Wrong KLabel for rule content");
+                    }
+                })
                 .findFirst().get();
 
-        ParseInModule ruleParser = gen.getRuleGrammar(mainModuleWithBubble);
+        Set<Sentence> configDeclProductions = GenerateSentencesFromConfigDecl.gen(configDecl.body(), configDecl.ensures(), configDecl.att(), configParser.module())._1();
+        Module mainModuleBubblesWithConfig = Module(mainModuleName, Set(),
+                (Set<Sentence>) mainModuleWithBubble.sentences().$bar(configDeclProductions), Att());
 
-        Set<Sentence> ruleSet = stream(mainModuleWithBubble.sentences())
+        ParseInModule ruleParser = gen.getRuleGrammar(mainModuleBubblesWithConfig);
+
+        Set<Sentence> ruleSet = stream(mainModuleBubblesWithConfig.sentences())
                 .filter(s -> s instanceof Bubble)
                 .map(b -> (Bubble) b)
                 .map(b -> {
@@ -141,7 +181,7 @@ public class Kompile {
                 .collect(Collections.toSet());
 
         Module mainModule = Module(mainModuleName, Set(),
-                (Set<Sentence>) mainModuleWithBubble.sentences().$bar(ruleSet), Att());
+                (Set<Sentence>) mainModuleBubblesWithConfig.sentences().$bar(ruleSet), Att());
 
         Module afterHeatingCooling = StrictToHeatingCooling.apply(mainModule);
 

@@ -1,17 +1,18 @@
 // Copyright (c) 2012-2015 K Team. All Rights Reserved.
 package org.kframework.utils.errorsystem;
 
+import com.google.inject.Inject;
 import org.kframework.attributes.Location;
 import org.kframework.attributes.Source;
 import org.kframework.kil.ASTNode;
 import org.kframework.kil.AbstractVisitor;
+import org.kframework.kore.K;
 import org.kframework.main.GlobalOptions;
 import org.kframework.utils.StringUtil;
 import org.kframework.utils.errorsystem.KException.ExceptionType;
 import org.kframework.utils.errorsystem.KException.KExceptionGroup;
 import org.kframework.utils.inject.RequestScoped;
 
-import com.google.inject.Inject;
 import java.lang.Thread.UncaughtExceptionHandler;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -105,6 +106,10 @@ public class KExceptionManager {
 
     public static KEMException compilerError(String message, Throwable e, ASTNode node) {
         return create(ExceptionType.ERROR, KExceptionGroup.COMPILER, message, null, e, node.getLocation(), node.getSource());
+    }
+
+    public static KEMException compilerError(String message, K node) {
+        return create(ExceptionType.ERROR, KExceptionGroup.COMPILER, message, null, null, node.location(), node.source());
     }
 
     public static KEMException compilerError(String message, ASTNode node) {

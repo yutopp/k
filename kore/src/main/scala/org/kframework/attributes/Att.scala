@@ -22,6 +22,16 @@ case class Att(att: Set[K]) extends AttributesToString {
       .map(down)
       .map { _.asInstanceOf[T] }
 
+  def get[T](key: String, cls: Class[T]): Option[T] =
+    getKValue(key).orElse(getK(key))
+      .map(down)
+      .map { x =>
+        if (cls.isInstance(x))
+          x.asInstanceOf[T]
+        else
+          getK(key).map(down).map { _.asInstanceOf[T] }.get
+      }
+
   def getOptional[T](label: String): java.util.Optional[T] =
     get[T](label) match {
       case Some(s) => java.util.Optional.of(s);

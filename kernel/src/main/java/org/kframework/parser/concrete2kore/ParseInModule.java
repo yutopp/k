@@ -38,6 +38,10 @@ public class ParseInModule implements Serializable {
         this.grammar = KSyntax2GrammarStatesFilter.getGrammar(module);
     }
 
+    public Module module() {
+        return module;
+    }
+
     /**
      * Parse as input the given string and start symbol using the module stored in the object.
      * @param input          the string to parse.

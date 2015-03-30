@@ -248,4 +248,7 @@ public abstract class Term extends JavaSymbolicObject implements Transformable, 
     public Att att() {
         return Att.apply();
     }
+
+    public Location location() { return getLocation(); }
+    public Source source() { return getSource(); }
 }
