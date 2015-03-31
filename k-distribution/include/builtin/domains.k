@@ -456,18 +456,24 @@ module K-EQUAL
 
 endmodule
 
+module K-REFLECTION
+  imports KCELLS
+
+  syntax Bag ::= "#configuration" [function, impure, hook(MetaK:#configuration)]
+
+endmodule
+
 module K-IO
   imports LIST
   imports STRING
 
   syntax IOError ::= "#EOF" | "#noparse" | "#ENOENT" | "#ENOTDIR" | "#EACCES" | "#ELOOP" | "#ENAMETOOLONG" | "#EBADF" | "#ESPIPE" | "#EISDIR" | "#EINVAL"
 
-  // B, N, and P are really supposed to be Nat
-  syntax KItem ::= "#open" "(" String ")" [function]
-                 | "#open" "(" String "," String ")" [function, hook(#IO:#open), impure]
-                 | "#tell" "(" Int ")" [function, hook(#IO:#tell), impure]
-                 | "#getc" "(" Int ")"             [function, hook(#IO:#getc), impure]
-                 | "#read" "(" Int "," Int ")"    [function, hook(#IO:#read), impure]
+  syntax Int ::= "#open" "(" String ")" [function]
+               | "#open" "(" String "," String ")" [function, hook(#IO:#open), impure]
+               | "#tell" "(" Int ")" [function, hook(#IO:#tell), impure]
+               | "#getc" "(" Int ")"             [function, hook(#IO:#getc), impure]
+  syntax String ::= "#read" "(" Int "," Int ")"    [function, hook(#IO:#read), impure]
 
   syntax K ::= "#close" "(" Int ")" [function, hook(#IO:#close), impure]
              | "#seek" "(" Int "," Int ")" [function, hook(#IO:#seek), impure]
@@ -524,39 +530,39 @@ module K-IO
   rule ListItem(#ostream((.K => #write(N, S)) ~> N:Int))
        ListItem(#buffer(S:String => ""))
        _:List
-    when S =/=String "" [stdout, stderr]
+    requires S =/=String "" [stdout, stderr]
 
   // read one character at a time until we read whitespace
-  rule ListItem(#parseInput(_:KItem, Delimiters:String))
+  rule ListItem(#parseInput(_:String, Delimiters:String))
        ListItem(#buffer(S:String => S +String chrChar(#getc(N))))
        ListItem(#istream(N:Int))
-    when findChar(S, Delimiters, 0) ==Int -1 [stdin]
+    requires findChar(S, Delimiters, 0) ==Int -1 [stdin]
 
   // when we reach whitespace, if it parses create a ListItem
   rule (ListItem(#parseInput("String", Delimiters:String)) => ListItem(S))
        ListItem(#buffer(S:String => ""))
        _:List
-    when findChar(S, Delimiters, 0) =/=Int -1 [stdin]
+    requires findChar(S, Delimiters, 0) =/=Int -1 [stdin]
 
   // a hack: handle the case when we read integers without the help of the IO server
   rule (ListItem(#parseInput("Int", Delimiters:String))
        => ListItem(String2Int(substrString(S, 0, lengthString(S) -Int 1))))
        ListItem(#buffer(S:String => ""))
-    when findChar(S, Delimiters, 0) =/=Int -1
+    requires findChar(S, Delimiters, 0) =/=Int -1
        andBool lengthString(S) >Int 1 [stdin]
 
   rule (ListItem(#parseInput(Sort:String, Delimiters:String))
        => ListItem(#parse(substrString(S, 0, lengthString(S) -Int 1), Sort)))
        ListItem(#buffer(S:String => ""))
        ListItem(#istream(_))
-    when findChar(S, Delimiters, 0) =/=Int -1
+    requires findChar(S, Delimiters, 0) =/=Int -1
        andBool Sort =/=String "String"
        andBool lengthString(S) >Int 1 [stdin]
 
   rule ListItem(#parseInput(Sort:String, Delimiters:String))
        ListItem(#buffer(S:String => substrString(S, 1, lengthString(S))))
        _:List
-    when findChar(S, Delimiters, 0) =/=Int -1
+    requires findChar(S, Delimiters, 0) =/=Int -1
        andBool Sort =/=String "String"
        andBool lengthString(S) <=Int 1 [stdin]
 

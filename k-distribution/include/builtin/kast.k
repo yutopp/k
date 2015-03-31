@@ -52,7 +52,7 @@ module KCELLS
 
   syntax Cell
   syntax Bag ::= Bag Bag  [left, assoc, klabel(#cells), unit(#EmptyBag)]
-               | "\\.(::)?Bag" [klabel(#EmptyBag)]
+               | r"\\.(::)?Bag" [klabel(#EmptyBag)]
                | Cell
   syntax K ::= Bag
   syntax Bag ::= KBott
@@ -82,9 +82,9 @@ module REQUIRES-ENSURES
   imports BASIC-K
 
   syntax RuleContent ::= K                                 [klabel("#ruleNoConditions")]
-                       | K "requires" K                    [klabel("#ruleRequires")]
+                       | K r"(requires)|(when)" K                    [klabel("#ruleRequires")]
                        | K "ensures"  K                    [klabel("#ruleEnsures")]
-                       | K "requires" K "ensures" K        [klabel("#ruleRequiresEnsures")]
+                       | K r"(requires)|(when)" K "ensures" K        [klabel("#ruleRequiresEnsures")]
 endmodule
 
 

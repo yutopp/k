@@ -1,14 +1,13 @@
 // Copyright (c) 2014-2015 K Team. All Rights Reserved.
 package org.kframework.parser.concrete2kore.kernel;
 
-import org.kframework.Collection;
-import org.kframework.kil.loader.Constants;
-import org.kframework.kore.Sort;
 import org.kframework.definition.Module;
 import org.kframework.definition.Production;
 import org.kframework.definition.ProductionItem;
 import org.kframework.definition.RegexTerminal;
 import org.kframework.definition.Terminal;
+import org.kframework.kil.loader.Constants;
+import org.kframework.kore.Sort;
 import org.kframework.parser.concrete2kore.kernel.Grammar.NextableState;
 import org.kframework.parser.concrete2kore.kernel.Grammar.NonTerminal;
 import org.kframework.parser.concrete2kore.kernel.Grammar.NonTerminalState;
@@ -18,11 +17,9 @@ import org.kframework.parser.concrete2kore.kernel.Grammar.RuleState;
 import org.kframework.parser.concrete2kore.kernel.Rule.AddLocationRule;
 import org.kframework.parser.concrete2kore.kernel.Rule.DeleteRule;
 import org.kframework.parser.concrete2kore.kernel.Rule.WrapLabelRule;
-import org.kframework.parser.generator.CollectTerminalsVisitor;
 import org.kframework.utils.errorsystem.KExceptionManager;
 
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.regex.Pattern;
@@ -74,13 +71,9 @@ public class KSyntax2GrammarStatesFilter {
                     pattern = Pattern.quote(((Terminal) prdItem).value());
                     rejects.add(pattern);
                 }
-            } else if (prdItem instanceof RegexTerminal && false) {
-                // TODO: (radum) properly handle regex terminals once SDF is gone
-                if (prd.att().contains("regex"))
-                    pattern = prd.att().get("regex").get().toString();
-                else
-                    pattern = ((RegexTerminal) prdItem).regex();
-                if (!pattern.equals(""))
+            } else if (prdItem instanceof RegexTerminal) {
+                pattern = ((RegexTerminal) prdItem).regex();
+                if (!pattern.equals("") && !prd.att().contains("token"))
                     rejects.add(pattern);
             }
         }
