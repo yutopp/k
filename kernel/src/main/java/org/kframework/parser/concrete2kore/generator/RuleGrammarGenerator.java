@@ -18,10 +18,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import static org.kframework.Collections.*;
-import static org.kframework.definition.Constructors.Att;
-import static org.kframework.definition.Constructors.NonTerminal;
-import static org.kframework.definition.Constructors.Production;
-import static org.kframework.definition.Constructors.RegexTerminal;
+import static org.kframework.definition.Constructors.*;
 import static org.kframework.kore.KORE.Sort;
 
 /**
