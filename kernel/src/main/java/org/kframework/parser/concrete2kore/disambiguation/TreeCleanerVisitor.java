@@ -43,9 +43,9 @@ public class TreeCleanerVisitor extends SetsTransformerWithErrors<ParseFailedExc
     public Either<Set<ParseFailedException>, Term> apply(KList node) {
         Either<Set<ParseFailedException>, Term> res = super.apply(node);
 
-        if (res.isRight() && ((KList) res.right().get()).items().size() == 1) {
+        if (res.isRight() && ((KList) res.right().get()).items().size() == 1)
             return Right.apply(((KList) res.right().get()).items().get(0));
-        } else
+        else
             return res;
     }
 }

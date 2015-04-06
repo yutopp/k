@@ -230,18 +230,6 @@ public class Grammar implements Serializable {
         }
     }
 
-    public Grammar minimize() {
-        Grammar g = new Grammar();
-        for (NonTerminal nt : startNonTerminals.values()) {
-            g.add(minimize(nt));
-        }
-        return g;
-    }
-
-    public static NonTerminal minimize(NonTerminal nt) {
-        return null;
-    }
-
     /**
      * Recursive DFS that traverses all the states and returns a set of all reachable {@link NonTerminal}.
      * @param start The state from which to run the collector.
