@@ -9,6 +9,7 @@ import org.kframework.utils.algorithms.SCCTarjan;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -154,7 +155,7 @@ public class Grammar implements Serializable {
         PrimitiveState whitespace = new RegExState(
             "whitespace", start.nt, pattern);
         RuleState deleteToken = new RuleState(
-            "whitespace-D", start.nt, new DeleteRule(1, true));
+            "whitespace-D", start.nt, new DeleteRule(1));
         whitespace.next.add(deleteToken);
         deleteToken.next.addAll(start.next);
         start.next.clear();
@@ -380,7 +381,7 @@ public class Grammar implements Serializable {
         /** Counter for generating unique ids for the state. */
         private static int counter = 0;
         /** The unique id of this state. */
-        private final int unique = counter++;
+        public final int unique = counter++;
 
         /** A back reference to the NonTerminal that this state is part of. */
         public final NonTerminal nt;
@@ -576,11 +577,11 @@ public class Grammar implements Serializable {
             matcher.region(startPosition, text.length());
             matcher.useAnchoringBounds(false);
             matcher.useTransparentBounds(true);
-            Set<MatchResult> results = new HashSet<>();
+            Set<MatchResult> results = Collections.emptySet();
             if (matcher.lookingAt()) {
                 // reject keywords
                 if (!rejects.contains(matcher.group()))
-                    results.add(new MatchResult(matcher.end()));
+                    results = Collections.singleton(new MatchResult(matcher.end()));
             }
             return results;
         }
