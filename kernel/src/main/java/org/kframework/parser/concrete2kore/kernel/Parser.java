@@ -729,7 +729,6 @@ public class Parser {
             String msg = content.length() == perror.position ?
                     "Parse error: unexpected end of file." :
                     "Parse error: unexpected character '" + content.charAt(perror.position) + "'.";
-            msg += "Expected to find next one of " + perror.tokens.stream().map(pair -> pair.getRight()).collect(Collectors.toSet());
             Location loc = new Location(perror.line, perror.column,
                     perror.line, perror.column + 1);
             Source source = perror.source;
