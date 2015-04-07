@@ -151,6 +151,11 @@ public class Parser {
                 result = 31 * result + state.hashCode();
                 return result;
             }
+
+            @Override
+            public String toString() {
+                return ntCall.key.nt.name + "." + state.name + " @ "+ stateBegin;
+            }
         }
         final Key key;
         StateCall(Key key) { assert key != null; this.key = key; }
@@ -238,6 +243,11 @@ public class Parser {
                 int result = stateCall.key.hashCode();
                 result = 31 * result + stateEnd;
                 return result;
+            }
+
+            @Override
+            public String toString() {
+                return stateCall.key.toString() + "-" + stateEnd;
             }
         }
 
@@ -361,6 +371,11 @@ public class Parser {
                 result = 31 * result + ntBegin;
                 return result;
             }
+
+            @Override
+            public String toString() {
+                return nt.name + " @ " + ntBegin;
+            }
         }
         final Key key;
         NonTerminalCall(Key key) { assert key != null; this.key = key; }
@@ -478,9 +493,9 @@ public class Parser {
          * In other words, we are trying to parse a +() or -() that will become children
          * of the *().
          */
-        private abstract class Mapping {}
-        private class Nil extends Mapping { Set<Term> values = new HashSet<>(); }
-        private class One extends Mapping { Map<Term, Set<Term>> values = new HashMap<>(); }
+        private static abstract class Mapping {}
+        private static class Nil extends Mapping { Set<Term> values = new HashSet<>(); }
+        private static class One extends Mapping { Map<Term, Set<Term>> values = new HashMap<>(); }
 
         /** The mapping that this Function represents */
         private Mapping mapping = new Nil();

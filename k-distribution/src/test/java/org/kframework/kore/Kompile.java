@@ -18,6 +18,7 @@ import org.kframework.definition.Sentence;
 import org.kframework.attributes.Source;
 import org.kframework.kore.K;
 import org.kframework.kore.compile.GenerateSentencesFromConfigDecl;
+import org.kframework.parser.Term;
 import org.kframework.parser.TreeNodesToKORE;
 import org.kframework.parser.concrete2kore.ParseInModule;
 import org.kframework.parser.concrete2kore.ParserUtils;
@@ -30,6 +31,7 @@ import scala.Option;
 import scala.Tuple2;
 import scala.collection.Seq;
 import scala.collection.immutable.Set;
+import scala.util.Either;
 
 import static org.kframework.Collections.*;
 import static org.kframework.kore.KORE.*;
@@ -38,7 +40,9 @@ import static org.kframework.definition.Constructors.*;
 import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.function.Function;
@@ -80,7 +84,7 @@ public class Kompile {
     }
 
     // todo: rename and refactor this
-    public static Tuple2<Module, BiFunction<String, Source, K>> getStuff(File definitionFile, String mainModuleName, String mainProgramsModule) throws IOException, URISyntaxException {
+    public static Tuple2<Module, BiFunction<String, Source, K>> getStuff(File definitionFile, String mainModuleName, String mainProgramsModule, String programStartSymbol) throws IOException, URISyntaxException {
         String definitionString = FileUtils.readFileToString(definitionFile);
 
 //        Module mainModuleWithBubble = ParserUtils.parseMainModuleOuterSyntax(definitionString, "TEST");
@@ -95,24 +99,50 @@ public class Kompile {
 
         Module mainModuleWithBubble = stream(definition.modules()).filter(m -> m.name().equals(mainModuleName)).findFirst().get();
 
-        RuleGrammarGenerator gen = makeRuleGrammarGenerator();
-        ParseInModule configParser = gen.getConfigGrammar(mainModuleWithBubble);
-
-        Set<Bubble> configDecls = stream(mainModuleWithBubble.sentences())
+        boolean hasConfigDecl = stream(mainModuleWithBubble.sentences())
                 .filter(s -> s instanceof Bubble)
                 .map(b -> (Bubble) b)
                 .filter(b -> b.sentenceType().equals("config"))
-                .collect(Collections.toSet());
+                .findFirst().isPresent();
+
+        if (!hasConfigDecl) {
+            mainModuleWithBubble = Module(mainModuleName, (Set<Module>)mainModuleWithBubble.imports().$plus(definition.getModule("DEFAULT-CONFIGURATION").get()), mainModuleWithBubble.localSentences(), mainModuleWithBubble.att());
+        }
+
+        RuleGrammarGenerator gen = makeRuleGrammarGenerator();
+        ParseInModule configParser = gen.getConfigGrammar(mainModuleWithBubble);
+
+        Map<Bubble, Module> configDecls = new HashMap<>();
+        Optional<Bubble> configBubbleMainModule = stream(mainModuleWithBubble.localSentences())
+                .filter(s -> s instanceof Bubble)
+                .map(b -> (Bubble) b)
+                .filter(b -> b.sentenceType().equals("config"))
+                .findFirst();
+        if (configBubbleMainModule.isPresent()) {
+            configDecls.put(configBubbleMainModule.get(), mainModuleWithBubble);
+        }
+        for (Module mod : iterable(mainModuleWithBubble.importedModules())) {
+            Optional<Bubble> configBubble = stream(mod.localSentences())
+                    .filter(s -> s instanceof Bubble)
+                    .map(b -> (Bubble) b)
+                    .filter(b -> b.sentenceType().equals("config"))
+                    .findFirst();
+            if (configBubble.isPresent()) {
+                configDecls.put(configBubble.get(), mod);
+            }
+        }
         if (configDecls.size() > 1) {
             throw KExceptionManager.compilerError("Found more than one configuration in definition: " + configDecls);
         }
         if (configDecls.size() == 0) {
-            configDecls = Set(Bubble("config", "<k> $PGM:K </k>", Att().add("Source", "<generated>").add("contentStartLine", 1).add("contentStartColumn", 1)));
+            throw KExceptionManager.compilerError("Unexpected lack of default configuration and no configuration present: bad prelude?");
         }
+
+        Map.Entry<Bubble, Module> configDeclBubble = configDecls.entrySet().iterator().next();
 
         java.util.Set<ParseFailedException> errors = Sets.newHashSet();
 
-        Optional<Configuration> configDeclOpt = stream(configDecls)
+        Optional<Configuration> configDeclOpt = configDecls.keySet().stream()
                 .parallel()
                 .map(b -> {
                     int startLine = b.att().<Integer>get("contentStartLine").get();
@@ -152,8 +182,15 @@ public class Kompile {
         Configuration configDecl = configDeclOpt.get();
 
         Set<Sentence> configDeclProductions = GenerateSentencesFromConfigDecl.gen(configDecl.body(), configDecl.ensures(), configDecl.att(), configParser.module())._1();
-        Module mainModuleBubblesWithConfig = Module(mainModuleName, Set(),
-                (Set<Sentence>) mainModuleWithBubble.sentences().$bar(configDeclProductions), Att());
+        Module configurationModule = configDeclBubble.getValue();
+        Module configurationModuleWithSentences = Module(configurationModule.name(), configurationModule.imports(), (Set<Sentence>)configurationModule.localSentences().$bar(configDeclProductions), configurationModule.att());
+        modules.remove(configurationModule);
+        modules.add(configurationModuleWithSentences);
+        Definition defWithConfiguration = Definition(immutable(modules));
+
+        Module mainModuleBubblesWithConfig = stream(defWithConfiguration.modules()).filter(m -> m.name().equals(mainModuleName)).findFirst().get();
+
+        gen = new RuleGrammarGenerator(defWithConfiguration);
 
         ParseInModule ruleParser = gen.getRuleGrammar(mainModuleBubblesWithConfig);
 
@@ -212,18 +249,26 @@ public class Kompile {
                         definitionFile.getParentFile(),
                         Lists.newArrayList(BUILTIN_DIRECTORY))));
 
-        ConfigurationInfoFromModule configInfo = new ConfigurationInfoFromModule(afterHeatingCooling);
+        //ConfigurationInfoFromModule configInfo = new ConfigurationInfoFromModule(afterHeatingCooling);
 
 
         Module withKSeq = Module("EXECUTION",
                 Set(afterHeatingCooling, kastDefintion.getModule("KSEQ").get()),
                 Collections.<Sentence>Set(), Att());
 
-        Module moduleForPrograms = definition.getModule(mainProgramsModule).get();
-        ParseInModule parseInModule = RuleGrammarGenerator.getProgramsGrammar(moduleForPrograms);
+        Module moduleForPrograms = defWithConfiguration.getModule(mainProgramsModule).get();
+        Set<Module> imports = Stream.concat(stream(moduleForPrograms.imports()), Stream.of(configurationModuleWithSentences)).collect(Collections.toSet());
+        if (moduleForPrograms.importedModules().contains(configurationModule)) {
+            moduleForPrograms = Module(moduleForPrograms.name(), imports, moduleForPrograms.localSentences(), moduleForPrograms.att());
+        }
+        ParseInModule parseInModule = gen.getProgramsGrammar(moduleForPrograms);
 
         final BiFunction<String, Source, K> pp = (s, source) -> {
-            return TreeNodesToKORE.down(TreeNodesToKORE.apply(parseInModule.parseString(s, "K", source)._1().right().get()));
+            Tuple2<Either<java.util.Set<ParseFailedException>, Term>, java.util.Set<ParseFailedException>> res = parseInModule.parseString(s, programStartSymbol, source);
+            if (res._1().isLeft()) {
+                throw res._1().left().get().iterator().next();
+            }
+            return TreeNodesToKORE.down(TreeNodesToKORE.apply(res._1().right().get()));
         };
 
         return Tuple2.apply(withKSeq, pp);

@@ -60,7 +60,8 @@ public class RuleGrammarGenerator {
     public static final String RULE_CELLS = "RULE-CELLS";
     public static final String CONFIG_CELLS = "CONFIG-CELLS";
     public static final String K = "K";
-    public static final String CAST_AUTO_GEN = "CAST-AUTO-GEN";
+    public static final String AUTO_CASTS = "AUTO-CASTS";
+    public static final String K_SORT_LATTICE = "K-SORT-LATTICE";
 
     public RuleGrammarGenerator(Definition baseK) {
         this.baseK = renameKItem2Bottom(baseK);
@@ -92,13 +93,9 @@ public class RuleGrammarGenerator {
     public ParseInModule getCombinedGrammar(Module mod) {
         Set<Sentence> prods = new HashSet<>();
 
-        if (mod.importedModules().contains(baseK.getModule(CAST_AUTO_GEN).get())) { // create the diamond
+        if (mod.importedModules().contains(baseK.getModule(AUTO_CASTS).get())) { // create the diamond
             for (Sort srt : iterable(mod.definedSorts())) {
                 if (!kSorts.contains(srt) && !srt.name().startsWith("#")) {
-                    // Sort ::= KBott
-                    prods.add(Production(srt, Seq(NonTerminal(KBott)), Att()));
-                    // K ::= Sort
-                    prods.add(Production(KTop, Seq(NonTerminal(srt)), Att()));
                     // K ::= K "::Sort" | K ":Sort" | K "<:Sort" | K ":>Sort"
                     prods.addAll(makeCasts(KBott, KTop, srt));
                 }
@@ -107,6 +104,16 @@ public class RuleGrammarGenerator {
             prods.addAll(makeCasts(KList, KList, KList));
             prods.addAll(makeCasts(KBott, KTop, KItem));
             prods.addAll(makeCasts(KBott, KTop, KTop));
+        }
+        if (mod.importedModules().contains(baseK.getModule(K_SORT_LATTICE).get())) { // create the diamond
+            for (Sort srt : iterable(mod.definedSorts())) {
+                if (!kSorts.contains(srt) && !srt.name().startsWith("#")) {
+                    // Sort ::= KBott
+                    prods.add(Production(srt, Seq(NonTerminal(KBott)), Att()));
+                    // K ::= Sort
+                    prods.add(Production(KTop, Seq(NonTerminal(srt)), Att()));
+                }
+            }
         }
         if (mod.importedModules().contains(baseK.getModule(RULE_CELLS).get())) { // prepare cell productions for rule parsing
             scala.collection.immutable.Set<Sentence> prods2 = stream(mod.sentences()).map(s -> {
@@ -197,7 +204,7 @@ public class RuleGrammarGenerator {
         return prods;
     }
 
-    public static ParseInModule getProgramsGrammar(Module mod) {
+    public ParseInModule getProgramsGrammar(Module mod) {
         Set<Sentence> prods = new HashSet<>();
 
         // if no start symbol has been defined in the configuration, then use K
@@ -209,6 +216,6 @@ public class RuleGrammarGenerator {
         }
 
         Module newM = new Module(mod.name() + "-FOR-PROGRAMS", Set(mod), immutable(prods), null);
-        return new ParseInModule(newM);
+        return getCombinedGrammar(newM);
     }
 }

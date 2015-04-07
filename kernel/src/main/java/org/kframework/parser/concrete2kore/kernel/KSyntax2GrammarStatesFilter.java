@@ -103,7 +103,7 @@ public class KSyntax2GrammarStatesFilter {
                 NextableState previous = pair.getValue();
                 if (prdItem instanceof Terminal) {
                     Terminal terminal = (Terminal) prdItem;
-                    Grammar.PrimitiveState pstate = new Grammar.RegExState(sort + "-T", nt,
+                    Grammar.PrimitiveState pstate = new Grammar.RegExState(sort + ": " + terminal.value(), nt,
                             Pattern.compile(terminal.value(), Pattern.LITERAL));
                     previous.next.add(pstate);
                     RuleState del = new RuleState("DelTerminalRS", nt, new Rule.DeleteRule(1));
@@ -111,7 +111,7 @@ public class KSyntax2GrammarStatesFilter {
                     previous = del;
                 } else if (prdItem instanceof org.kframework.definition.NonTerminal) {
                     org.kframework.definition.NonTerminal srt = (org.kframework.definition.NonTerminal) prdItem;
-                    Grammar.NonTerminalState nts = new Grammar.NonTerminalState(sort + "-S", nt,
+                    Grammar.NonTerminalState nts = new Grammar.NonTerminalState(sort + " ::= " + srt.sort(), nt,
                             grammar.get(srt.sort().name()), false);
                     previous.next.add(nts);
                     previous = nts;

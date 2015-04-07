@@ -21,7 +21,7 @@ public class Konsole {
         String programModuleName = args[2];
 
         Tuple2<Module, BiFunction<String, Source, K>> stuff =
-                Kompile.getStuff(new File(definitionFilename), mainModuleName, programModuleName);
+                Kompile.getStuff(new File(definitionFilename), mainModuleName, programModuleName, "K");
 
         Module module = stuff._1();
         BiFunction<String, Source, K> programParser = stuff._2();

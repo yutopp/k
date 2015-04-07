@@ -430,6 +430,11 @@ public class Grammar implements Serializable {
         public int hashCode() {
             return unique;
         }
+
+        @Override
+        public String toString() {
+            return name;
+        }
     }
 
     /**
