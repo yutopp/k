@@ -4,6 +4,7 @@ package org.kframework.kore.convertors;
 
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import com.google.inject.name.Names;
 import org.junit.Test;
 import org.kframework.attributes.Source;
 import org.kframework.backend.java.builtins.IntToken;
@@ -34,6 +35,8 @@ import org.kframework.kore.Kompile;
 import org.kframework.krun.api.KRunState;
 import org.kframework.main.GlobalOptions;
 import org.kframework.main.Tool;
+import org.kframework.utils.inject.RequestScoped;
+import org.kframework.utils.inject.SimpleScope;
 import scala.Tuple2;
 import scala.collection.JavaConversions;
 
@@ -60,6 +63,14 @@ public class TstBackendOnKORE extends BaseTest {
         KOREtoBackendKIL converter = new KOREtoBackendKIL(getSymbolicRewriter.termContext);
         getSymbolicRewriter.getRewriter().rewrite(new ConstrainedTerm(converter.convert(program), getSymbolicRewriter.termContext), getSymbolicRewriter.termContext.definition().context(), -1, false);
     }
+
+    @Test
+    public void kore_csemantics_annnotation() throws IOException, URISyntaxException {
+        String filename = "/home/dwightguth/c-semantics/verification/annotation.k";
+        Tuple2<Module, BiFunction<String, Source, K>> rwModuleAndProgramParser = Kompile.getStuff(new File(filename),
+                "ANNOTATION-SYNTAX", "ANNOTATION-SYNTAX");
+    }
+
 
     protected String convert(BaseTest.DefinitionWithContext defWithContext) {
         KILtoKORE kilToKore = new KILtoKORE(defWithContext.context);
@@ -136,6 +147,7 @@ public class TstBackendOnKORE extends BaseTest {
         public GetSymbolicRewriter invoke() {
             definition = new Definition(module, null);
 
+            SimpleScope requestScope = new SimpleScope();
             Injector injector = Guice.createInjector(new JavaSymbolicCommonModule() {
                 @Override
                 protected void configure() {
@@ -143,8 +155,12 @@ public class TstBackendOnKORE extends BaseTest {
                     bind(GlobalOptions.class).toInstance(new GlobalOptions());
                     bind(Definition.class).toInstance(definition);
                     bind(Tool.class).toInstance(Tool.KRUN);
+
+                    bindScope(RequestScoped.class, requestScope);
+                    bind(SimpleScope.class).annotatedWith(Names.named("requestScope")).toInstance(requestScope);
                 }
             });
+            requestScope.enter();
             termContext = TermContext.of(new GlobalContext(
                     null,
                     new Equality.EqualityOperations(() -> definition, new JavaExecutionOptions()),
@@ -161,6 +177,7 @@ public class TstBackendOnKORE extends BaseTest {
             definition.setIndex(new IndexingTable(() -> definition, new IndexingTable.Data()));
 
             rewriter = new SymbolicRewriter(definition, new KompileOptions(), new JavaExecutionOptions(), new KRunState.Counter());
+            requestScope.exit();
             return this;
         }
     }

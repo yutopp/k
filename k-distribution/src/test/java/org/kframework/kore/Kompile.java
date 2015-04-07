@@ -107,7 +107,7 @@ public class Kompile {
             throw KExceptionManager.compilerError("Found more than one configuration in definition: " + configDecls);
         }
         if (configDecls.size() == 0) {
-            configDecls = Set(Bubble("config", "<k> $PGM:K </k>", Att()));
+            configDecls = Set(Bubble("config", "<k> $PGM:K </k>", Att().add("Source", "<generated>").add("contentStartLine", 1).add("contentStartColumn", 1)));
         }
 
         java.util.Set<ParseFailedException> errors = Sets.newHashSet();
