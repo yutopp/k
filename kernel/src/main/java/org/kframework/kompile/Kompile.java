@@ -54,8 +54,7 @@ import java.util.stream.StreamSupport;
 
 public class Kompile {
 
-    public static final File BUILTIN_DIRECTORY = new File(new File("k-distribution/include/builtin").getAbsoluteFile()
-            .toString().replace("k-distribution" + File.separator + "k-distribution", "k-distribution"));
+    public final File BUILTIN_DIRECTORY;
     private static final String REQUIRE_KAST_K = "requires \"kast.k\"\n";
     private static final String mainModule = "K";
     private static final String startSymbol = "RuleContent";
@@ -83,6 +82,7 @@ public class Kompile {
     public Kompile(FileUtil files) {
         this.files = files;
         this.parser = new ParserUtils(files);
+        BUILTIN_DIRECTORY = files.resolveKBase("include/builtin");
     }
 
     // todo: rename and refactor this
