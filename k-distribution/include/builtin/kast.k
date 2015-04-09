@@ -19,7 +19,7 @@ module KAST
   syntax KItem ::= KBott
 
   syntax KLabel ::= r"`(\\\\`|\\\\\\\\|[^`\\\\\\s])+`" [token, hook(org.kframework.kore.KLabel)]
-                  | r"[#a-z][a-zA-Z0-9]*"              [token, hook(org.kframework.kore.KLabel), autoReject]
+                  | r"(?<![a-zA-Z0-9])[#a-z][a-zA-Z0-9]*"              [token, hook(org.kframework.kore.KLabel), autoReject]
                        // something that doesn't collide with meta-variables
 
   syntax KList ::= K
