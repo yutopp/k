@@ -1,7 +1,8 @@
-package org.kframework.kore;
+package org.kframework.kompile;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
+import com.google.inject.Inject;
 import org.apache.commons.io.FileUtils;
 import org.kframework.Collections;
 import org.kframework.attributes.Att;
@@ -17,16 +18,17 @@ import org.kframework.definition.ProductionItem;
 import org.kframework.definition.Sentence;
 import org.kframework.attributes.Source;
 import org.kframework.kore.K;
+import org.kframework.kore.KApply;
 import org.kframework.kore.compile.GenerateSentencesFromConfigDecl;
 import org.kframework.parser.Term;
 import org.kframework.parser.TreeNodesToKORE;
 import org.kframework.parser.concrete2kore.ParseInModule;
 import org.kframework.parser.concrete2kore.ParserUtils;
 import org.kframework.parser.concrete2kore.generator.RuleGrammarGenerator;
-import org.kframework.tiny.*;
 import org.kframework.utils.StringUtil;
 import org.kframework.utils.errorsystem.KExceptionManager;
 import org.kframework.utils.errorsystem.ParseFailedException;
+import org.kframework.utils.file.FileUtil;
 import scala.Option;
 import scala.Tuple2;
 import scala.collection.Seq;
@@ -58,18 +60,17 @@ public class Kompile {
     private static final String mainModule = "K";
     private static final String startSymbol = "RuleContent";
 
-    private static RuleGrammarGenerator makeRuleGrammarGenerator() throws URISyntaxException, IOException {
+    private final FileUtil files;
+    private final ParserUtils parser;
+
+    public RuleGrammarGenerator makeRuleGrammarGenerator() {
         String definitionText;
         File definitionFile = new File(BUILTIN_DIRECTORY.toString() + "/kast.k");
-        try {
-            definitionText = FileUtils.readFileToString(definitionFile);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+        definitionText = files.loadFromWorkingDirectory(definitionFile.getPath());
 
         //Definition baseK = ParserUtils.parseMainModuleOuterSyntax(definitionText, mainModule);
         java.util.Set<Module> modules =
-                ParserUtils.loadModules(definitionText,
+                parser.loadModules(definitionText,
                         Source.apply(definitionFile.getAbsolutePath()),
                         definitionFile.getParentFile(),
                         Lists.newArrayList(BUILTIN_DIRECTORY));
@@ -78,19 +79,18 @@ public class Kompile {
         return new RuleGrammarGenerator(baseK);
     }
 
-    public static org.kframework.tiny.Rewriter getRewriter(Module module) throws IOException, URISyntaxException {
-
-        return new org.kframework.tiny.Rewriter(module, KIndex$.MODULE$);
+    @Inject
+    public Kompile(FileUtil files) {
+        this.files = files;
+        this.parser = new ParserUtils(files);
     }
 
     // todo: rename and refactor this
-    public static Tuple2<Module, BiFunction<String, Source, K>> getStuff(File definitionFile, String mainModuleName, String mainProgramsModule, String programStartSymbol) throws IOException, URISyntaxException {
-        String definitionString = FileUtils.readFileToString(definitionFile);
-
-//        Module mainModuleWithBubble = ParserUtils.parseMainModuleOuterSyntax(definitionString, "TEST");
+    public Tuple2<Module, BiFunction<String, Source, K>> run(File definitionFile, String mainModuleName, String mainProgramsModule, String programStartSymbol) {
+        String definitionString = files.loadFromWorkingDirectory(definitionFile.getPath());
 
         java.util.Set<Module> modules =
-                ParserUtils.loadModules(REQUIRE_KAST_K + definitionString,
+                parser.loadModules(REQUIRE_KAST_K + definitionString,
                         Source.apply(definitionFile.getAbsolutePath()),
                         definitionFile.getParentFile(),
                         Lists.newArrayList(BUILTIN_DIRECTORY));
@@ -142,6 +142,8 @@ public class Kompile {
 
         java.util.Set<ParseFailedException> errors = Sets.newHashSet();
 
+        K _true = KToken(Sort("Bool"), "true");
+
         Optional<Configuration> configDeclOpt = configDecls.keySet().stream()
                 .parallel()
                 .map(b -> {
@@ -166,7 +168,7 @@ public class Kompile {
                     List<org.kframework.kore.K> items = ruleContents.klist().items();
                     switch (ruleContents.klabel().name()) {
                     case "#ruleNoConditions":
-                        return Configuration(items.get(0), Or.apply(), Att.apply());
+                        return Configuration(items.get(0), _true, Att.apply());
                     case "#ruleEnsures":
                         return Configuration(items.get(0), items.get(1), Att.apply());
                     default:
@@ -221,11 +223,11 @@ public class Kompile {
                     List<org.kframework.kore.K> items = ruleContents.klist().items();
                     switch (ruleContents.klabel().name()) {
                         case "#ruleNoConditions":
-                            return Rule(items.get(0), And.apply(), Or.apply());
+                            return Rule(items.get(0), _true, _true);
                         case "#ruleRequires":
-                            return Rule(items.get(0), items.get(1), Or.apply());
+                            return Rule(items.get(0), items.get(1), _true);
                         case "#ruleEnsures":
-                            return Rule(items.get(0), And.apply(), items.get(1));
+                            return Rule(items.get(0), _true, items.get(1));
                         case "#ruleRequiresEnsures":
                             return Rule(items.get(0), items.get(1), items.get(2));
                         default:
@@ -244,7 +246,7 @@ public class Kompile {
         Module afterHeatingCooling = StrictToHeatingCooling.apply(mainModule);
 
         Definition kastDefintion = Definition(immutable(
-                ParserUtils.loadModules(REQUIRE_KAST_K,
+                parser.loadModules(REQUIRE_KAST_K,
                         Source.apply(BUILTIN_DIRECTORY.toPath().resolve("kast.k").toFile().getAbsolutePath()),
                         definitionFile.getParentFile(),
                         Lists.newArrayList(BUILTIN_DIRECTORY))));
