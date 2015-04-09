@@ -42,14 +42,14 @@ object KOREToTreeNodes {
 
   def toString(t: Term): String = t match {
     case Constant(s, _) => s
-    case TermCons(items, p) => {
+    case t@TermCons(items, p) => {
       var i = 0
       (p.items map {
         case Terminal(s) => s
         case NonTerminal(sort) => {
           i = i + 1
-          toString(items.get(i - 1))
-        }
+          toString(t.get(i - 1))
+        } 
       }).mkString(" ")
     }
   }
