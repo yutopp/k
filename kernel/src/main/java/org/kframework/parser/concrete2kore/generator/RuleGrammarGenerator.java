@@ -55,6 +55,7 @@ public class RuleGrammarGenerator {
         kSorts.add(KItem);
         kSorts.add(Sort("RuleContent"));
         kSorts.add(Sort("KVariable"));
+        kSorts.add(Sort("KString"));
     }
     /// modules that have a meaning:
     public static final String RULE_CELLS = "RULE-CELLS";

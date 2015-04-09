@@ -16,7 +16,6 @@ module KAST
   syntax KBott ::= "#token" "(" KString "," KString ")"  [klabel(#KToken), hook(org.kframework.kore.KToken)]
                  | "#klabel" "(" KLabel ")"              [klabel(#WrappedKLabel), hook(org.kframework.kore.meta.WrappedKLabel)]
                  | KLabel "(" KList ")"                  [klabel(#KApply), hook(org.kframework.kore.KApply)]
-  syntax KTop ::= KItem
   syntax KItem ::= KBott
 
   syntax KLabel ::= r"`(\\\\`|\\\\\\\\|[^`\\\\\\s])+`" [token, hook(org.kframework.kore.KLabel)]

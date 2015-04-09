@@ -9,6 +9,7 @@ import org.kframework.attributes.Att;
 import org.kframework.builtin.Sorts;
 import org.kframework.compile.ConfigurationInfo;
 import org.kframework.compile.ConfigurationInfoFromModule;
+import org.kframework.compile.ModuleTransformation;
 import org.kframework.compile.StrictToHeatingCooling;
 import org.kframework.definition.Bubble;
 import org.kframework.definition.Configuration;
@@ -31,6 +32,7 @@ import org.kframework.utils.errorsystem.ParseFailedException;
 import org.kframework.utils.file.FileUtil;
 import scala.Option;
 import scala.Tuple2;
+import scala.Tuple3;
 import scala.collection.Seq;
 import scala.collection.immutable.Set;
 import scala.util.Either;
@@ -43,6 +45,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -86,7 +89,7 @@ public class Kompile {
     }
 
     // todo: rename and refactor this
-    public Tuple2<Module, BiFunction<String, Source, K>> run(File definitionFile, String mainModuleName, String mainProgramsModule, String programStartSymbol) {
+    public Tuple3<Module, Definition, BiFunction<String, Source, K>> run(File definitionFile, String mainModuleName, String mainProgramsModule, String programStartSymbol) {
         String definitionString = files.loadFromWorkingDirectory(definitionFile.getPath());
 
         java.util.Set<Module> modules =
@@ -185,9 +188,13 @@ public class Kompile {
 
         Set<Sentence> configDeclProductions = GenerateSentencesFromConfigDecl.gen(configDecl.body(), configDecl.ensures(), configDecl.att(), configParser.module())._1();
         Module configurationModule = configDeclBubble.getValue();
-        Module configurationModuleWithSentences = Module(configurationModule.name(), configurationModule.imports(), (Set<Sentence>)configurationModule.localSentences().$bar(configDeclProductions), configurationModule.att());
+        Module configurationModuleWithSentences = Module(configurationModule.name(), configurationModule.imports(), (Set<Sentence>) configurationModule.localSentences().$bar(configDeclProductions), configurationModule.att());
         modules.remove(configurationModule);
         modules.add(configurationModuleWithSentences);
+        modules = modules.stream().map(mod -> Module(mod.name(), stream(mod.imports()).map(_import -> {
+                    if (_import == configurationModule) return configurationModuleWithSentences;
+                    return _import;
+                }).collect(Collections.toSet()), mod.localSentences(), mod.att())).collect(Collectors.toSet());
         Definition defWithConfiguration = Definition(immutable(modules));
 
         Module mainModuleBubblesWithConfig = stream(defWithConfiguration.modules()).filter(m -> m.name().equals(mainModuleName)).findFirst().get();
@@ -259,10 +266,6 @@ public class Kompile {
                 Collections.<Sentence>Set(), Att());
 
         Module moduleForPrograms = defWithConfiguration.getModule(mainProgramsModule).get();
-        Set<Module> imports = Stream.concat(stream(moduleForPrograms.imports()), Stream.of(configurationModuleWithSentences)).collect(Collections.toSet());
-        if (moduleForPrograms.importedModules().contains(configurationModule)) {
-            moduleForPrograms = Module(moduleForPrograms.name(), imports, moduleForPrograms.localSentences(), moduleForPrograms.att());
-        }
         ParseInModule parseInModule = gen.getProgramsGrammar(moduleForPrograms);
 
         final BiFunction<String, Source, K> pp = (s, source) -> {
@@ -273,6 +276,6 @@ public class Kompile {
             return TreeNodesToKORE.down(TreeNodesToKORE.apply(res._1().right().get()));
         };
 
-        return Tuple2.apply(withKSeq, pp);
+        return Tuple3.apply(withKSeq, defWithConfiguration, pp);
     }
 }

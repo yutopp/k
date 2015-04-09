@@ -5,12 +5,13 @@ package org.kframework.kore.convertors;
 import org.junit.Test;
 import org.junit.rules.TestName;
 import org.kframework.attributes.Source;
+import org.kframework.definition.Definition;
 import org.kframework.definition.Module;
-import org.kframework.kore.K;
 import org.kframework.kompile.Kompile;
+import org.kframework.kore.K;
 import org.kframework.tiny.Rewriter;
 import org.kframework.utils.file.FileUtil;
-import scala.Tuple2;
+import scala.Tuple3;
 
 import java.io.File;
 import java.io.IOException;
@@ -38,10 +39,10 @@ public class TstTinyOnKORE {
         String filename = "/convertor-tests/" + name.getMethodName() + ".k";
 
         File definitionFile = testResource(filename);
-        Tuple2<Module, BiFunction<String, Source, K>> rwModuleAndProgramParser = new Kompile(FileUtil.testFileUtil()).run(definitionFile, "TEST", "TEST-PROGRAMS", "K");
+        Tuple3<Module, Definition, BiFunction<String, Source, K>> rwModuleAndProgramParser = new Kompile(FileUtil.testFileUtil()).run(definitionFile, "TEST", "TEST-PROGRAMS", "K");
 
         Module module = rwModuleAndProgramParser._1();
-        BiFunction<String, Source, K> programParser = rwModuleAndProgramParser._2();
+        BiFunction<String, Source, K> programParser = rwModuleAndProgramParser._3();
         Rewriter rewriter = new org.kframework.tiny.Rewriter(module);
 
         K program = programParser.apply(
