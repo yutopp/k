@@ -49,7 +49,7 @@ object KOREToTreeNodes {
         case NonTerminal(sort) => {
           i = i + 1
           toString(t.get(i - 1))
-        } 
+        }
       }).mkString(" ")
     }
   }
