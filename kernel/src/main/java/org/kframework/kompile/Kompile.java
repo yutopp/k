@@ -189,17 +189,17 @@ public class Kompile {
         Set<Sentence> configDeclProductions = GenerateSentencesFromConfigDecl.gen(configDecl.body(), configDecl.ensures(), configDecl.att(), configParser.module())._1();
         Module configurationModule = configDeclBubble.getValue();
         Module configurationModuleWithSentences = Module(configurationModule.name(), configurationModule.imports(), (Set<Sentence>) configurationModule.localSentences().$bar(configDeclProductions), configurationModule.att());
-        modules.remove(configurationModule);
-        modules.add(configurationModuleWithSentences);
-        modules = modules.stream().map(mod -> Module(mod.name(), stream(mod.imports()).map(_import -> {
-                    if (_import == configurationModule) return configurationModuleWithSentences;
-                    return _import;
-                }).collect(Collections.toSet()), mod.localSentences(), mod.att())).collect(Collectors.toSet());
-        Definition defWithConfiguration = Definition(immutable(modules));
 
-        Module mainModuleBubblesWithConfig = stream(defWithConfiguration.modules()).filter(m -> m.name().equals(mainModuleName)).findFirst().get();
+        Set<Module> newModules = modules.stream().map(mod -> new ModuleTransformation(mod2 -> {
+            if (mod2.name().equals(configurationModule.name()))
+                return configurationModuleWithSentences;
+            return mod2;
+        }).apply(mod)).collect(Collections.toSet());
+
+        Definition defWithConfiguration = Definition(newModules);
 
         gen = new RuleGrammarGenerator(defWithConfiguration);
+        Module mainModuleBubblesWithConfig = stream(defWithConfiguration.modules()).filter(m -> m.name().equals(mainModuleName)).findFirst().get();
 
         ParseInModule ruleParser = gen.getRuleGrammar(mainModuleBubblesWithConfig);
 

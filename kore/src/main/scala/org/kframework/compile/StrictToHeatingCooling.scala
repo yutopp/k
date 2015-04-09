@@ -5,6 +5,7 @@ import org.kframework.kore.K
 import org.kframework.kore.KORE._
 
 class ModuleTransformation(f: Module => Module) extends (Module => Module) {
+  def this(f: java.util.function.Function[Module, Module]) = this(a => f(a))
   val memoization = collection.mutable.HashMap[Module, Module]()
 
   override def apply(input: Module): Module = {
