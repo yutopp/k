@@ -3,7 +3,7 @@
 // Module defining only the sorts K and KString, useful for modularity
 module BASIC-K
   syntax K
-  syntax KString ::= r"[\\\"](([^\\\"\\n\\r\\\\])|([\\\\][nrtf\\\"\\\\])|([\\\\][x][0-9a-fa-f]{2})|([\\\\][u][0-9a-fa-f]{4})|([\\\\][u][0-9a-fa-f]{8}))*[\\\"]"      [token, hook(org.kframework.kore.KString)]
+  syntax KString ::= r"[\\\"](([^\\\"\n\r\\\\])|([\\\\][nrtf\\\"\\\\])|([\\\\][x][0-9a-fa-f]{2})|([\\\\][u][0-9a-fa-f]{4})|([\\\\][u][0-9a-fa-f]{8}))*[\\\"]"      [token, hook(org.kframework.kore.KString)]
     // optionally qualified strings, like in Scala "abc", i"abc", r"a*bc", etc.
   syntax KLabel
 endmodule
@@ -18,20 +18,23 @@ module KAST
                  | KLabel "(" KList ")"                  [klabel(#KApply), hook(org.kframework.kore.KApply)]
   syntax KItem ::= KBott
 
-  syntax KLabel ::= r"`(\\\\`|\\\\\\\\|[^`\\\\\\s])+`" [token, hook(org.kframework.kore.KLabel)]
+  syntax KLabel ::= r"`(\\\\`|\\\\\\\\|[^`\\\\\n\r])+`" [token, hook(org.kframework.kore.KLabel)]
                   | r"[#a-z][a-zA-Z0-9]*"              [token, hook(org.kframework.kore.KLabel), autoReject]
                        // something that doesn't collide with meta-variables
 
   syntax KList ::= K
-                 | r"\\.(::)?KList"           [klabel(#EmptyKList), hook(org.kframework.kore.EmptyKList)]
-                 | KList r",,?" KList   [klabel(#KList), left, assoc, unit(#EmptyKList), hook(org.kframework.kore.KList), prefer]
+                 | ".KList"           [klabel(#EmptyKList), hook(org.kframework.kore.EmptyKList)]
+                 | ".::KList"           [klabel(#EmptyKList), hook(org.kframework.kore.EmptyKList)]
+                 | KList "," KList   [klabel(#KList), left, assoc, unit(#EmptyKList), hook(org.kframework.kore.KList), prefer]
+                 | KList ",," KList   [klabel(#KList), left, assoc, unit(#EmptyKList), hook(org.kframework.kore.KList), prefer]
 endmodule
 
 
 // To be used when parsing/pretty-printing ground configurations
 module KSEQ
   imports KAST
-  syntax KBott ::= r"\\.(::)?K"    [klabel(#EmptyK), hook(org.kframework.kore.EmptyK)]
+  syntax KBott ::= ".K"    [klabel(#EmptyK), hook(org.kframework.kore.EmptyK)]
+                 | ".::K"    [klabel(#EmptyK), hook(org.kframework.kore.EmptyK)]
                  | K "~>" K  [klabel(#KSequence), left, assoc, unit(#EmptyK), hook(org.kframework.kore.KSequence)]
   syntax left #KSequence
   syntax KBott     ::= "`" K "`"    [bracket]
@@ -41,7 +44,7 @@ endmodule
 // To be used when parsing/pretty-printing symbolic configurations
 module KSEQ-SYMBOLIC
   imports KSEQ
-  syntax KVariable ::= r"(?<![A-Za-z0-9_\\$!\\?])(\\$|!|\\?)?([A-Z][A-Za-z0-9']*|_)"   [token, autoReject, hook(org.kframework.kore.KVariable)]
+  syntax KVariable ::= r"(\\$|!|\\?)?([A-Z][A-Za-z0-9']*|_)"   [token, autoReject, hook(org.kframework.kore.KVariable)]
   syntax KBott     ::= KVariable
   syntax KLabel    ::= KVariable
 endmodule
@@ -51,7 +54,8 @@ module KCELLS
 
   syntax Cell
   syntax Bag ::= Bag Bag  [left, assoc, klabel(#cells), unit(#EmptyBag)]
-               | r"\\.(::)?Bag" [klabel(#EmptyBag)]
+               | ".Bag" [klabel(#EmptyBag)]
+               | ".::Bag" [klabel(#EmptyBag)]
                | Cell
   syntax K ::= Bag
   syntax Bag ::= KBott
@@ -83,9 +87,11 @@ module REQUIRES-ENSURES
   imports BASIC-K
 
   syntax RuleContent ::= K                                 [klabel("#ruleNoConditions")]
-                       | K r"(requires)|(when)" K                    [klabel("#ruleRequires")]
+                       | K "requires" K                    [klabel("#ruleRequires")]
+                       | K "when" K                        [klabel("#ruleRequires")]
                        | K "ensures"  K                    [klabel("#ruleEnsures")]
-                       | K r"(requires)|(when)" K "ensures" K        [klabel("#ruleRequiresEnsures")]
+                       | K "requires" K "ensures" K        [klabel("#ruleRequiresEnsures")]
+                       | K "when" K "ensures" K            [klabel("#ruleRequiresEnsures")]
 endmodule
 
 module K-SORT-LATTICE

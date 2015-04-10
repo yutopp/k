@@ -44,7 +44,7 @@ public class RuleGrammarTest {
     }
 
     private void printout(Tuple2<Either<Set<ParseFailedException>, Term>, Set<ParseFailedException>> rule, int warnings, boolean expectedError) {
-        if (false) { // true to print detailed results
+        if (true) { // true to print detailed results
             KExceptionManager kem = new KExceptionManager(new GlobalOptions(true, Warnings.ALL, true));
             if (rule._1().isLeft()) {
                 for (ParseFailedException x : rule._1().left().get()) {
@@ -237,5 +237,17 @@ public class RuleGrammarTest {
         parseRule("A: K", def, 2, false);
         parseRule("A:Stmt ?F : Stmt", def, 2, false);
         parseRule("A:Stmt ? F : Stmt", def, 2, false);
+    }
+
+    //test whitespace
+    @Test
+    public void test15() {
+        String def = "" +
+                "module TEST " +
+                "syntax Exp ::= Divide(K, K) [klabel('Divide)] " +
+                "syntax Exp ::= K \"/\" K [klabel('Div)] " +
+                "syntax K " +
+                "endmodule";
+        parseRule("Divide(K1:K, K2:K) => K1:K / K2:K", def, 0, false);
     }
 }

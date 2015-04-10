@@ -1,6 +1,8 @@
 // Copyright (c) 2014-2015 K Team. All Rights Reserved.
 package org.kframework.parser.concrete2kore.kernel;
 
+import dk.brics.automaton.RegExp;
+import dk.brics.automaton.RunAutomaton;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 import org.kframework.attributes.Location;
@@ -34,7 +36,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 /**
  * This is the main code for running the parser.
@@ -766,11 +767,11 @@ public class Parser {
             if (key.state instanceof PrimitiveState)
                 current = Math.max(current, key.stateBegin);
         }
-        Set<Pair<Production, Pattern>> tokens = new HashSet<>();
+        Set<Pair<Production, RegExState>> tokens = new HashSet<>();
         for (StateCall.Key key : s.stateCalls.keySet()) {
             if (key.state instanceof RegExState && key.stateBegin == current) {
                 tokens.add(new ImmutablePair<>(
-                    null, ((RegExState) key.state).pattern));
+                    null, ((RegExState) key.state)));
             }
         }
         return new ParseError(source, current, s.lines[current], s.columns[current], tokens);
@@ -789,9 +790,9 @@ public class Parser {
         /// The line of the error
         public final int line;
         /// Pairs of Sorts and RegEx patterns that the parsed expected to occur next
-        public final Set<Pair<Production, Pattern>> tokens;
+        public final Set<Pair<Production, RegExState>> tokens;
 
-        public ParseError(Source source, int position, int line, int column, Set<Pair<Production, Pattern>> tokens) {
+        public ParseError(Source source, int position, int line, int column, Set<Pair<Production, RegExState>> tokens) {
             assert tokens != null;
             this.source = source;
             this.position = position;
