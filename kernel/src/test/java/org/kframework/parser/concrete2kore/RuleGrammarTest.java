@@ -235,11 +235,11 @@ public class RuleGrammarTest {
                 "syntax Exp ::= K \"?\" K \":\" K " +
                 "endmodule";
         parseRule("A::K ==K A", def, 0, false);
-        //parseRule("A::K == K A", def, 0, true);
-        //pa1rseRule("A:K", def, 0, false);
-        //parseRule("A: K", def, 2, false);
-        //parseRule("A:Stmt ?F : Stmt", def, 2, false);
-        //parseRule("A:Stmt ? F : Stmt", def, 2, false);
+        parseRule("A::K == K A", def, 0, true);
+        parseRule("A:K", def, 0, false);
+        parseRule("A: K", def, 2, false);
+        parseRule("A:Stmt ?F : Stmt", def, 2, false);
+        parseRule("A:Stmt ? F : Stmt", def, 2, false);
     }
 
     // test whitespace

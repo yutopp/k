@@ -332,7 +332,7 @@ public class KILtoKORE extends KILTransformation<Object> {
                                     if (regex.charAt(i) == '(') depth++;
                                     if (regex.charAt(i) == ')') depth--;
                                     if (depth == 0) {
-                                        precede = regex.substring("(?<!".length(), i - 1);
+                                        precede = regex.substring("(?<!".length(), i);
                                         regex = regex.substring(i + 1);
                                         break;
                                     }
