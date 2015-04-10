@@ -130,7 +130,7 @@ public class KSyntax2GrammarStatesFilter {
                         Grammar.PrimitiveState pstate = new Grammar.RegExState(
                                 sort.name() + ":" + lx.regex() + "(?!" + lx.followPattern() + ")",
                                 nt,
-                                precedeAuto, // TODO: (radum) this should be precede
+                                precedeAuto,
                                 patternAuto,
                                 followsAuto);
                         RuleState del = new RuleState("DelRegexTerminalRS", nt, new Rule.DeleteRule(1));
