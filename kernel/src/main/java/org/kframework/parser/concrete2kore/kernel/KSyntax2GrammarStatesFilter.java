@@ -104,8 +104,8 @@ public class KSyntax2GrammarStatesFilter {
                 NextableState previous = pair.getValue();
                 if (prdItem instanceof Terminal) {
                     Terminal terminal = (Terminal) prdItem;
-                    Grammar.PrimitiveState pstate = new Grammar.RegExState(sort + ": " + terminal.value() + "(?!" + terminal.followPattern() + ")", nt,
-                            BasicAutomata.makeString(terminal.value()), new RegExp(terminal.followPattern()).toAutomaton());
+                    Grammar.PrimitiveState pstate = new Grammar.RegExState(sort + ": " + terminal.value(), nt,
+                            BasicAutomata.makeString(terminal.value()));
                     previous.next.add(pstate);
                     RuleState del = new RuleState("DelTerminalRS", nt, new Rule.DeleteRule(1));
                     pstate.next.add(del);
@@ -119,7 +119,12 @@ public class KSyntax2GrammarStatesFilter {
                 } else if (prdItem instanceof RegexTerminal) {
                     RegexTerminal lx = (RegexTerminal) prdItem;
                     try {
-                        Grammar.PrimitiveState pstate = new Grammar.RegExState(sort.name() + ":" + lx.regex() + "(?!" + lx.followPattern() + ")", nt, new RegExp(lx.regex()).toAutomaton(), new RegExp(lx.followPattern()).toAutomaton());
+                        Grammar.PrimitiveState pstate = new Grammar.RegExState(
+                                sort.name() + ":" + lx.regex() + "(?!" + lx.followPattern() + ")",
+                                nt,
+                                new RegExp(lx.followPattern()).toAutomaton(), // TODO: (radum) this should be precede
+                                new RegExp(lx.regex()).toAutomaton(),
+                                new RegExp(lx.followPattern()).toAutomaton());
                         RuleState del = new RuleState("DelRegexTerminalRS", nt, new Rule.DeleteRule(1));
                         previous.next.add(pstate);
                         pstate.next.add(del);
