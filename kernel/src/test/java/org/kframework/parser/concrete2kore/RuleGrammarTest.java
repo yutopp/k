@@ -253,14 +253,4 @@ public class RuleGrammarTest {
                 "endmodule";
         parseRule("Divide(K1:K, K2:K) => K1:K / K2:K", def, 0, false);
     }
-
-    // test bricks automaton
-    @Test
-    public void test16() {
-
-        RunAutomaton ra1 = new RunAutomaton(BasicAutomata.makeEmpty(), false);
-        System.out.println("match1 = " + ra1.run("abcd", 2));
-        RunAutomaton ra2 = new RunAutomaton(new RegExp("[c]").toAutomaton(), false);
-        System.out.println("match2 = " + ra2.run("abcd", 2));
-    }
 }
