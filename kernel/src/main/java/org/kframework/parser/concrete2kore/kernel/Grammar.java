@@ -562,21 +562,22 @@ public class Grammar implements Serializable {
             super(name, nt);
             assert pattern != null;
             this.precedePattern = new RunAutomaton(precedePattern != null ? precedePattern : BasicAutomata.makeEmpty(), false);
+            //this.precedePattern = new RunAutomaton()
             this.pattern = new RunAutomaton(pattern, false);
             this.followPattern = new RunAutomaton(followPattern != null ? followPattern : BasicAutomata.makeEmpty(), false);
         }
 
         // Position is an 'int' offset into the text because CharSequence uses 'int'
         Set<MatchResult> matches(String text, String reverseText, int startPosition) {
-            int matchedLenght = pattern.run(text, startPosition);
-            if (matchedLenght == -1)
+            int matchedLength = pattern.run(text, startPosition);
+            if (matchedLength == -1)
                 return Collections.emptySet();
-            if (followPattern.run(text, startPosition + matchedLenght) != -1)
+            if (followPattern.run(text, startPosition + matchedLength) != -1)
                 return Collections.emptySet();
             if (precedePattern.run(reverseText, text.length() - startPosition) != -1)
                 return Collections.emptySet();
 
-            return Collections.singleton(new MatchResult(startPosition + matchedLenght));
+            return Collections.singleton(new MatchResult(startPosition + matchedLength));
         }
     }
 }
