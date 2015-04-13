@@ -339,9 +339,9 @@ public class KILtoKORE extends KILTransformation<Object> {
                                 }
                             }
                             String follow = "#";
-                            int followIndex = regex.indexOf("(?<!");
+                            int followIndex = regex.indexOf("(?!");
                             if (followIndex != -1) { // find the follow pattern at the end: (?!X)
-                                follow = regex.substring(followIndex + "(?<!".length(), regex.length() - 2);
+                                follow = regex.substring(followIndex + "(?!".length(), regex.length() - 2);
                                 regex = regex.substring(0, followIndex);
                             }
 
