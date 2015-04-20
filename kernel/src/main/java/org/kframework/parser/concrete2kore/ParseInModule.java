@@ -52,7 +52,6 @@ public class ParseInModule implements Serializable {
      * @param startSymbol    the start symbol from which to parse.
      * @return the Term representation of the parsed input.
      */
-    // TODO: figure out how to handle parsing errors
     public Tuple2<Either<Set<ParseFailedException>, Term>, Set<ParseFailedException>>
             parseString(String input, String startSymbol, Source source) {
         return parseString(input, startSymbol, source, 1, 1);
@@ -74,11 +73,6 @@ public class ParseInModule implements Serializable {
             parsed = parser.parse(startSymbolNT, 0);
         } catch (ParseFailedException e) {
             return Tuple2.apply(Left.apply(Collections.singleton(e)), Collections.emptySet());
-        }
-
-        if (parsed.equals(Ambiguity.apply())) {
-            Parser.ParseError errors = parser.getErrors();
-            throw new AssertionError("There are parsing errors: " + errors.toString());
         }
 
         Either<Set<ParseFailedException>, Term> rez = new TreeCleanerVisitor().apply(parsed);

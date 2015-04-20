@@ -153,8 +153,6 @@ public class Kompile {
         gen = new RuleGrammarGenerator(definitionWithConfigBubble);
         Definition defWithConfig = DefinitionTransformer.from(this::resolveConfig).apply(definitionWithConfigBubble);
 
-        gen = new RuleGrammarGenerator(defWithConfig);
-
         if (!errors.isEmpty()) {
             kem.addAllKException(errors.stream().map(e -> e.getKException()).collect(Collectors.toList()));
             throw KExceptionManager.compilerError("Had " + errors.size() + " parsing errors.");
@@ -168,6 +166,16 @@ public class Kompile {
     K _true = KToken(Sort("KBool"), "KTrue");
 
     private Module resolveConfig(Module module) {
+        if (stream(module.localSentences()).filter(s -> {
+            if (s instanceof Bubble) {
+                Bubble b = (Bubble) s;
+                if (b.sentenceType().equals("config"))
+                    return true;
+            }
+            return false;
+        }).count() == 0)
+            return module;
+
         ParseInModule configParser = gen.getConfigGrammar(module);
 
         Set<Sentence> configDeclProductions = stream(module.localSentences())
@@ -211,6 +219,15 @@ public class Kompile {
     }
 
     private Module resolveBubbles(Module mainModuleWithBubble) {
+        if (stream(mainModuleWithBubble.localSentences()).filter(s -> {
+            if (s instanceof Bubble) {
+                Bubble b = (Bubble) s;
+                if (!b.sentenceType().equals("config"))
+                    return true;
+            }
+            return false;
+        }).count() == 0)
+            return mainModuleWithBubble;
         ParseInModule ruleParser = gen.getRuleGrammar(mainModuleWithBubble);
 
         Set<Sentence> ruleSet = stream(mainModuleWithBubble.localSentences())
@@ -252,6 +269,11 @@ public class Kompile {
                     }
                 })
                 .collect(Collections.toSet());
+
+        if (!errors.isEmpty()) {
+            kem.addAllKException(errors.stream().map(e -> e.getKException()).collect(Collectors.toList()));
+            throw KExceptionManager.compilerError("Had " + errors.size() + " parsing errors.");
+        }
 
         // todo: Cosmin: fix as this effectively flattens the module
         return Module(mainModuleWithBubble.name(), mainModuleWithBubble.imports(),
