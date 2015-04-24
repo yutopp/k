@@ -72,12 +72,12 @@ public class RuleGrammarGenerator {
     }
 
     public Module getRuleGrammar(Module mod) {
-        Module newM = new Module(mod.name() + "-" + RULE_CELLS, Set(mod, baseK.getModule(K).get(), baseK.getModule(RULE_CELLS).get()), Set(), null);
+        Module newM = new Module(mod.name() + "-" + RULE_CELLS, Set(baseK.getModule(K).get(), baseK.getModule(RULE_CELLS).get()), stream(mod.sentences()).filter(p -> !(p instanceof Production && p.att().contains("notInRules"))).collect(Collections.toSet()), null);
         return getCombinedGrammar(newM);
     }
 
     public Module getConfigGrammar(Module mod) {
-        Module newM = new Module(mod.name() + "-" + CONFIG_CELLS, Set(mod, baseK.getModule(K).get(), baseK.getModule(CONFIG_CELLS).get()), Set(), null);
+        Module newM = new Module(mod.name() + "-" + CONFIG_CELLS, Set(baseK.getModule(K).get(), baseK.getModule(CONFIG_CELLS).get()), stream(mod.sentences()).filter(p -> !(p instanceof Production && p.att().contains("notInGround"))).collect(Collections.toSet()), null);
         return getCombinedGrammar(newM);
     }
 
@@ -147,6 +147,7 @@ public class RuleGrammarGenerator {
                     List<ProductionItem> items = stream(p.items()).map(pi -> {
                         if (pi instanceof Terminal) {
                             Terminal t = (Terminal) pi;
+                            if (t.value().equals("")) return pi;
                             Set<String> follow = new HashSet<>();
                             for (String biggerString : terminals.prefixMap(t.value()).keySet()) {
                                 if (!t.value().equals(biggerString)) {
@@ -199,7 +200,8 @@ public class RuleGrammarGenerator {
             }
         }
 
-        Module newM = new Module(mod.name() + "-FOR-PROGRAMS", Set(mod), immutable(prods), null);
+        Module filteredMod = new Module(mod.name() + "-FILTERED-FOR-PROGRAMS", Set(mod), stream(mod.sentences()).filter(p -> !(p instanceof Production && p.att().contains("notInPrograms"))).collect(Collections.toSet()), null);
+        Module newM = new Module(mod.name() + "-FOR-PROGRAMS", Set(filteredMod), immutable(prods), null);
         return getCombinedGrammar(newM);
     }
 }
