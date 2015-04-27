@@ -9,7 +9,9 @@ import org.kframework.kore.K;
 import org.kframework.main.GlobalOptions;
 import org.kframework.tiny.Rewriter;
 import org.kframework.utils.errorsystem.KExceptionManager;
+import org.kframework.utils.errorsystem.ParseFailedException;
 import org.kframework.utils.file.FileUtil;
+import scala.Option;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -43,9 +45,22 @@ public class Konsole {
             BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
             cmd = br.readLine();
             if (cmd.startsWith("rw")) {
-                K result = rewriter.execute(programParser.apply(cmd.substring(2), Source.apply("<command line>")));
-                System.out.println("=> " + result);
-            } else if (cmd.equals("exit")) {
+                try {
+                    K result = rewriter.execute(programParser.apply(cmd.substring(2), Source.apply("<console>")));
+                    System.out.println("=> " + result);
+                } catch (ParseFailedException e) {
+                    System.out.println(e.getMessage());
+                }
+            }
+            else if(cmd.startsWith("step")) {
+                try {
+                    Option<org.kframework.tiny.K> result = rewriter.executeStep(programParser.apply(cmd.substring(4), Source.apply("<console>")));
+                    System.out.println("=> " + result);
+                } catch (ParseFailedException e) {
+                    System.out.println(e.getMessage());
+                }
+            }
+            else if (cmd.equals("exit")) {
                 break;
             } else
                 System.out.println("Unknown command.");

@@ -122,7 +122,12 @@ public class Kompile {
         ParseInModule parseInModule = new ParseInModule(gen.getProgramsGrammar(moduleForPrograms));
 
         return (s, source) -> {
-            return TreeNodesToKORE.down(TreeNodesToKORE.apply(parseInModule.parseString(s, programStartSymbol, source)._1().right().get()));
+            Either<java.util.Set<ParseFailedException>, Term> resultOrException = parseInModule.parseString(s, programStartSymbol, source)._1();
+            if (resultOrException.isRight()) {
+                return TreeNodesToKORE.down(TreeNodesToKORE.apply(resultOrException.right().get()));
+            } else {
+                throw resultOrException.left().get().iterator().next();
+            }
         };
     }
 

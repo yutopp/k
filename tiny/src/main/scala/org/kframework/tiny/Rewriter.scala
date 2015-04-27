@@ -88,8 +88,10 @@ class Rewriter(module: definition.Module, index: K => Option[String] = KIndex) {
   var totalTriedRules = 0
   var indexFailures = 0
 
-  def executeStep(k: K): Option[K] = {
+  def executeStep(koreK: kore.K): Option[K] = {
 //    println("\n\n MATCHING ON: " + k)
+
+    val k = cons.convert(koreK)
 
     val i = index(k).get
 
