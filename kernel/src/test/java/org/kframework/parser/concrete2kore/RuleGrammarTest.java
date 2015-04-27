@@ -301,4 +301,16 @@ public class RuleGrammarTest {
         RunAutomaton ra = new RunAutomaton(a, false);
         System.out.println(ra.run("\"\u202F\""));
     }
+
+    // test list desuggaring
+    @Test
+    public void test19() {
+        String def = "" +
+                "module TEST " +
+                "syntax Exps ::= List{Exp,\",\"} [klabel('Exps)] " +
+                "syntax Exp ::= \"a\" [klabel('a)] " +
+                "syntax K " +
+                "endmodule";
+        parseRule("A:Exps, B:Exps", def, 0, false);
+    }
 }
