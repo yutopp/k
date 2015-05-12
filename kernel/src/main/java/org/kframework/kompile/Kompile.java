@@ -174,7 +174,9 @@ public class Kompile {
         if (!hasConfigDecl) {
             definitionWithConfigBubble = DefinitionTransformer.from(mod -> {
                 if (mod == definition.mainModule()) {
-                    return Module(mod.name(), (Set<Module>) mod.imports().$plus(definition.getModule("DEFAULT-CONFIGURATION").get()), mod.localSentences(), mod.att());
+                    java.util.Set<Module> imports = mutable(mod.imports());
+                    imports.add(definition.getModule("DEFAULT-CONFIGURATION").get());
+                    return Module(mod.name(), (Set<Module>) immutable(imports), mod.localSentences(), mod.att());
                 }
                 return mod;
             }, "adding default configuration").apply(definition);
@@ -318,7 +320,7 @@ public class Kompile {
             result = parser.parseString(b.contents(), START_SYMBOL, Source.apply(source), startLine, startColumn);
             kem.addAllKException(result._2().stream().map(e -> e.getKException()).collect(Collectors.toList()));
             if (result._1().isRight()) {
-                KApply k = (KApply)TreeNodesToKORE.down(TreeNodesToKORE.apply(result._1().right().get()));
+                KApply k = (KApply) TreeNodesToKORE.down(TreeNodesToKORE.apply(result._1().right().get()));
                 k = KApply(k.klabel(), k.klist(), k.att().addAll(b.att().remove("contentStartLine").remove("contentStartColumn").remove("Source").remove("Location")));
                 cache.put(b.contents(), new ParsedSentence(k, new HashSet<>(result._2())));
                 return Stream.of(k);
