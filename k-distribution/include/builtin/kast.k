@@ -40,6 +40,7 @@ module KSEQ
   syntax left #KSequence
   syntax KBott     ::= "`" K "`"    [bracket]
   syntax KBott     ::= "HOLE"       [klabel([])]
+  syntax KConfigVar
 endmodule
 
 
@@ -47,6 +48,8 @@ endmodule
 module KSEQ-SYMBOLIC
   imports KSEQ
   syntax #KVariable ::= r"(?<![A-Za-z0-9_\\$!\\?])(\\$|\\!|\\?)?([A-Z][A-Za-z0-9'_]*|_)"   [token, autoReject, hook(org.kframework.kore.KVariable)]
+  syntax KConfigVar ::= r"(?<![A-Za-z0-9_\\$!\\?])(\\$)([A-Z][A-Za-z0-9'_]*)"              [token, autoReject]
+  syntax KBott      ::= KConfigVar
   syntax KBott      ::= #KVariable
   syntax KLabel     ::= #KVariable
 endmodule
