@@ -20,6 +20,7 @@ import scala.collection.immutable.Seq;
 
 import java.util.HashSet;
 import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.kframework.Collections.*;
@@ -59,6 +60,7 @@ public class RuleGrammarGenerator {
     public static final String CONFIG_CELLS = "CONFIG-CELLS";
     public static final String K = "K";
     public static final String AUTO_CASTS = "AUTO-CASTS";
+    public static final String K_SORT_LATTICE = "K-SORT-LATTICE";
     public static final String K_TOP_SORT = "K-TOP-SORT";
     public static final String K_BOTTOM_SORT = "K-BOTTOM-SORT";
     public static final String AUTO_FOLLOW = "AUTO-FOLLOW";
@@ -121,26 +123,8 @@ public class RuleGrammarGenerator {
             prods.addAll(makeCasts(Sorts.KBott(), Sorts.K(), Sorts.KItem()));
             prods.addAll(makeCasts(Sorts.KBott(), Sorts.K(), Sorts.K()));
         }
-        if (baseK.getModule(K_TOP_SORT).isDefined() && mod.importedModules().contains(baseK.getModule(K_TOP_SORT).get())) { // create the diamond
-            for (Sort srt : iterable(mod.definedSorts())) {
-                if (!kSorts.contains(srt) && !srt.name().startsWith("#")) {
-                    // K ::= Sort
-                    prods.add(Production(Sorts.K(), Seq(NonTerminal(srt)), Att()));
-                }
-            }
-        }
-
-        if (baseK.getModule(K_BOTTOM_SORT).isDefined() && mod.importedModules().contains(baseK.getModule(K_BOTTOM_SORT).get())) { // create the diamond
-            for (Sort srt : iterable(mod.definedSorts())) {
-                if (!kSorts.contains(srt) && !srt.name().startsWith("#")) {
-                    // Sort ::= KBott
-                    prods.add(Production(srt, Seq(NonTerminal(Sorts.KBott())), Att()));
-                }
-            }
-        }
-        scala.collection.immutable.Set<Sentence> prods2;
         if (baseK.getModule(RULE_CELLS).isDefined() && mod.importedModules().contains(baseK.getModule(RULE_CELLS).get())) { // prepare cell productions for rule parsing
-            prods2 = Stream.concat(prods.stream(), stream(mod.sentences())).flatMap(s -> {
+            prods = Stream.concat(prods.stream(), stream(mod.sentences())).flatMap(s -> {
                 if (s instanceof Production && (s.att().contains("cell"))) {
                     Production p = (Production) s;
                     // assuming that productions tagged with 'cell' start and end with terminals, and only have non-terminals in the middle
@@ -152,22 +136,22 @@ public class RuleGrammarGenerator {
                     return Stream.of(p1, p2);
                 }
                 return Stream.of(s);
-            }).collect(Collections.toSet());
+            }).collect(Collectors.toSet());
         } else
-            prods2 = Stream.concat(prods.stream(), stream(mod.sentences())).collect(Collections.toSet());
+            prods = Stream.concat(prods.stream(), stream(mod.sentences())).collect(Collectors.toSet());
 
         if (baseK.getModule(AUTO_FOLLOW).isDefined() && mod.importedModules().contains(baseK.getModule(AUTO_FOLLOW).get())) {
             Object PRESENT = new Object();
             PatriciaTrie<Object> terminals = new PatriciaTrie<>(); // collect all terminals so we can do automatic follow restriction for prefix terminals
-            stream(prods2).filter(sent -> sent instanceof Production).forEach(p -> stream(((Production) p).items()).forEach(i -> {
+            prods.stream().filter(sent -> sent instanceof Production).forEach(p -> stream(((Production) p).items()).forEach(i -> {
                 if (i instanceof Terminal) terminals.put(((Terminal) i).value(), PRESENT);
             }));
-            prods2 = stream(prods2).map(s -> {
+            prods = prods.stream().map(s -> {
                 if (s instanceof Production) {
                     Production p = (Production) s;
                     if (p.sort().name().startsWith("#"))
                         return p; // don't do anything for such productions since they are advanced features
-                    // rewrite productions to contin follow restrictions for prefix terminals
+                    // rewrite productions to contain follow restrictions for prefix terminals
                     // example _==_ and _==K_ can produce ambiguities. Rewrite the first into _(==(?![K])_
                     // this also takes care of casting and productions that have ":"
                     List<ProductionItem> items = stream(p.items()).map(pi -> {
@@ -194,10 +178,38 @@ public class RuleGrammarGenerator {
                     return p;
                 }
                 return s;
-            }).collect(Collections.toSet());
+            }).collect(Collectors.toSet());
         }
 
-        Module newM = new Module(mod.name() + "-PARSER", Set(), prods2, mod.att());
+        if (baseK.getModule(K_SORT_LATTICE).isDefined() && mod.importedModules().contains(baseK.getModule(K_SORT_LATTICE).get())) { // create the diamond
+            for (Sort srt : iterable(mod.definedSorts())) {
+                if (!kSorts.contains(srt) && !srt.name().startsWith("#")) {
+                    // K ::= Sort
+                    prods.add(Production(Sorts.K(), Seq(NonTerminal(srt)), Att()));
+                    // Sort ::= KBott
+                    prods.add(Production(srt, Seq(NonTerminal(Sorts.KBott())), Att()));
+                }
+            }
+        }
+//        if (baseK.getModule(K_TOP_SORT).isDefined() && mod.importedModules().contains(baseK.getModule(K_TOP_SORT).get())) { // create the diamond
+//            for (Sort srt : iterable(mod.definedSorts())) {
+//                if (!kSorts.contains(srt) && !srt.name().startsWith("#")) {
+//                    // K ::= Sort
+//                    prods.add(Production(Sorts.K(), Seq(NonTerminal(srt)), Att()));
+//                }
+//            }
+//        }
+//
+//        if (baseK.getModule(K_BOTTOM_SORT).isDefined() && mod.importedModules().contains(baseK.getModule(K_BOTTOM_SORT).get())) { // create the diamond
+//            for (Sort srt : iterable(mod.definedSorts())) {
+//                if (!kSorts.contains(srt) && !srt.name().startsWith("#")) {
+//                    // Sort ::= KBott
+//                    prods.add(Production(srt, Seq(NonTerminal(Sorts.KBott())), Att()));
+//                }
+//            }
+//        }
+
+        Module newM = new Module(mod.name() + "-PARSER", Set(), immutable(prods), mod.att());
         return newM;
     }
 

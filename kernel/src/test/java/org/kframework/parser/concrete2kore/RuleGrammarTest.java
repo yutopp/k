@@ -312,4 +312,15 @@ public class RuleGrammarTest {
                 "endmodule";
         parseRule("\u2022 => .K", def, 0, false);
     }
+
+    // test performance of lattice optimisations
+    @Test
+    public void test19() {
+        String def = "" +
+                "module TEST syntax Exp0 \n";
+        for (int i = 1; i < 300; i++)
+            def += "syntax Exp" + i + " ::= Exp" + (i-1) + "\n";
+        def += "endmodule";
+        parseRule("A => B", def, 2, false);
+    }
 }
