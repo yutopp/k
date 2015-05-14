@@ -1,14 +1,16 @@
 package org.kframework.tiny
 
 
-import org.kframework.definition
+import org.kframework.builtin.Sorts
+import org.kframework.definition.{Module, ModuleTransformer}
+import org.kframework.kore.{KApply, Unapply}
+import org.kframework.{definition, kore}
 import org.kframework.kore.Unapply.KLabel
-import org.kframework.kore
 
 import scala.collection.parallel.ParIterable
 
-object KIndex extends (K => Option[String]) {
-  def apply(k: K): Option[String] = k match {
+object KIndex extends (K => Option[Symbol]) {
+  def apply(k: K): Option[Symbol] = k match {
     case KApp(KLabel("<k>"), c, _) =>
       val top = c.head match {
         case s: KSeq => s.children.headOption.getOrElse(KSeq())
@@ -23,32 +25,67 @@ object KIndex extends (K => Option[String]) {
   }
 }
 
-object SimpleIndex extends (K => Option[String]) {
+object SimpleIndex extends (K => Option[Symbol]) {
   def apply(k: K) = k match {
-    case KApp(l, _, _) => Some(l.toString)
-    case v => Some("")
+    case KApp(l, _, _) => Some(Symbol(l.toString))
+    case v => None
   }
 }
 
-class Rewriter(module: definition.Module, index: K => Option[String] = KIndex) extends org.kframework.Rewriter {
-  def this(module: definition.Module) = this(module, KIndex)
+class FullTinyRewriter(module: definition.Module) extends org.kframework.Rewriter {
+  val moduleWithoutFunctions = ModuleTransformer(m => Module(
+    m.name, m.imports, m.localSentences.filter({
+      case r: org.kframework.definition.Rule =>
+        r.body match {
+          case Unapply.KRewrite(app: KApply, _) => !module.attributesFor(app.klabel).contains("function")
+          case _ => true
+        }
+      case _ => true
+    })), "CreateModuleForFunctions").apply(module)
 
-  val cons = new Constructors(module)
+  val innerRewriter = new Rewriter(moduleWithoutFunctions, KIndex, new TheoryWithFunctions(module))
+
+  override def execute(k: kore.K): kore.K = innerRewriter.execute(k)
+}
+
+class Rewriter(module: definition.Module, index: K => Option[Symbol] = KIndex, theory: Theory) extends org.kframework.Rewriter {
+
+  //new Up(this, Set()), new Down(Set())
+
+  val cons = new Constructors(module, theory)
 
   import cons._
 
   def createRule(r: definition.Rule): Rule = {
+    val sideCondition = liftedSideCondition(r)
+
     if (r.att.contains("anywhere"))
-      AnywhereRule(convert(r.body), convert(r.requires))
+      AnywhereRule(convert(r.body), sideCondition)
     else
-      RegularRule(convert(r.body), convert(r.requires))
+      RegularRule(convert(r.body), sideCondition)
+  }
+
+  def createExecuteRule(r: definition.Rule): Rule = {
+    val sideCondition = liftedSideCondition(r)
+
+    if (r.att.contains("anywhere"))
+      AnywhereRule(convert(r.body), sideCondition)
+    else
+      ExecuteRule(convert(r.body), sideCondition)
+  }
+
+  def liftedSideCondition(r: definition.Rule): K = {
+    if (module.optionSortFor(r.requires) == Some(Sorts.Bool))
+      LiftBoolToML(convert(r.requires))
+    else
+      convert(r.requires)
   }
 
   val rules = module.rules map createRule
 
-  val indexedRules: Map[String, ParIterable[Rule]] = {
+  val indexedRules: Map[Option[Symbol], ParIterable[Rule]] = {
     module.rules
-      .groupBy { r => index(convert(r.body)).getOrElse("NOINDEX") }
+      .groupBy { r => index(convert(r.body)) }
       .map { case (k, ruleSet) =>
       (k, ruleSet
         .map(createRule)
@@ -57,22 +94,22 @@ class Rewriter(module: definition.Module, index: K => Option[String] = KIndex) e
   }
 
   val executeRules = module.rules
-    .map { r => ExecuteRule(convert(r.body), convert(r.requires)) }
+    .map(createExecuteRule)
     .seq.view.par
 
-  val indexedExecuteRules: Map[String, ParIterable[Rule]] = {
+  val indexedExecuteRules: Map[Option[Symbol], ParIterable[Rule]] = {
     module.rules
-      .groupBy { r => index(convert(r.body)).getOrElse("NOINDEX") }
+      .groupBy { r => index(convert(r.body)) }
       .map { case (k, ruleSet) =>
       (k, ruleSet
-        .map { r => ExecuteRule(convert(r.body), convert(r.requires)) }
+        .map(createExecuteRule)
         .seq.view.par)
     }
   }
 
 
   def rewriteStep(k: K): Set[K] = {
-    val i = index(k).get
+    val i = index(k)
 
     val prioritized = indexedRules.get(i).getOrElse({
       indexFailures += 1;
@@ -91,7 +128,7 @@ class Rewriter(module: definition.Module, index: K => Option[String] = KIndex) e
   def executeStep(k: K): Option[K] = {
     //    println("\n\n MATCHING ON: " + k)
 
-    val i = index(k).get
+    val i = index(k)
 
     val prioritized = indexedExecuteRules.get(i).getOrElse({
       indexFailures += 1;
@@ -109,7 +146,9 @@ class Rewriter(module: definition.Module, index: K => Option[String] = KIndex) e
         case None => None
       }
     }
-      .find {_.isInstanceOf[Some[_]]}
+      .find {
+      _.isInstanceOf[Some[_]]
+    }
       .getOrElse(None)
     //    println("RESULT:\n    " + res.mkString("\n    "))
     res
@@ -127,7 +166,7 @@ class Rewriter(module: definition.Module, index: K => Option[String] = KIndex) e
       if (steps % 1000 == 0) {
         println(steps +
           " runtime: " + (System.nanoTime() - time) / 1000000 +
-          " cache size: " + NormalizationCaching.cache.size +
+          " cache size: " + theory.cache.size +
           " avg tried rules: " + totalTriedRules / steps +
           " index failures: " + indexFailures)
         time = System.nanoTime()
@@ -138,7 +177,6 @@ class Rewriter(module: definition.Module, index: K => Option[String] = KIndex) e
         case None => prev
       }
     } while (current != prev)
-    println(steps)
     current
   }
 
@@ -159,7 +197,11 @@ class Rewriter(module: definition.Module, index: K => Option[String] = KIndex) e
   def search(k: K, pattern: K)(implicit sofar: Set[K] = Set()): Either[Set[K], K] = {
     val newKs = (rewriteStep(k) &~ sofar).toStream
 
-    newKs find {pattern.matcher(_).normalize == True} map {Right(_)} getOrElse {
+    newKs find {
+      pattern.matcher(_).normalize == True
+    } map {
+      Right(_)
+    } getOrElse {
       if (newKs.size == 0)
         Left(Set[K]())
       else {

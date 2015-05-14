@@ -1,12 +1,13 @@
 package org.kframework.tiny
 
 import org.kframework.attributes.Att
+import org.kframework.builtin.Sorts
 import org.kframework.kore.Unapply
 import org.kframework.tiny.matcher.{MatcherLabel, EqualsMatcher, Matcher}
 
 object Or extends KAssocAppLabel with EmptyAtt {
   override def constructFromFlattened(l: Seq[K], att: Att): KAssocApp = new Or(l.toSet, att)
-  override def name: String = "_orBool_"
+  override def name: String = "OR"
   override def apply(ks: K*): K = super.apply(ks: _*)
   def apply(ks: Set[K], att: Att = Att()): K =
     if (ks.size == 1)
@@ -17,6 +18,10 @@ object Or extends KAssocAppLabel with EmptyAtt {
 
 class Or(val children: Set[K], val att: Att = Att(), normalBy: Option[Theory] = None)
   extends KAssocApp {
+
+  if(children.size == 0)
+    this.isNormal = true
+
   /** Estimate the time it takes to solve (up to available data) one of the child formulas  */
   def estimate(implicit t: Theory): Int = ???
 
@@ -66,11 +71,14 @@ object OrMatcher extends MatcherLabel {
 
 object And extends KAssocAppLabel with EmptyAtt {
   override def constructFromFlattened(l: Seq[K], att: Att): KAssocApp = new And(l.toSet, att)
-  override def name: String = "_andBool_"
+  override def name: String = "AND"
 }
 
 case class And(children: Set[K], att: Att, normalBy: Option[Theory] = None)
   extends KAssocApp {
+
+  if(children.size == 0)
+    this.isNormal = true
 
   /** Estimate the time it takes to solve one variable in one formula */
   def estimate(implicit t: Theory): Int = ???
@@ -210,20 +218,21 @@ object Not extends KProduct1Label with EmptyAtt {
 }
 
 case class SortPredicate(klabel: SortPredicateLabel, k: K, att: Att = Att())
-  extends KProduct {
-  override protected[this] def normalizeInner(implicit theory: Theory): K =
+  extends KProduct with PlainNormalization {
+  override def normalizeInner(implicit theory: Theory): K =
     if (!k.isInstanceOf[KVar]) {
-      val actualSort = k match {
-        case KApp(l, _, _) => theory.asInstanceOf[TheoryWithUpDown].module.sortFor(l)
+      val actualSort = k.normalize match {
+        case s: SortPredicate => Sorts.Bool
+        case KApp(l, _, _) => theory.module.sortFor(l)
         case Unapply.KToken(s, _) => s
       }
       if (actualSort == klabel.sort ||
-        theory.asInstanceOf[TheoryWithUpDown].module.subsorts.<(actualSort, klabel.sort))
-        True
+        theory.module.subsorts.<(actualSort, klabel.sort))
+        TypedKTok(Sorts.Bool, true)
       else
-        False
+        TypedKTok(Sorts.Bool, false)
     } else {
-      this
+      super[PlainNormalization].normalizeInner
     }
 }
 

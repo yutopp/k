@@ -95,7 +95,7 @@ public class RuleGrammarGenerator {
     public Module getCombinedGrammar(Module mod) {
         Set<Sentence> prods = new HashSet<>();
 
-        if (baseK.getModule(AUTO_CASTS).isDefined() && mod.importedModules().contains(baseK.getModule(AUTO_CASTS).get())) { // create the diamond
+        if (baseK.getModule(AUTO_CASTS).isDefined() && mod.allImports().contains(baseK.getModule(AUTO_CASTS).get())) { // create the diamond
             for (Sort srt : iterable(mod.definedSorts())) {
                 if (!kSorts.contains(srt) && !srt.name().startsWith("#")) {
                     // K ::= K "::Sort" | K ":Sort" | K "<:Sort" | K ":>Sort"
@@ -107,7 +107,7 @@ public class RuleGrammarGenerator {
             prods.addAll(makeCasts(Sorts.KBott(), Sorts.K(), Sorts.KItem()));
             prods.addAll(makeCasts(Sorts.KBott(), Sorts.K(), Sorts.K()));
         }
-        if (baseK.getModule(K_TOP_SORT).isDefined() && mod.importedModules().contains(baseK.getModule(K_TOP_SORT).get())) { // create the diamond
+        if (baseK.getModule(K_TOP_SORT).isDefined() && mod.allImports().contains(baseK.getModule(K_TOP_SORT).get())) { // create the diamond
             for (Sort srt : iterable(mod.definedSorts())) {
                 if (!kSorts.contains(srt) && !srt.name().startsWith("#")) {
                     // K ::= Sort
@@ -116,7 +116,7 @@ public class RuleGrammarGenerator {
             }
         }
 
-        if (baseK.getModule(K_BOTTOM_SORT).isDefined() && mod.importedModules().contains(baseK.getModule(K_BOTTOM_SORT).get())) { // create the diamond
+        if (baseK.getModule(K_BOTTOM_SORT).isDefined() && mod.allImports().contains(baseK.getModule(K_BOTTOM_SORT).get())) { // create the diamond
             for (Sort srt : iterable(mod.definedSorts())) {
                 if (!kSorts.contains(srt) && !srt.name().startsWith("#")) {
                     // Sort ::= KBott
@@ -125,7 +125,7 @@ public class RuleGrammarGenerator {
             }
         }
         scala.collection.immutable.Set<Sentence> prods2;
-        if (baseK.getModule(RULE_CELLS).isDefined() && mod.importedModules().contains(baseK.getModule(RULE_CELLS).get())) { // prepare cell productions for rule parsing
+        if (baseK.getModule(RULE_CELLS).isDefined() && mod.allImports().contains(baseK.getModule(RULE_CELLS).get())) { // prepare cell productions for rule parsing
             prods2 = Stream.concat(prods.stream(), stream(mod.sentences())).flatMap(s -> {
                 if (s instanceof Production && (s.att().contains("cell"))) {
                     Production p = (Production) s;
@@ -142,7 +142,7 @@ public class RuleGrammarGenerator {
         } else
             prods2 = Stream.concat(prods.stream(), stream(mod.sentences())).collect(Collections.toSet());
 
-        if (baseK.getModule(AUTO_FOLLOW).isDefined() && mod.importedModules().contains(baseK.getModule(AUTO_FOLLOW).get())) {
+        if (baseK.getModule(AUTO_FOLLOW).isDefined() && mod.allImports().contains(baseK.getModule(AUTO_FOLLOW).get())) {
             Object PRESENT = new Object();
             PatriciaTrie<Object> terminals = new PatriciaTrie<>(); // collect all terminals so we can do automatic follow restriction for prefix terminals
             stream(prods2).filter(sent -> sent instanceof Production).forEach(p -> stream(((Production) p).items()).forEach(i -> {

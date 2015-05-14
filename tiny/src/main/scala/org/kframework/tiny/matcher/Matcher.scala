@@ -46,7 +46,7 @@ case class KRegularAppMatcher(left: KRegularApp, right: K) extends KAppMatcher {
 
   def matchContents(ksL: Seq[K], ksR: Seq[K])(implicit theory: Theory): K =
     And(ksL.zip(ksR) map {case (k1, k2) =>
-      assert(k2.isGround, "Trying to create KRegularAppMatcher(...(" + k1 + "    ,    " + k2 + ")...)")
+//      assert(k2.isGround, "Trying to create KRegularAppMatcher(...(" + k1 + "    ,    " + k2 + ")...)")
       k1.matcher(k2)
     }: _*)
 

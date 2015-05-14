@@ -2,10 +2,10 @@
 
 package org.kframework.definition
 
-import dk.brics.automaton.{SpecialOperations, BasicAutomata, RegExp, RunAutomaton}
+import dk.brics.automaton.{BasicAutomata, RegExp, RunAutomaton, SpecialOperations}
 import org.kframework.POSet
-import org.kframework.attributes.{Source, Location, Att}
-import org.kframework.kore.Unapply.{KLabel, KApply}
+import org.kframework.attributes.Att
+import org.kframework.kore.Unapply.{KApply, KLabel}
 import org.kframework.kore._
 import org.kframework.utils.errorsystem.KEMException
 
@@ -26,10 +26,10 @@ case class DivergingAttributesForTheSameKLabel(ps: Set[Production])
 //}
 
 case class Definition(
-  mainModule: Module,
-  mainSyntaxModule: Module,
-  entryModules: Set[Module],
-  att: Att = Att())
+                       mainModule: Module,
+                       mainSyntaxModule: Module,
+                       entryModules: Set[Module],
+                       att: Att = Att())
   extends DefinitionToString with OuterKORE {
 
   private def allModules(m: Module): Set[Module] = m.imports | (m.imports flatMap allModules) + m
@@ -45,10 +45,14 @@ case class Definition(
 case class Module(name: String, imports: Set[Module], localSentences: Set[Sentence], att: Att = Att())
   extends ModuleToString with KLabelMappings with OuterKORE {
 
-  val sentences: Set[Sentence] = localSentences | (imports flatMap {_.sentences})
+  val sentences: Set[Sentence] = localSentences | (imports flatMap {
+    _.sentences
+  })
 
   /** All the imported modules, calculated recursively. */
-  lazy val importedModules: Set[Module] = imports | (imports flatMap {_.importedModules})
+  lazy val allImports: Set[Module] = imports | (imports flatMap {
+    _.allImports
+  })
 
   val productions: Set[Production] = sentences collect { case p: Production => p }
 
@@ -66,11 +70,22 @@ case class Module(name: String, imports: Set[Module], localSentences: Set[Senten
 
   lazy val bracketProductionsFor: Map[Sort, Set[Production]] =
     productions
-      .collect({ case p if p.att.contains("bracket") => p})
+      .collect({ case p if p.att.contains("bracket") => p })
       .groupBy(_.sort)
-      .map { case (s, ps) => (s, ps)}
+      .map { case (s, ps) => (s, ps) }
 
-  @transient lazy val sortFor: Map[KLabel, Sort] = productionsFor mapValues {_.head.sort}
+  @transient lazy val sortFor: Map[KLabel, Sort] = productionsFor mapValues {
+    _.head.sort
+  }
+
+  def sortFor(k: K): Sort = optionSortFor(k).get
+
+  def optionSortFor(k: K): Option[Sort] = k match {
+    case Unapply.KApply(l, _) => sortFor.get(l)
+    case Unapply.KRewrite(_, r) => optionSortFor(r)
+    case Unapply.KToken(s, _) => Some(s)
+    case Unapply.KSequence(s) => optionSortFor(s.last)
+  }
 
   def isSort(klabel: KLabel, s: Sort) = subsorts.<(sortFor(klabel), s)
 
@@ -83,11 +98,12 @@ case class Module(name: String, imports: Set[Module], localSentences: Set[Senten
   //        throw DivergingAttributesForTheSameKLabel(ps)
   //  }
 
-  @transient lazy val attributesFor: Map[KLabel, Att] = productionsFor mapValues {p => {
+  @transient lazy val attributesFor: Map[KLabel, Att] = productionsFor mapValues { p => {
     val union = p.flatMap(_.att.att)
-    val attMap = union.collect({case t@KApply(KLabel(_), _) => t}).groupBy(_.klabel).map { case (l, as) => (l, as) }
-    Att(union.filter { k => !k.isInstanceOf[KApply] || attMap(k.asInstanceOf[KApply].klabel).size == 1})
-  }}
+    val attMap = union.collect({ case t@KApply(KLabel(_), _) => t }).groupBy(_.klabel).map { case (l, as) => (l, as) }
+    Att(union.filter { k => !k.isInstanceOf[KApply] || attMap(k.asInstanceOf[KApply].klabel).size == 1 })
+  }
+  }
 
   @transient lazy val signatureFor: Map[KLabel, Set[(Seq[Sort], Sort)]] =
     productionsFor mapValues {
@@ -101,10 +117,15 @@ case class Module(name: String, imports: Set[Module], localSentences: Set[Senten
 
   val sortDeclarations: Set[SyntaxSort] = sentences.collect({ case s: SyntaxSort => s })
 
-  val definedSorts: Set[Sort] = (productions map {_.sort}) ++ (sortDeclarations map {_.sort})
+  val definedSorts: Set[Sort] = (productions map {
+    _.sort
+  }) ++ (sortDeclarations map {
+    _.sort
+  })
 
   lazy val listSorts: Set[Sort] = sentences.collect({ case Production(srt, _, att1) if att1.contains("userList") =>
-    srt })
+    srt
+  })
 
   private lazy val subsortRelations: Set[(Sort, Sort)] = sentences collect {
     case Production(endSort, Seq(NonTerminal(startSort)), _) => (startSort, endSort)
@@ -178,9 +199,9 @@ object Associativity extends Enumeration {
 }
 
 case class SyntaxAssociativity(
-  assoc: Associativity.Value,
-  tags: collection.immutable.Set[Tag],
-  att: Att = Att())
+                                assoc: Associativity.Value,
+                                tags: collection.immutable.Set[Tag],
+                                att: Att = Att())
   extends Sentence with SyntaxAssociativityToString with OuterKORE
 
 case class Tag(name: String) extends TagToString with OuterKORE
@@ -200,7 +221,9 @@ with SyntaxSortToString with OuterKORE {
 
 case class Production(sort: Sort, items: Seq[ProductionItem], att: Att)
   extends Sentence with ProductionToString {
-  lazy val klabel: Option[KLabel] = att.get[String]("#klabel") map {org.kframework.kore.KORE.KLabel(_)}
+  lazy val klabel: Option[KLabel] = att.get[String]("#klabel") map {
+    org.kframework.kore.KORE.KLabel(_)
+  }
 
   override def equals(that: Any) = that match {
     case p@Production(`sort`, `items`, _) => this.klabel == p.klabel
@@ -217,6 +240,7 @@ object Production {
   def apply(klabel: String, sort: Sort, items: Seq[ProductionItem], att: Att = Att()): Production = {
     Production(sort, items, att + ("#klabel" -> klabel))
   }
+
   val kLabelAttribute = "klabel"
 }
 
@@ -228,7 +252,9 @@ sealed trait ProductionItem extends OuterKORE
 
 trait TerminalLike extends ProductionItem {
   def pattern: RunAutomaton
+
   def followPattern: RunAutomaton
+
   def precedePattern: RunAutomaton
 }
 

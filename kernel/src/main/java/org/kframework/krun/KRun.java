@@ -81,7 +81,7 @@ public class KRun implements Transformation<Void, Void> {
     }
 
     public KApply plugConfigVars(CompiledDefinition compiledDef, Map<KToken, K> output) {
-        return KApply(compiledDef.topCellInitializer, output.entrySet().stream().map(e -> KApply(KLabel("_|->_"), e.getKey(), e.getValue())).reduce(KApply(KLabel(".Map")), (a, b) -> KApply(KLabel("_Map_"), a, b)));
+        return KApply(compiledDef.topCellInitializer, output.entrySet().stream().map(e -> KApply(KLabel("_|->_"), e.getKey(), e.getValue())).reduce(KApply(KLabel("_Map_")), (a, b) -> KApply(KLabel("_Map_"), a, b)));
     }
 
     private String unparseTerm(K input, Module test) {
