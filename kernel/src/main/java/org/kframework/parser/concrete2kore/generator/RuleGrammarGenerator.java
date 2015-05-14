@@ -113,7 +113,7 @@ public class RuleGrammarGenerator {
 
         if (baseK.getModule(AUTO_CASTS).isDefined() && mod.importedModules().contains(baseK.getModule(AUTO_CASTS).get())) { // create the diamond
             for (Sort srt : iterable(mod.definedSorts())) {
-                if (!kSorts.contains(srt) && !srt.name().startsWith("#")) {
+                if (isExceptionSort(srt)) {
                     // K ::= K "::Sort" | K ":Sort" | K "<:Sort" | K ":>Sort"
                     prods.addAll(makeCasts(Sorts.KBott(), Sorts.K(), srt));
                 }
@@ -182,10 +182,42 @@ public class RuleGrammarGenerator {
         }
 
         if (baseK.getModule(K_SORT_LATTICE).isDefined() && mod.importedModules().contains(baseK.getModule(K_SORT_LATTICE).get())) { // create the diamond
+            // 1. Sort-no-subsorts - called from K
+            Set<Sentence> noSubsorts = prods.stream().flatMap(s -> {
+                // remove subsorts, and rename the production sort. These productions will be called from K contexts
+                if (s instanceof Production) {
+                    Production p = (Production) s;
+                    if (!isExceptionSort(p.sort())) {
+                        if (p.isSyntacticSubsort())
+                            return Stream.of();
+                        else
+                            return Stream.of(Production(Sort(p.sort().name() + "#1"), p.items(), p.att()));
+                    }
+                }
+                return Stream.of(s);
+            }).collect(Collectors.toSet());
+            // 2. Sort no-KBott-subsort  - called from user subsorts
+            Set<Sentence> noBott = prods.stream().flatMap(s -> {
+                // remove subsorts, and rename the production sort. These productions will be called from K contexts
+                if (s instanceof Production) {
+                    Production p = (Production) s;
+                    if (!isExceptionSort(p.sort())) {
+                        if (p.isSyntacticSubsort())
+                            return Stream.of(Production(Sort(p.sort().name() + "#2"), p.items().head(), p.att()));
+                        else
+                            return Stream.of(Production(Sort(p.sort().name() + "#2"), p.items(), p.att()));
+                    }
+                }
+                return Stream.of(s);
+            }).collect(Collectors.toSet());
+
+            // 3. All/subsorts  - called from user subsorts
+
+
             for (Sort srt : iterable(mod.definedSorts())) {
-                if (!kSorts.contains(srt) && !srt.name().startsWith("#")) {
+                if (isExceptionSort(srt)) {
                     // K ::= Sort
-                    prods.add(Production(Sorts.K(), Seq(NonTerminal(srt)), Att()));
+                    prods.add(Production(Sorts.K(), Seq(NonTerminal(Sort(srt.name() + "#1"))), Att()));
                     // Sort ::= KBott
                     prods.add(Production(srt, Seq(NonTerminal(Sorts.KBott())), Att()));
                 }
@@ -211,6 +243,10 @@ public class RuleGrammarGenerator {
 
         Module newM = new Module(mod.name() + "-PARSER", Set(), immutable(prods), mod.att());
         return newM;
+    }
+
+    private boolean isExceptionSort(Sort srt) {
+        return !kSorts.contains(srt) && !srt.name().startsWith("#");
     }
 
     private Set<Sentence> makeCasts(Sort outerSort, Sort innerSort, Sort castSort) {
