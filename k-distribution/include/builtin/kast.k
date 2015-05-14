@@ -59,8 +59,6 @@ module KCELLS
                | ".Bag"   [klabel(#cells)]
                | ".::Bag" [klabel(#cells)]
                | Cell
-  syntax K ::= Bag
-  syntax Bag ::= KBott
 endmodule
 
 module RULE-CELLS

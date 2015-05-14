@@ -2,22 +2,28 @@
 package org.kframework.parser.concrete2kore.generator;
 
 import org.apache.commons.collections4.trie.PatriciaTrie;
+import org.apache.commons.io.FileUtils;
 import org.kframework.Collections;
 import org.kframework.attributes.Att;
 import org.kframework.builtin.Sorts;
 import org.kframework.definition.Definition;
 import org.kframework.definition.Module;
+import org.kframework.definition.NonTerminal;
 import org.kframework.definition.Production;
 import org.kframework.definition.ProductionItem;
 import org.kframework.definition.RegexTerminal;
 import org.kframework.definition.Sentence;
+import org.kframework.definition.SyntaxSort;
 import org.kframework.definition.Terminal;
 import org.kframework.kil.Attribute;
+import org.kframework.kil.Syntax;
 import org.kframework.kore.Sort;
 import org.kframework.utils.StringUtil;
 import scala.collection.immutable.List;
 import scala.collection.immutable.Seq;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -198,30 +204,65 @@ public class RuleGrammarGenerator {
             }).collect(Collectors.toSet());
             // 2. Sort no-KBott-subsort  - called from user subsorts
             Set<Sentence> noBott = prods.stream().flatMap(s -> {
-                // remove subsorts, and rename the production sort. These productions will be called from K contexts
+                // no bottom subsorts - these productions will be called from user subsorts
                 if (s instanceof Production) {
                     Production p = (Production) s;
                     if (!isExceptionSort(p.sort())) {
-                        if (p.isSyntacticSubsort())
-                            return Stream.of(Production(Sort(p.sort().name() + "#2"), p.items().head(), p.att()));
-                        else
+                        if (p.isSyntacticSubsort()) {
+                            NonTerminal nt = NonTerminal(Sort(((NonTerminal)p.items().head()).sort().name() + "#2"));
+                            return Stream.of(Production(Sort(p.sort().name() + "#2"), Seq(nt), p.att()));
+                        } else {
                             return Stream.of(Production(Sort(p.sort().name() + "#2"), p.items(), p.att()));
+                        }
                     }
                 }
                 return Stream.of(s);
             }).collect(Collectors.toSet());
 
             // 3. All/subsorts  - called from user subsorts
+            Set<Sentence> allRenameSubs = prods.stream().flatMap(s -> {
+                // all, but rename user subsorts to call #2 where there are no bottom subsorts
+                if (s instanceof Production) {
+                    Production p = (Production) s;
+                    if (!isExceptionSort(p.sort())) {
+                        if (p.isSyntacticSubsort()) {
+                            NonTerminal nt = NonTerminal(Sort(((NonTerminal)p.items().head()).sort().name() + "#2"));
+                            return Stream.of(Production(p.sort(), Seq(nt), p.att()));
+                        } else {
+                            return Stream.of(Production(p.sort(), p.items(), p.att()));
+                        }
+                    }
+                }
+                return Stream.of(s);
+            }).collect(Collectors.toSet());
 
-
+            Set<Sentence> lattice = new HashSet<>();
             for (Sort srt : iterable(mod.definedSorts())) {
-                if (isExceptionSort(srt)) {
+                if (!isExceptionSort(srt)) {
                     // K ::= Sort
-                    prods.add(Production(Sorts.K(), Seq(NonTerminal(Sort(srt.name() + "#1"))), Att()));
+                    lattice.add(Production(Sorts.K(), Seq(NonTerminal(Sort(srt.name() + "#1"))), Att()));
                     // Sort ::= KBott
-                    prods.add(Production(srt, Seq(NonTerminal(Sorts.KBott())), Att()));
+                    lattice.add(Production(srt, Seq(NonTerminal(Sorts.KBott())), Att()));
                 }
             }
+
+            prods = prods.stream().flatMap(s -> {
+                if (s instanceof SyntaxSort) {
+                    SyntaxSort ss = (SyntaxSort) s;
+                    if (!isExceptionSort(ss.sort()))
+                        return Stream.of(s, SyntaxSort(Sort(ss.sort().name() + "#1")), SyntaxSort(Sort(ss.sort().name() + "#2")));
+                }
+                if (s instanceof Production) {
+                    Production ss = (Production) s;
+                    if (!isExceptionSort(ss.sort()))
+                        return Stream.of(SyntaxSort(Sort(ss.sort().name() + "#1")), SyntaxSort(Sort(ss.sort().name() + "#2")));
+                }
+                return Stream.of();
+            }).collect(Collectors.toSet());
+            prods.addAll(lattice);
+            prods.addAll(noSubsorts);
+            prods.addAll(noBott);
+            prods.addAll(allRenameSubs);
         }
 //        if (baseK.getModule(K_TOP_SORT).isDefined() && mod.importedModules().contains(baseK.getModule(K_TOP_SORT).get())) { // create the diamond
 //            for (Sort srt : iterable(mod.definedSorts())) {
@@ -246,7 +287,7 @@ public class RuleGrammarGenerator {
     }
 
     private boolean isExceptionSort(Sort srt) {
-        return !kSorts.contains(srt) && !srt.name().startsWith("#");
+        return kSorts.contains(srt) || srt.name().startsWith("#");
     }
 
     private Set<Sentence> makeCasts(Sort outerSort, Sort innerSort, Sort castSort) {
