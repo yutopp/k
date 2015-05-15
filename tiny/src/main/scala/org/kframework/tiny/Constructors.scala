@@ -24,10 +24,12 @@ class Constructors(val module: definition.Module, implicit val theory: Theory) e
     case "Map:__" => KMapAppLabel(labelString)
     case "Map:_|->_" => Tuple2Label
     case "Map:keys" => MapKeys
-    case "Map:lookup" => BinaryHookedFunctionLabel(labelString, Att(), {
+    case "Map:lookup" =>
+      BinaryHookedFunctionLabel(labelString, Att(), {
       case (map: RegularKApp, index: K) if map.klabel == Tuple2Label && map.children.head == index =>
         map.children.tail.head
-      case (map: KMapApp, index: K) => map.theMap(index)
+      case (map: KMapApp, index: K) =>
+        map.theMap(index)
     })
     case "Set:in" => RegularKAppLabel("???in???", Att())
     case "LOGIC:AND" => And

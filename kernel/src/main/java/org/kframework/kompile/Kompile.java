@@ -206,6 +206,7 @@ public class Kompile {
 
         if (!errors.isEmpty()) {
             kem.addAllKException(errors.stream().map(e -> e.getKException()).collect(Collectors.toList()));
+            System.err.println(errors);
             throw KEMException.compilerError("Had " + errors.size() + " parsing errors.");
         }
         return parsedDef;

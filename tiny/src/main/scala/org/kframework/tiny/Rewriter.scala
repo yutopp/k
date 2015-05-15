@@ -3,9 +3,8 @@ package org.kframework.tiny
 
 import org.kframework.builtin.Sorts
 import org.kframework.definition.{Module, ModuleTransformer}
-import org.kframework.kore.{KApply, Unapply}
-import org.kframework.{definition, kore}
 import org.kframework.kore.Unapply.KLabel
+import org.kframework.{definition, kore}
 
 import scala.collection.parallel.ParIterable
 
@@ -16,17 +15,14 @@ object KIndex extends (K => Option[Symbol]) {
         case s: KSeq => s.children.headOption.getOrElse(KSeq())
         case x => x
       }
-      SimpleIndex(top)
-    case KApp(_, l, _) =>
-      l.toStream map KIndex collectFirst {
-        case Some(s) => s
-      }
-    case _ => None
+      SimpleIndex(top) map { s => Symbol("<k>" + s.toString) }
+    case x => SimpleIndex(x)
   }
 }
 
 object SimpleIndex extends (K => Option[Symbol]) {
-  def apply(k: K) = k match {
+  def apply(k: K): Option[Symbol] = k match {
+    case KRewrite(l, _, _) => apply(l)
     case KApp(l, _, _) => Some(Symbol(l.toString))
     case v => None
   }
@@ -37,7 +33,7 @@ class FullTinyRewriter(module: definition.Module) extends org.kframework.Rewrite
     m.name, m.imports, m.localSentences.filter({
       case r: org.kframework.definition.Rule =>
         r.body match {
-          case Unapply.KRewrite(app: KApply, _) => !module.attributesFor(app.klabel).contains("function")
+          //          case Unapply.KRewrite(app: KApply, _) => !module.attributesFor(app.klabel).contains("function")
           case _ => true
         }
       case _ => true

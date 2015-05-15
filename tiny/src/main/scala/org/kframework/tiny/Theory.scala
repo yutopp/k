@@ -7,7 +7,9 @@ import org.kframework.kore.{Unapply, KApply}
 trait Theory {
   val cache = CacheBuilder.newBuilder().maximumSize(10000).build[K, K]()
   val module: Module
+
   def normalize(k: K): K
+
   val self = this
 }
 
@@ -31,7 +33,12 @@ class TheoryWithFunctions(val module: Module) extends Theory {
 
   val rewriterForFunctions = new Rewriter(moduleWithOnlyFunctions, SimpleIndex, FreeTheory(moduleWithOnlyFunctions))
 
-  override def normalize(k: K): K = rewriterForFunctions.execute(k)
+  override def normalize(k: K): K =
+    if (k.isNormal)
+      k
+    else
+      rewriterForFunctions.execute(k)
+
 }
 
 //case class RewriteBasedTheory(rw: K => K) extends Theory {

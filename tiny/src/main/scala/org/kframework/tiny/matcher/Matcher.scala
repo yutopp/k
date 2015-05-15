@@ -105,7 +105,7 @@ object KAssocAppMatcher extends MatcherLabel {
 case class KVarMatcher(left: KVar, right: K) extends Matcher {
   val klabel = KVarMatcher
 
-  assert(!right.isInstanceOf[KVar], "Trying to create KVarMatcher(" + left + "," + right + ")")
+//  assert(!right.isInstanceOf[KVar], "Trying to create KVarMatcher(" + left + "," + right + ")")
 
   override def normalizeInner(implicit theory: Theory): K =
     Binding(left, right.normalize)
