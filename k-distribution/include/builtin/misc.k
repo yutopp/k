@@ -28,7 +28,7 @@ module BOOL
                   Bool "==Bool" Bool      [function, left, smtlib(=), hook(#BOOL:_==Bool_)]
                 | Bool "=/=Bool" Bool     [function, left, smtlib(distinct), hook(#BOOL:_=/=Bool_)]
 
-
+/*
   rule notBool true => false
   rule notBool false => true
 
@@ -52,7 +52,7 @@ module BOOL
   rule _:Bool impliesBool true => true
   rule B:Bool impliesBool false => notBool B
 
-  rule B1:Bool =/=Bool B2:Bool => notBool `B1 ==Bool B2`
+  rule B1:Bool =/=Bool B2:Bool => notBool `B1 ==Bool B2`*/
 endmodule
 
 module LOGIC

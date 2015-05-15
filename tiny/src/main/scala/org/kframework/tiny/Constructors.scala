@@ -36,14 +36,10 @@ class Constructors(val module: definition.Module, implicit val theory: Theory) e
     case "LOGIC:OR" => Or
     case "LOGIC:NOT" => Not
     case "LOGIC:BOOL-TO-ML" => LiftBoolToMLLabel
-    case "#BOOL:_andBool_" =>
-      NativeBinaryOpLabel(labelString, Att(), (x: Boolean, y: Boolean) => x && y, Sorts.Bool)
-    case "#BOOL:_orBool_" =>
-      NativeBinaryOpLabel(labelString, Att(), (x: Boolean, y: Boolean) => x || y, Sorts.Bool)
-    case "#BOOL:_impliesBool_" =>
-      NativeBinaryOpLabel(labelString, Att(), (x: Boolean, y: Boolean) => !x || y, Sorts.Bool)
-    case "#BOOL:notBool_" =>
-      NativeUnaryOpLabel(labelString, Att(), (x: Boolean) => !x, Sorts.Bool)
+    case "#BOOL:_andBool_" => Boolean.And(labelString)
+    case "#BOOL:_orBool_" => Boolean.Or(labelString)
+    case "#BOOL:_impliesBool_" => ???
+    case "#BOOL:notBool_" => Boolean.Not(labelString)
     case "#BOOL:_xorBool_" =>
       NativeBinaryOpLabel(labelString, Att(), (x: Boolean, y: Boolean) => x ^ y, Sorts.Bool)
     case "#BOOL:_==Bool_" =>

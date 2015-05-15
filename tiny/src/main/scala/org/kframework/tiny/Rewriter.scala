@@ -3,6 +3,7 @@ package org.kframework.tiny
 
 import org.kframework.builtin.Sorts
 import org.kframework.definition.{Module, ModuleTransformer}
+import org.kframework.kore.{KApply, Unapply}
 import org.kframework.kore.Unapply.KLabel
 import org.kframework.{definition, kore}
 
@@ -33,7 +34,7 @@ class FullTinyRewriter(module: definition.Module) extends org.kframework.Rewrite
     m.name, m.imports, m.localSentences.filter({
       case r: org.kframework.definition.Rule =>
         r.body match {
-          //          case Unapply.KRewrite(app: KApply, _) => !module.attributesFor(app.klabel).contains("function")
+          case Unapply.KRewrite(app: KApply, _) => !module.attributesFor(app.klabel).contains("function")
           case _ => true
         }
       case _ => true
