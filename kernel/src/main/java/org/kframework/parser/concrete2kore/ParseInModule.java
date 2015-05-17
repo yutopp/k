@@ -36,15 +36,22 @@ import java.util.Set;
  * Declarative disambiguation filters are also applied.
  */
 public class ParseInModule implements Serializable {
-    private final Module module;
+    private final Module disambiguation;
+    private final Module parsing;
     private final Grammar grammar;
-    public ParseInModule(Module module) {
-        this.module = module;
-        this.grammar = KSyntax2GrammarStatesFilter.getGrammar(module);
+    public ParseInModule(Module parsing) {
+        this.disambiguation = parsing;
+        this.parsing = parsing;
+        this.grammar = KSyntax2GrammarStatesFilter.getGrammar(this.parsing);
+    }
+    public ParseInModule(Module disambiguation, Module parsing) {
+        this.disambiguation = disambiguation;
+        this.parsing = parsing;
+        this.grammar = KSyntax2GrammarStatesFilter.getGrammar(this.parsing);
     }
 
     public Module module() {
-        return module;
+        return disambiguation;
     }
 
     /**
@@ -88,13 +95,13 @@ public class ParseInModule implements Serializable {
         rez = new CorrectCastPriorityVisitor().apply(rez.right().get());
         if (rez.isLeft())
             return new Tuple2<>(rez, warn);
-        rez = new ApplyTypeCheckVisitor(module.subsorts()).apply(rez.right().get());
+        rez = new ApplyTypeCheckVisitor(disambiguation.subsorts()).apply(rez.right().get());
         if (rez.isLeft())
             return new Tuple2<>(rez, warn);
-        rez = new PriorityVisitor(module.priorities(), module.leftAssoc(), module.rightAssoc()).apply(rez.right().get());
+        rez = new PriorityVisitor(disambiguation.priorities(), disambiguation.leftAssoc(), disambiguation.rightAssoc()).apply(rez.right().get());
         if (rez.isLeft())
             return new Tuple2<>(rez, warn);
-        Tuple2<Either<Set<ParseFailedException>, Term>, Set<ParseFailedException>> rez2 = new VariableTypeInferenceFilter(module.subsorts(), module.definedSorts(), module.productionsFor()).apply(rez.right().get());
+        Tuple2<Either<Set<ParseFailedException>, Term>, Set<ParseFailedException>> rez2 = new VariableTypeInferenceFilter(disambiguation.subsorts(), disambiguation.definedSorts(), disambiguation.productionsFor()).apply(rez.right().get());
         if (rez2._1().isLeft())
             return rez2;
         warn = rez2._2();

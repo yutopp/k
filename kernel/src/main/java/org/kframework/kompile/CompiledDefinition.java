@@ -81,6 +81,6 @@ public class CompiledDefinition implements Serializable {
     }
 
     public Module getParserModule(Module module) {
-        return new RuleGrammarGenerator(parsedDefinition).getCombinedGrammar(module);
+        return new RuleGrammarGenerator(parsedDefinition).getCombinedGrammar(module).module();
     }
 }

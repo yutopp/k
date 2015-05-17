@@ -33,7 +33,6 @@ endmodule
 // To be used when parsing/pretty-printing ground configurations
 module KSEQ
   imports KAST
-  imports K-TOP-SORT
   syntax KBott ::= ".K"      [klabel(#EmptyK), hook(org.kframework.kore.EmptyK)]
                  | ".::K"    [klabel(#EmptyK), hook(org.kframework.kore.EmptyK)]
                  | K "~>" K  [klabel(#KSequence), left, assoc, unit(#EmptyK), hook(org.kframework.kore.KSequence)]
@@ -94,23 +93,12 @@ module REQUIRES-ENSURES
                        | K "when" K "ensures" K            [klabel("#ruleRequiresEnsures")]
 endmodule
 
-module K-TOP-SORT
+module K-SORT-LATTICE
   // if this module is imported, the parser automatically
-  // generates, for all sorts, productions of the form:
+  // generates, for all user sorts, productions of the form:
   // K     ::= Sort
-  // this is part of the mechanism that allows concrete user syntax in K
-endmodule
-
-module K-BOTTOM-SORT
-  // if this module is imported, the parser automatically
-  // generates, for all sorts, productions of the form:
   // Sort  ::= KBott
   // this is part of the mechanism that allows concrete user syntax in K
-endmodule
-
-module K-SORT-LATTICE
-  imports K-TOP-SORT
-  imports K-BOTTOM-SORT
 endmodule
 
 module AUTO-CASTS

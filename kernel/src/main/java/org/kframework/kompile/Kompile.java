@@ -137,7 +137,7 @@ public class Kompile {
     }
 
     public Definition addProgramModule(Definition d) {
-        Module programsModule = gen.getProgramsGrammar(d.mainSyntaxModule());
+        Module programsModule = gen.getProgramsGrammar(d.mainSyntaxModule()).module();
         java.util.Set<Module> allModules = mutable(d.modules());
         allModules.add(programsModule);
         return Definition(d.mainModule(), programsModule, immutable(allModules));
@@ -201,7 +201,7 @@ public class Kompile {
         loader.saveOrDie(files.resolveKompiled("cache.bin"), caches);
 
         if (!errors.isEmpty()) {
-            kem.addAllKException(errors.stream().map(e -> e.getKException()).collect(Collectors.toList()));
+            kem.addAllKException(errors.stream().map(ParseFailedException::getKException).collect(Collectors.toList()));
             throw KEMException.compilerError("Had " + errors.size() + " parsing errors.");
         }
         return parsedDef;
@@ -217,10 +217,10 @@ public class Kompile {
                 .map(b -> (Bubble) b)
                 .filter(b -> b.sentenceType().equals("config")).count() == 0)
             return module;
-        Module configParserModule = gen.getConfigGrammar(module);
+        Module configParserModule = gen.getConfigGrammar(module).module();
 
         ParseCache cache = loadCache(configParserModule);
-        ParseInModule parser = cache.getParser();
+        ParseInModule parser = gen.getConfigGrammar(module);
 
         Set<Sentence> configDeclProductions = stream(module.localSentences())
                 .parallel()
@@ -253,10 +253,10 @@ public class Kompile {
                 .map(b -> (Bubble) b)
                 .filter(b -> !b.sentenceType().equals("config")).count() == 0)
             return module;
-        Module ruleParserModule = gen.getRuleGrammar(module);
+        Module ruleParserModule = gen.getRuleGrammar(module).module();
 
         ParseCache cache = loadCache(ruleParserModule);
-        ParseInModule parser = cache.getParser();
+        ParseInModule parser = gen.getRuleGrammar(module);
 
         Set<Sentence> ruleSet = stream(module.localSentences())
                 .parallel()
@@ -310,11 +310,11 @@ public class Kompile {
         Tuple2<Either<java.util.Set<ParseFailedException>, Term>, java.util.Set<ParseFailedException>> result;
         if (cache.containsKey(b.contents())) {
             ParsedSentence parse = cache.get(b.contents());
-            kem.addAllKException(parse.getWarnings().stream().map(e -> e.getKException()).collect(Collectors.toList()));
+            kem.addAllKException(parse.getWarnings().stream().map(ParseFailedException::getKException).collect(Collectors.toList()));
             return Stream.of(parse.getParse());
         } else {
             result = parser.parseString(b.contents(), START_SYMBOL, Source.apply(source), startLine, startColumn);
-            kem.addAllKException(result._2().stream().map(e -> e.getKException()).collect(Collectors.toList()));
+            kem.addAllKException(result._2().stream().map(ParseFailedException::getKException).collect(Collectors.toList()));
             if (result._1().isRight()) {
                 KApply k = (KApply)TreeNodesToKORE.down(TreeNodesToKORE.apply(result._1().right().get()));
                 k = KApply(k.klabel(), k.klist(), k.att().addAll(b.att().remove("contentStartLine").remove("contentStartColumn").remove("Source").remove("Location")));

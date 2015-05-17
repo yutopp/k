@@ -15,11 +15,17 @@ public class Stopwatch {
     private long start;
     private long lastIntermediate;
     Formatter f = new Formatter(System.out);
-    private final GlobalOptions options;
+    private final boolean verbose;
 
     @Inject
     public Stopwatch(GlobalOptions options) {
-        this.options = options;
+        this.verbose = options.verbose;
+        start = System.currentTimeMillis();
+        lastIntermediate = start;
+    }
+
+    public Stopwatch(boolean verbose) {
+        this.verbose = verbose;
         start = System.currentTimeMillis();
         lastIntermediate = start;
     }
@@ -30,14 +36,14 @@ public class Stopwatch {
 
     public void printIntermediate(String message) {
         long current = System.currentTimeMillis();
-        if (options.verbose)
+        if (verbose)
             f.format("%-60s = %5d%n", message, current - lastIntermediate);
         lastIntermediate = current;
     }
 
     public void printTotal(String message) {
         printIntermediate("Cleanup");
-        if (options.verbose)
+        if (verbose)
             f.format("%-60s = %5d%n", message, lastIntermediate - start);
     }
 

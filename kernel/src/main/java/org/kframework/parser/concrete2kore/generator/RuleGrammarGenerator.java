@@ -17,7 +17,9 @@ import org.kframework.definition.SyntaxSort;
 import org.kframework.definition.Terminal;
 import org.kframework.kil.Attribute;
 import org.kframework.kil.Syntax;
+import org.kframework.kil.loader.Constants;
 import org.kframework.kore.Sort;
+import org.kframework.parser.concrete2kore.ParseInModule;
 import org.kframework.utils.StringUtil;
 import scala.collection.immutable.List;
 import scala.collection.immutable.Seq;
@@ -67,8 +69,6 @@ public class RuleGrammarGenerator {
     public static final String K = "K";
     public static final String AUTO_CASTS = "AUTO-CASTS";
     public static final String K_SORT_LATTICE = "K-SORT-LATTICE";
-    public static final String K_TOP_SORT = "K-TOP-SORT";
-    public static final String K_BOTTOM_SORT = "K-BOTTOM-SORT";
     public static final String AUTO_FOLLOW = "AUTO-FOLLOW";
 
     public RuleGrammarGenerator(Definition baseK) {
@@ -80,19 +80,19 @@ public class RuleGrammarGenerator {
         return def;
     }
 
-    public Module getRuleGrammar(Module mod) {
+    public ParseInModule getRuleGrammar(Module mod) {
         // import RULE-CELLS in order to parse cells specific to rules
         Module newM = new Module(mod.name() + "-" + RULE_CELLS, Set(mod, baseK.getModule(K).get(), baseK.getModule(RULE_CELLS).get()), Set(), null);
         return getCombinedGrammar(newM);
     }
 
-    public Module getConfigGrammar(Module mod) {
+    public ParseInModule getConfigGrammar(Module mod) {
         // import CONFIG-CELLS in order to parse cells specific to configurations
         Module newM = new Module(mod.name() + "-" + CONFIG_CELLS, Set(mod, baseK.getModule(K).get(), baseK.getModule(CONFIG_CELLS).get()), Set(), null);
         return getCombinedGrammar(newM);
     }
 
-    public Module getProgramsGrammar(Module mod) {
+    public ParseInModule getProgramsGrammar(Module mod) {
         Set<Sentence> prods = new HashSet<>();
         // if no start symbol has been defined in the configuration, then use K
         for (Sort srt : iterable(mod.definedSorts())) {
@@ -102,7 +102,7 @@ public class RuleGrammarGenerator {
             }
         }
         Module newM = new Module(mod.name() + "-FOR-PROGRAMS", Set(mod), immutable(prods), null);
-        return newM;
+        return new ParseInModule(newM, newM);
     }
 
     /**
@@ -114,12 +114,12 @@ public class RuleGrammarGenerator {
      * @param mod module for which to create the parser.
      * @return parser which applies disambiguation filters by default.
      */
-    public Module getCombinedGrammar(Module mod) {
+    public ParseInModule getCombinedGrammar(Module mod) {
         Set<Sentence> prods = new HashSet<>();
 
         if (baseK.getModule(AUTO_CASTS).isDefined() && mod.importedModules().contains(baseK.getModule(AUTO_CASTS).get())) { // create the diamond
             for (Sort srt : iterable(mod.definedSorts())) {
-                if (isExceptionSort(srt)) {
+                if (!isExceptionSort(srt)) {
                     // K ::= K "::Sort" | K ":Sort" | K "<:Sort" | K ":>Sort"
                     prods.addAll(makeCasts(Sorts.KBott(), Sorts.K(), srt));
                 }
@@ -187,7 +187,26 @@ public class RuleGrammarGenerator {
             }).collect(Collectors.toSet());
         }
 
-        if (baseK.getModule(K_SORT_LATTICE).isDefined() && mod.importedModules().contains(baseK.getModule(K_SORT_LATTICE).get())) { // create the diamond
+        Set<Sentence> disambProds = prods.stream().collect(Collectors.toSet());
+        if (baseK.getModule(K_SORT_LATTICE).isDefined() && mod.importedModules().contains(baseK.getModule(K_SORT_LATTICE).get())) {
+            // create the diamond for the dummy module
+            for (Sort srt : iterable(mod.definedSorts())) {
+                if (!kSorts.contains(srt) && !srt.name().startsWith("#")) {
+                    // K ::= Sort
+                    disambProds.add(Production(Sorts.K(), Seq(NonTerminal(srt)), Att()));
+                    // Sort ::= KBott
+                    disambProds.add(Production(srt, Seq(NonTerminal(Sorts.KBott())), Att()));
+                }
+            }
+            // rewrite the grammar to reduce the number of ambiguities:
+            // K   ::= Exp
+            // Exp ::= Exp "+" Exp
+            //       | Int
+            //       | KBott
+            // Lattice subsorts are not allowed to be called, or call other subsorts:
+            // -------- #1 ---------           -------- #2 ---------        ------ #3 -----------
+            // K     ::= Exp#1                 Exp#2 ::= Exp "+" Exp        Exp ::= Exp "+" Exp
+            // Exp#1 ::= Exp "+" Exp                   | Int#2                    | KBott | Int#2
             // 1. Sort-no-subsorts - called from K
             Set<Sentence> noSubsorts = prods.stream().flatMap(s -> {
                 // remove subsorts, and rename the production sort. These productions will be called from K contexts
@@ -197,7 +216,7 @@ public class RuleGrammarGenerator {
                         if (p.isSyntacticSubsort())
                             return Stream.of();
                         else
-                            return Stream.of(Production(Sort(p.sort().name() + "#1"), p.items(), p.att()));
+                            return Stream.of(Production(Sort(p.sort().name() + "#1"), p.items(), p.att().add(Constants.ORIGINAL_PRD, p)));
                     }
                 }
                 return Stream.of(s);
@@ -210,9 +229,9 @@ public class RuleGrammarGenerator {
                     if (!isExceptionSort(p.sort())) {
                         if (p.isSyntacticSubsort()) {
                             NonTerminal nt = NonTerminal(Sort(((NonTerminal)p.items().head()).sort().name() + "#2"));
-                            return Stream.of(Production(Sort(p.sort().name() + "#2"), Seq(nt), p.att()));
+                            return Stream.of(Production(Sort(p.sort().name() + "#2"), Seq(nt), p.att().add(Constants.ORIGINAL_PRD, p)));
                         } else {
-                            return Stream.of(Production(Sort(p.sort().name() + "#2"), p.items(), p.att()));
+                            return Stream.of(Production(Sort(p.sort().name() + "#2"), p.items(), p.att().add(Constants.ORIGINAL_PRD, p)));
                         }
                     }
                 }
@@ -227,9 +246,9 @@ public class RuleGrammarGenerator {
                     if (!isExceptionSort(p.sort())) {
                         if (p.isSyntacticSubsort()) {
                             NonTerminal nt = NonTerminal(Sort(((NonTerminal)p.items().head()).sort().name() + "#2"));
-                            return Stream.of(Production(p.sort(), Seq(nt), p.att()));
+                            return Stream.of(Production(p.sort(), Seq(nt), p.att().add(Constants.ORIGINAL_PRD, p)));
                         } else {
-                            return Stream.of(Production(p.sort(), p.items(), p.att()));
+                            return Stream.of(Production(p.sort(), p.items(), p.att().add(Constants.ORIGINAL_PRD, p)));
                         }
                     }
                 }
@@ -264,26 +283,10 @@ public class RuleGrammarGenerator {
             prods.addAll(noBott);
             prods.addAll(allRenameSubs);
         }
-//        if (baseK.getModule(K_TOP_SORT).isDefined() && mod.importedModules().contains(baseK.getModule(K_TOP_SORT).get())) { // create the diamond
-//            for (Sort srt : iterable(mod.definedSorts())) {
-//                if (!kSorts.contains(srt) && !srt.name().startsWith("#")) {
-//                    // K ::= Sort
-//                    prods.add(Production(Sorts.K(), Seq(NonTerminal(srt)), Att()));
-//                }
-//            }
-//        }
-//
-//        if (baseK.getModule(K_BOTTOM_SORT).isDefined() && mod.importedModules().contains(baseK.getModule(K_BOTTOM_SORT).get())) { // create the diamond
-//            for (Sort srt : iterable(mod.definedSorts())) {
-//                if (!kSorts.contains(srt) && !srt.name().startsWith("#")) {
-//                    // Sort ::= KBott
-//                    prods.add(Production(srt, Seq(NonTerminal(Sorts.KBott())), Att()));
-//                }
-//            }
-//        }
 
         Module newM = new Module(mod.name() + "-PARSER", Set(), immutable(prods), mod.att());
-        return newM;
+        Module disamb = new Module(mod.name() + "-DISAMB", Set(), immutable(disambProds), mod.att());
+        return new ParseInModule(disamb, newM);
     }
 
     private boolean isExceptionSort(Sort srt) {
