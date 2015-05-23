@@ -27,17 +27,20 @@ import java.util.stream.Collectors;
 
 public class CompiledDefinition implements Serializable {
     public final KompileOptions kompileOptions;
-    private final Definition parsedDefinition;
     public final Definition kompiledDefinition;
     public final Sort programStartSymbol;
     public final KLabel topCellInitializer;
+    /**
+     * The parsed but uncompiled definition
+     */
+    public final Definition parsedDefinition;
 
     public CompiledDefinition(KompileOptions kompileOptions, Definition parsedDefinition, Definition kompiledDefinition, Sort programStartSymbol, KLabel topCellInitializer) {
-        this.kompileOptions = kompileOptions;
-        this.parsedDefinition = parsedDefinition;
-        this.kompiledDefinition = kompiledDefinition;
         this.programStartSymbol = programStartSymbol;
+        this.parsedDefinition = parsedDefinition;
         this.topCellInitializer = topCellInitializer;
+        this.kompiledDefinition = kompiledDefinition;
+        this.kompileOptions = kompileOptions;
     }
 
     /**
@@ -48,20 +51,15 @@ public class CompiledDefinition implements Serializable {
     }
 
     /**
-     * The parsed but uncompiled definition
-     */
-    public Definition getParsedDefinition() {
-        return parsedDefinition;
-    }
-
-    /**
      * A module containing the compiled definition
      */
     public Module executionModule() {
         return kompiledDefinition.mainModule();
     }
 
-    public Module syntaxModule() { return kompiledDefinition.mainSyntaxModule(); }
+    public Module syntaxModule() {
+        return kompiledDefinition.mainSyntaxModule();
+    }
 
     /**
      * Creates a parser for a module.

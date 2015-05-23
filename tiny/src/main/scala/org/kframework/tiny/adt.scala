@@ -22,27 +22,39 @@ trait K extends kore.K {
 
   def matcher(right: K): Matcher
 
+  val outerThis = this
+
   final def normalize(implicit theory: Theory): K = {
-    if (this.isNormal) {
+    if (this.normalBy.contains(theory)) {
       this
     } else {
       val res = theory.cache.get(this, new Callable[K] {
         override def call(): K = {
-          val inner = normalizeInner
-          val res = theory.normalize(inner)
-          res.isNormal = true
-          res
+          var finalRes: K = null
+          var inner: K = outerThis
+          do {
+            //            println(inner + " ..... " + finalRes)
+            finalRes = inner
+            inner = inner.normalizeInner
+            inner = theory.normalize(inner)
+          } while (finalRes != inner)
+          //          println(" ... => " + finalRes)
+          finalRes.normalBy.+=(theory)
+          finalRes
         }
       })
       res
     }
   }
 
-  protected[this] def normalizeInner(implicit theory: Theory): K
+  def normalizeInner(implicit theory: Theory): K
 
   def isGround: Boolean
 
-  var isNormal = false
+  private val normalBy = collection.mutable.Set[Theory]()
+
+  def isNormalBy(theory: Theory) = normalBy.contains(theory)
+  def setIsNormalBy(theory: Theory) = normalBy.+=(theory)
 
   def isFalse: Boolean = false
 }
@@ -99,7 +111,7 @@ trait KLeaf extends K {
 
   def normalizeInner(implicit theory: Theory): K = this
 
-  isNormal = true
+  override def isNormalBy(theory: Theory) = true
 }
 
 /**
@@ -293,7 +305,7 @@ trait KProduct2Label extends KRegularAppLabel {
 case class LiftBoolToML(k: K, val att: Att = Att()) extends KProduct {
   val klabel = LiftBoolToMLLabel
 
-  override protected[this] def normalizeInner(implicit theory: Theory): K = {
+  override def normalizeInner(implicit theory: Theory): K = {
     k.normalize match {
       case TypedKTok(Sorts.Bool, true, _) => And()
       case TypedKTok(Sorts.Bool, false, _) => Or()

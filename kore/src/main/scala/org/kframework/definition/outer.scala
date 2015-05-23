@@ -5,6 +5,7 @@ package org.kframework.definition
 import dk.brics.automaton.{BasicAutomata, RegExp, RunAutomaton, SpecialOperations}
 import org.kframework.POSet
 import org.kframework.attributes.Att
+import org.kframework.builtin.Sorts
 import org.kframework.kore.Unapply.{KApply, KLabel}
 import org.kframework.kore._
 import org.kframework.utils.errorsystem.KEMException
@@ -81,7 +82,8 @@ case class Module(name: String, imports: Set[Module], localSentences: Set[Senten
   def sortFor(k: K): Sort = optionSortFor(k).get
 
   def optionSortFor(k: K): Option[Sort] = k match {
-    case Unapply.KApply(l, _) => sortFor.get(l)
+    case Unapply.KApply(l, _) => sortFor.get(l).orElse(if (l.name.startsWith("is")) Some(Sorts.Bool) else None)
+      // todo: Cosmin: above is a hack for sorting predicate sort
     case Unapply.KRewrite(_, r) => optionSortFor(r)
     case Unapply.KToken(s, _) => Some(s)
     case Unapply.KSequence(s) => optionSortFor(s.last)

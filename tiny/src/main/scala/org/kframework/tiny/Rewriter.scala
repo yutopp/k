@@ -47,7 +47,7 @@ class FullTinyRewriter(module: definition.Module) extends org.kframework.Rewrite
 
 class Rewriter(module: definition.Module, index: K => Option[Symbol] = KIndex, theory: Theory) extends org.kframework.Rewriter {
 
-  //new Up(this, Set()), new Down(Set())
+  println(module.allImports.mkString("\n\n"))
 
   val cons = new Constructors(module, theory)
 
@@ -122,8 +122,10 @@ class Rewriter(module: definition.Module, index: K => Option[Symbol] = KIndex, t
   var totalTriedRules = 0
   var indexFailures = 0
 
-  def executeStep(k: K): Option[K] = {
+  def executeStep(kk: K): Option[K] = {
     //    println("\n\n MATCHING ON: " + k)
+
+    val k = kk.normalize
 
     val i = index(k)
 
@@ -156,7 +158,7 @@ class Rewriter(module: definition.Module, index: K => Option[Symbol] = KIndex, t
   def execute(k: K): K = {
     var steps = 0
     var time = System.nanoTime()
-    var current: K = k
+    var current: K = k.normalize
     var prev: K = null
     do {
       steps += 1

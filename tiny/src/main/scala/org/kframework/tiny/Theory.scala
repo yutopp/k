@@ -23,18 +23,18 @@ class TheoryWithFunctions(val module: Module) extends Theory {
     m.name, m.imports, m.localSentences.filter({
       case r: org.kframework.definition.Rule =>
         r.body match {
-          case Unapply.KRewrite(app: KApply, _) => println(app); module.attributesFor(app.klabel).contains("function")
+          case Unapply.KRewrite(app: KApply, _) => module.attributesFor(app.klabel).contains("function")
           case _ => false
         }
       case _ => true
     })), "CreateModuleForFunctions").apply(module)
 
-  println(moduleWithOnlyFunctions.allImports.mkString("\n\n"))
+//  println(moduleWithOnlyFunctions.allImports.mkString("\n\n"))
 
   val rewriterForFunctions = new Rewriter(moduleWithOnlyFunctions, SimpleIndex, FreeTheory(moduleWithOnlyFunctions))
 
   override def normalize(k: K): K =
-    if (k.isNormal)
+    if (k.isNormalBy(this))
       k
     else
       rewriterForFunctions.execute(k)

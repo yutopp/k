@@ -22,8 +22,7 @@ object Or extends KAssocAppLabel with EmptyAtt {
 class Or(val children: Set[K], val att: Att = Att(), normalBy: Option[Theory] = None)
   extends KAssocApp {
 
-  if (children.size == 0)
-    this.isNormal = true
+  override def isNormalBy(theory: Theory) = children.size == 0 || super.isNormalBy(theory)
 
   /** Estimate the time it takes to solve (up to available data) one of the child formulas  */
   def estimate(implicit t: Theory): Int = ???
@@ -64,7 +63,7 @@ class Or(val children: Set[K], val att: Att = Att(), normalBy: Option[Theory] = 
 case class OrMatcher(left: Or, right: K) extends Matcher {
   override val klabel: MatcherLabel = OrMatcher
 
-  override protected[this] def normalizeInner(implicit theory: Theory): K = {
+  override def normalizeInner(implicit theory: Theory): K = {
     if (left == Or() && right == Or()) // TODO: understand this
       True
     else
@@ -87,8 +86,7 @@ object And extends KAssocAppLabel with EmptyAtt {
 case class And(children: Set[K], att: Att, normalBy: Option[Theory] = None)
   extends KAssocApp {
 
-  if (children.size == 0)
-    this.isNormal = true
+  override def isNormalBy(theory: Theory) = children.size == 0 || super.isNormalBy(theory)
 
   /** Estimate the time it takes to solve one variable in one formula */
   def estimate(implicit t: Theory): Int = ???

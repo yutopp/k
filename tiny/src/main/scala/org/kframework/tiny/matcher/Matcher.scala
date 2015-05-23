@@ -121,7 +121,7 @@ case class EqualsMatcher(left: K, right: K) extends Matcher {
   override val klabel = EqualsMatcher
   override def toString = left + ":=" + right
 
-  override protected[this] def normalizeInner(implicit theory: Theory): K = {
+  override def normalizeInner(implicit theory: Theory): K = {
     val res = if (left == right)
       True
     else if (isGround && left != right)

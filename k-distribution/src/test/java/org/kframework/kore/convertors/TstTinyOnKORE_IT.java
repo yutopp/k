@@ -37,16 +37,39 @@ public class TstTinyOnKORE_IT {
     @Test
     public void kore_imp_tiny() throws IOException, URISyntaxException {
         executeTest("TEST", "TEST-PROGRAMS",
-                "<top><k> while(0<=n) { s = s + n; n = n + -1; } </k><state>n|->10 s|->0</state></top>");
+                "<top><k> while(0<=n) { s = s + n; n = n + -1; } </k><state>n|->10 s|->0</state></top>",
+                "<top>(<k>(#KSequence()),<state>(_Map_(_|->_(n:Id,-1),_|->_(s:Id,55))))");
     }
 
     @Test
     public void imp_lesson1() throws IOException, URISyntaxException {
         executeTest("IMP", "IMP-SYNTAX",
-                "initKCell(`_|->_`($PGM, while(0<=n) { s = s + n; n = n + -1; }))");
+                "initKCell(`_|->_`($PGM, while(0<=n) { s = s + n; n = n + -1; }))",
+                "<k>(while(_)_(_<=_(0,n:Id),{_}(__(_=_;(s:Id,_+_(s:Id,n:Id)),_=_;(n:Id,_+_(n:Id,-1))))))");
     }
 
-    private void executeTest(String mainModule, String mainSyntaxModule, String programText) throws URISyntaxException {
+    @Test
+    public void imp_lesson2() throws IOException, URISyntaxException {
+        executeTest("IMP", "IMP-SYNTAX",
+                "initTCell(`_|->_`($PGM, while(0<=n) { s = s + n; n = n + -1; }))",
+                "<T>(<k>(while(_)_(_<=_(0,n:Id),{_}(__(_=_;(s:Id,_+_(s:Id,n:Id)),_=_;(n:Id,_+_(n:Id,-1)))))),<state>(_Map_()))");
+    }
+
+    @Test
+    public void simpleNestedFunctions() throws IOException, URISyntaxException {
+        executeTest("FUNC", "FUNC",
+                "`foo`(bar)",
+                "done()");
+    }
+
+    @Test
+    public void simpleNestedConfiguration() throws IOException, URISyntaxException {
+        executeTest("FUNC", "FUNC",
+                "initTopCell(.Map)",
+                "<top>(<k>(foo()))");
+    }
+
+    private void executeTest(String mainModule, String mainSyntaxModule, String programText, String expected) throws URISyntaxException {
         String filename = "/convertor-tests/" + name.getMethodName() + ".k";
 
         File definitionFile = testResource(filename);
@@ -67,7 +90,7 @@ public class TstTinyOnKORE_IT {
 
             System.out.println("result = " + result.toString());
 
-            Assert.assertEquals("<top>(<k>(#KSequence()),<state>(_Map_(_|->_(n:Id,-1),_|->_(s:Id,55))))", result.toString());
+            Assert.assertEquals(expected, result.toString());
         } finally {
             kem.print();
         }

@@ -64,7 +64,7 @@ import static scala.compat.java8.JFunction.*;
  * Tracked by #1442.
  */
 
-public class Kompile {
+public class Kompile extends org.kframework.kore.compile.Kompile {
 
     public static final File BUILTIN_DIRECTORY = JarInfo.getKIncludeDir().resolve("builtin").toFile();
     private static final String REQUIRE_KAST_K = "requires \"kast.k\"\n";
@@ -76,6 +76,10 @@ public class Kompile {
     private final boolean cacheParses;
     private final BinaryLoader loader;
     private final KompileOptions kompileOptions;
+
+    public static CompiledDefinition apply(File definitionFile, String mainModuleName, String mainSyntaxModuleName, KExceptionManager kem) {
+        return new Kompile(new KompileOptions(), FileUtil.testFileUtil(), kem, false).run(definitionFile, mainModuleName, mainSyntaxModuleName, Sorts.K());
+    }
 
     public Kompile(KompileOptions kompileOptions, FileUtil files, KExceptionManager kem, boolean cacheParses) {
         this.files = files;
@@ -101,6 +105,17 @@ public class Kompile {
      * @return
      */
     public CompiledDefinition run(File definitionFile, String mainModuleName, String mainProgramsModuleName, Sort programStartSymbol) {
+        CompiledDefinition kompiledDefinitionObject = apply(definitionFile, mainModuleName, mainProgramsModuleName, programStartSymbol);
+
+        return new CompiledDefinition(
+                kompileOptions,
+                kompiledDefinitionObject.parsedDefinition,
+                kompiledDefinitionObject.kompiledDefinition,
+                kompiledDefinitionObject.programStartSymbol,
+                kompiledDefinitionObject.topCellInitializer);
+    }
+
+    private CompiledDefinition apply(File definitionFile, String mainModuleName, String mainProgramsModuleName, Sort programStartSymbol) {
         Definition parsedDef = parseDefinition(definitionFile, mainModuleName, mainProgramsModuleName, true);
 
         DefinitionTransformer heatingCooling = new DefinitionTransformer(StrictToHeatingCooling.self());
@@ -321,7 +336,7 @@ public class Kompile {
             result = parser.parseString(b.contents(), START_SYMBOL, Source.apply(source), startLine, startColumn);
             kem.addAllKException(result._2().stream().map(e -> e.getKException()).collect(Collectors.toList()));
             if (result._1().isRight()) {
-                KApply k = (KApply)TreeNodesToKORE.down(TreeNodesToKORE.apply(result._1().right().get()));
+                KApply k = (KApply) TreeNodesToKORE.down(TreeNodesToKORE.apply(result._1().right().get()));
                 k = KApply(k.klabel(), k.klist(), k.att().addAll(b.att().remove("contentStartLine").remove("contentStartColumn").remove("Source").remove("Location")));
                 cache.put(b.contents(), new ParsedSentence(k, new HashSet<>(result._2())));
                 return Stream.of(k);
