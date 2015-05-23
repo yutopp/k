@@ -47,8 +47,6 @@ class FullTinyRewriter(module: definition.Module) extends org.kframework.Rewrite
 
 class Rewriter(module: definition.Module, index: K => Option[Symbol] = KIndex, theory: Theory) extends org.kframework.Rewriter {
 
-  println(module.allImports.mkString("\n\n"))
-
   val cons = new Constructors(module, theory)
 
   import cons._
