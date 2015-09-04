@@ -312,7 +312,7 @@ public class RuleGrammarGenerator {
              */
             for (UserList ul1 : userLists) {
                 for (UserList ul2 : userLists) {
-                    if (ul1 != ul2 && ul1.separator.equals(ul2.separator)
+                    if (ul1 != ul2 && ul1.klabel.equals(ul2.klabel)
                             && mod.subsorts().$greater(Sort(ul1.childSort), Sort(ul2.childSort))) {
                         res.add(Production(Sort(ul1.sort), Seq(NonTerminal(Sort(ul2.sort)))));
                     }
